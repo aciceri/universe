@@ -1,0 +1,104 @@
+{
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    import-tree.url = "github:vic/import-tree";
+
+    treefmt-nix = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "";
+    };
+    git-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs = {
+        nixpkgs.follows = "";
+        flake-compat.follows = "";
+        gitignore.follows = "";
+      };
+    };
+    make-shell = {
+      url = "github:nicknovitski/make-shell";
+      inputs.flake-compat.follows = "";
+    };
+    files.url = "github:mightyiam/files";
+    agenix-shell = {
+      url = "github:aciceri/agenix-shell";
+      inputs = {
+        flake-parts.follows = "flake-parts";
+        nixpkgs.follows = "";
+        flake-root.follows = "flake-root_";
+        treefmt-nix.follows = "treefmt-nix";
+        git-hooks-nix.follows = "git-hooks";
+        nix-github-actions.follows = "";
+      };
+    };
+
+    agenix = {
+      url = "github:ryantm/agenix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "";
+        systems.follows = "nix-systems_";
+      };
+    };
+    nixos-facter-modules.url = "github:nix-community/nixos-facter-modules";
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "";
+    };
+    lanzaboote = {
+      url = "github:nix-community/lanzaboote";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        pre-commit-hooks-nix.follows = "";
+        crane.follows = "crane_";
+        rust-overlay.follows = "rust-overlay_";
+        flake-compat.follows = "flake-compat_";
+      };
+    };
+    nuschtos = {
+      # TODO use
+      url = "github:NuschtOS/search";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils_";
+      };
+    };
+  };
+
+  # Grab SSH keys from GitHub
+  inputs = {
+    ghkeys-ccr = {
+      url = "https://github.com/aciceri.keys";
+      flake = false;
+    };
+  };
+
+  # For deduplication
+  inputs = {
+    flake-root_.url = "github:srid/flake-root";
+    nix-systems_.url = "github:nix-systems/default";
+    rust-overlay_ = {
+      url = "github:oxalica/rust-overlay";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    flake-compat_ = {
+      url = "github:edolstra/flake-compat";
+      flake = false;
+    };
+    crane_.url = "github:ipetkov/crane";
+    flake-utils_ = {
+      url = "github:numtide/flake-utils";
+      inputs.systems.follows = "nix-systems_";
+    };
+  };
+
+  outputs =
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ (inputs.import-tree ./modules) ];
+
+      _module.args.rootPath = ./.;
+    };
+}
