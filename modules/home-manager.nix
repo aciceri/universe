@@ -5,7 +5,6 @@
   ...
 }:
 {
-  debug = true;
   flake.modules.nixos.base = nixosArgs: {
     imports = [
       inputs.home-manager.nixosModules.home-manager
