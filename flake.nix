@@ -57,6 +57,10 @@
         flake-compat.follows = "flake-compat_";
       };
     };
+    home-manager = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";
