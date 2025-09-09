@@ -1,0 +1,54 @@
+{ config, lib, ... }:
+{
+  flake.modules.nixos.base =
+    { pkgs, ... }:
+    {
+      users.users =
+        config.users // { root = { }; }
+        |> lib.mapAttrs (
+          username: _: {
+            shell = pkgs.nushell;
+          }
+        );
+    };
+
+  flake.modules.homeManager.base = {
+    programs = {
+      nushell.enable = true;
+
+      carapace.enable = true;
+
+      bat.enable = true;
+
+      fzf.enable = true;
+
+      fd.enable = true;
+
+      ripgrep-all.enable = true;
+
+      broot.enable = true;
+
+      direnv = {
+        enable = true;
+        config = {
+          warn_timeout = "60s";
+        };
+        nix-direnv.enable = true;
+      };
+
+      pay-respects.enable = true;
+
+      television.enable = true;
+
+      ranger = {
+        enable = true;
+        settings = {
+          "preview_images" = true;
+          "preview_images_method" = "sixel";
+        };
+      };
+
+      zoxide.enable = true;
+    };
+  };
+}
