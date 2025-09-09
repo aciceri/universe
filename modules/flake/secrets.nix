@@ -8,7 +8,7 @@
 let
 
   secretSubmoduleType = lib.types.submodule (
-    { name, ... }:
+    { config, name, ... }:
     {
       options = {
         name = lib.mkOption {
@@ -18,6 +18,14 @@ let
         file = lib.mkOption {
           type = lib.types.path;
           default = rootPath + /secrets + "/${name}" + ".age";
+        };
+        sshHostKey = lib.mkOption {
+          type = lib.types.bool;
+          default = lib.hasPrefix "ssh_host_key_" name;
+        };
+        sshPublicKey = lib.mkOption {
+          type = lib.types.str; # TODO add assertion checking that if sshHostKey is true then this has to be set
+          default = "";
         };
         publicKeys = lib.mkOption {
           type = lib.types.listOf lib.types.str;
@@ -67,6 +75,6 @@ in
 
   config.secrets = {
     gptcommit__openai__api_key = { };
-    ssh_host_key_picard = { };
+    ssh_host_key_picard.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1+1z1IsLVJ6aGarMgzw3NbmFKcpYVgdUjl7xDsewxT";
   };
 }
