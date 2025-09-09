@@ -61,6 +61,21 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    stylix = {
+      url = "github:nix-community/stylix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "nix-systems_";
+        nur.follows = "nur";
+      };
+    };
+    nur = {
+      url = "github:nix-community/nur";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+      };
+    };
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";
