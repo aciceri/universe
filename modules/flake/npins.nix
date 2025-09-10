@@ -21,6 +21,10 @@
       { pkgs, ... }:
       {
         make-shells.default.packages = [ pkgs.npins ];
+        treefmt.settings.global.excludes = [
+          "npins/default.nix"
+          "npins/sources.json"
+        ];
       };
   };
 }

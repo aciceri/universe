@@ -8,7 +8,7 @@
 let
 
   secretSubmoduleType = lib.types.submodule (
-    { config, name, ... }:
+    { name, ... }:
     {
       options = {
         name = lib.mkOption {
