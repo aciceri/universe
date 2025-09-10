@@ -28,19 +28,34 @@
       users =
         config.users // { root = { }; }
         |> lib.mapAttrs (
-          username: _: {
-            imports = [
-              {
-                home.stateVersion = nixosArgs.config.system.stateVersion;
-                home = {
-                  inherit username;
-                };
-                programs.home-manager.enable = true;
-                systemd.user.startServices = "sd-switch";
-              }
-            ];
-          }
+          username: _:
+          (
+            { pkgs, ... }:
+            {
+              imports = [
+                {
+                  _module.args = { inherit (nixosArgs.config) age; };
+                  home = {
+                    stateVersion = nixosArgs.config.system.stateVersion;
+                    inherit username;
+                  };
+                  home.packages = [ pkgs.home-manager ];
+                  programs.home-manager.enable = true;
+                  systemd.user.startServices = "sd-switch";
+                }
+              ];
+            }
+          )
         );
     };
   };
+
+  flake.homeConfigurations =
+    config.flake.nixosConfigurations
+    |> lib.concatMapAttrs (
+      nixosName: nixos:
+      lib.concatMapAttrs (homeName: home: {
+        "${nixosName}/${homeName}" = home;
+      }) nixos.config.home-manager.users
+    );
 }
