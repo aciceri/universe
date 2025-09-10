@@ -22,6 +22,9 @@ let
       users.users.root.password = "nixos";
 
       virtualisation = {
+        diskSize = 8192;
+        memorySize = 4096;
+        cores = 4;
         writableStoreUseTmpfs = false;
         qemu.options = [
           "-device virtio-vga-gl"
