@@ -7,7 +7,12 @@
 
   flake.modules.homeManager.base = {
     programs = {
-      nushell.enable = true;
+      nushell = {
+        enable = true;
+        settings = {
+          show_banner = false;
+        };
+      };
 
       carapace.enable = true;
 
