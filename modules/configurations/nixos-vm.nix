@@ -5,7 +5,6 @@
   ...
 }:
 let
-
   commonModule =
     { config, modulesPath, ... }:
     {
@@ -23,6 +22,12 @@ let
       users.users.root.password = "nixos";
 
       virtualisation = {
+        writableStoreUseTmpfs = false;
+        qemu.options = [
+          "-device virtio-vga-gl"
+          "-spice unix=on,addr=/tmp/vm-${config.networking.hostName}-spice.sock,disable-ticketing=on,gl=on"
+        ];
+
         forwardPorts = [
           {
             from = "host";
@@ -67,7 +72,24 @@ in
 
             echo "Temporary copying the SSH private key to $PROVISIONED_SSH_KEYS"
             cp $SSH_HOST_KEY_${lib.toUpper name}_PATH $PROVISIONED_SSH_KEYS/ssh_host_ed25519_key
-            ${lib.getExe nixosVM.config.system.build.vm}
+
+            trap 'kill $vm_pid 2>/dev/null; rm -f /tmp/vm-${name}-spice.sock' EXIT INT TERM
+
+            ${lib.getExe nixosVM.config.system.build.vm} &
+            vm_pid=$!
+
+            echo 'Waiting for SPICE socket...'
+            while [ ! -S /tmp/vm-${name}-spice.sock ]; do
+              if ! kill -0 $vm_pid 2>/dev/null; then
+                echo "VM failed to start"
+                exit 1
+              fi
+              sleep 1
+            done
+
+            ${lib.getExe' pkgs.virt-viewer "remote-viewer"} spice+unix:///tmp/vm-${name}-spice.sock
+
+            echo 'SPICE client closed, shutting down VM...'
           '';
         }
       )
