@@ -1,6 +1,5 @@
 { lib, inputs, ... }:
 let
-
   userSubmoduleType = lib.types.submodule (
     { name, ... }:
     {
