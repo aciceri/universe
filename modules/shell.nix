@@ -1,15 +1,8 @@
-{ config, lib, ... }:
 {
   flake.modules.nixos.base =
     { pkgs, ... }:
     {
-      users.users =
-        config.users // { root = { }; }
-        |> lib.mapAttrs (
-          username: _: {
-            shell = pkgs.nushell;
-          }
-        );
+      users.defaultUserShell = pkgs.nushell;
     };
 
   flake.modules.homeManager.base = {
