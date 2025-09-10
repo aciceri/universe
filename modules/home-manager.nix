@@ -49,13 +49,4 @@
         );
     };
   };
-
-  flake.homeConfigurations =
-    config.flake.nixosConfigurations
-    |> lib.concatMapAttrs (
-      nixosName: nixos:
-      lib.concatMapAttrs (homeName: home: {
-        "${nixosName}/${homeName}" = home;
-      }) nixos.config.home-manager.users
-    );
 }
