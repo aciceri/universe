@@ -20,6 +20,7 @@
           hashedPasswordFile = nixosArgs.config.age.secrets."nixos_password_${username}".path;
         }
       );
+    home-manager.sharedModules = [ config.flake.modules.homeManager.base ];
 
     home-manager = {
       useGlobalPkgs = true;
@@ -37,7 +38,6 @@
                 programs.home-manager.enable = true;
                 systemd.user.startServices = "sd-switch";
               }
-              config.flake.modules.homeManager.base
             ];
           }
         );
