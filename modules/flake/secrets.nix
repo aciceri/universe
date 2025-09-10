@@ -75,6 +75,15 @@ in
 
   config.secrets = {
     gptcommit__openai__api_key = { };
+  };
+
+  # SSH host keys
+  config.secrets = {
     ssh_host_key_picard.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1+1z1IsLVJ6aGarMgzw3NbmFKcpYVgdUjl7xDsewxT";
+  };
+
+  # SSH user keys
+  config.secrets = {
+    ssh_user_key_ccr.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIIm9Sl/I+5G4g4f6iE4oCUJteP58v+wMIew9ZuLB+Gea";
   };
 }
