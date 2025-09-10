@@ -476,6 +476,33 @@
         "type": "github"
       }
     },
+    "niri": {
+      "inputs": {
+        "niri-stable": [],
+        "niri-unstable": [],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "nixpkgs-stable": [
+          "nixpkgs-stable_"
+        ],
+        "xwayland-satellite-stable": [],
+        "xwayland-satellite-unstable": []
+      },
+      "locked": {
+        "lastModified": 1757437545,
+        "narHash": "sha256-7ssbrFnmSrqtCtOySiu5ncyOBxPrR6p2nhNHrg6D+fo=",
+        "owner": "sodiboo",
+        "repo": "niri-flake",
+        "rev": "ef694b996daeeb8684c0adfaa9b7067a6e709054",
+        "type": "github"
+      },
+      "original": {
+        "owner": "sodiboo",
+        "repo": "niri-flake",
+        "type": "github"
+      }
+    },
     "nix-systems_": {
       "locked": {
         "lastModified": 1681028828,
@@ -534,6 +561,22 @@
       "original": {
         "owner": "nix-community",
         "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
+    "nixpkgs-stable_": {
+      "locked": {
+        "lastModified": 1757408970,
+        "narHash": "sha256-aSgK4BLNFFGvDTNKPeB28lVXYqVn8RdyXDNAvgGq+k0=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "d179d77c139e0a3f5c416477f7747e9d6b7ec315",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-25.05",
+        "repo": "nixpkgs",
         "type": "github"
       }
     },
@@ -601,9 +644,11 @@
         "import-tree": "import-tree",
         "lanzaboote": "lanzaboote",
         "make-shell": "make-shell",
+        "niri": "niri",
         "nix-systems_": "nix-systems_",
         "nixos-facter-modules": "nixos-facter-modules",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-stable_": "nixpkgs-stable_",
         "nur": "nur",
         "nuschtos": "nuschtos",
         "rust-overlay_": "rust-overlay_",

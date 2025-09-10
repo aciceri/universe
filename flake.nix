@@ -76,6 +76,17 @@
         flake-parts.follows = "flake-parts";
       };
     };
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        nixpkgs-stable.follows = "nixpkgs-stable_";
+        niri-stable.follows = "";
+        niri-unstable.follows = "";
+        xwayland-satellite-stable.follows = "";
+        xwayland-satellite-unstable.follows = "";
+      };
+    };
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";
@@ -111,6 +122,7 @@
       url = "github:numtide/flake-utils";
       inputs.systems.follows = "nix-systems_";
     };
+    nixpkgs-stable_.url = "github:NixOS/nixpkgs/nixos-25.05";
   };
 
   outputs =
