@@ -36,7 +36,7 @@ fpArgs@{ inputs, ... }:
         loader.systemd-boot.enable = lib.mkForce false; # needed by lanzaboote
         lanzaboote = {
           enable = true;
-          pkiBundle = "/etc/secure";
+          pkiBundle = "/var/lib/sbctl";
           configurationLimit = 20;
         };
 
