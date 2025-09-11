@@ -28,9 +28,10 @@
           ExecStart = "${
             pkgs.writeShellApplication {
               name = "git-fetch-${name}";
-              runtimeInputs = [
-                pkgs.git
-                pkgs.openssh
+              runtimeInputs = with pkgs; [
+                git
+                openssh
+                coreutils
               ];
               text = ''
                 if [ ! -d "${repo.path}" ]; then
