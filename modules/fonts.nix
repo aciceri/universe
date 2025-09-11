@@ -1,5 +1,5 @@
 {
-  flake.modules.homeManager.base =
+  flake.modules.nixos.base =
     { pkgs, ... }:
     {
       stylix.fonts = {
