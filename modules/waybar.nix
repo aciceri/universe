@@ -1,0 +1,123 @@
+{ lib, ... }:
+{
+  flake.modules.homeManager.pc =
+    { config, pkgs, ... }:
+    {
+      programs.waybar = {
+        enable = true;
+        systemd.enable = true;
+        settings =
+          let
+            rofi = lib.getExe config.programs.rofi.package;
+            pavucontrol = lib.getExe pkgs.pavucontrol;
+            pactl = lib.getExe' pkgs.pulseaudio "pactl";
+          in
+          {
+            mainBar = {
+              layer = "top";
+              position = "left";
+              width = 36;
+              margin = "12 0 12 0";
+              spacing = 2;
+
+              modules-left = [
+                "clock"
+                "custom/sep"
+                "niri/window"
+              ];
+
+              modules-center = [
+                "niri/workspaces"
+              ];
+
+              modules-right = [
+                "tray"
+                "custom/sep"
+                "temperature"
+                "custom/sep"
+                "pulseaudio"
+                "custom/powermenu"
+              ];
+
+              "custom/sep" = {
+                format = "──";
+              };
+
+              "custom/powermenu" = {
+                on-click = "${rofi} -show menu -modi menu:rofi-power-menu";
+                format = "";
+                tooltip = false;
+              };
+
+              "niri/workspaces" = {
+                format = "{icon}";
+                on-click = "activate";
+                format-icons = {
+                  active = "";
+                  urgent = "";
+                  default = "";
+                };
+              };
+
+              "niri/window" = {
+                rotate = 90;
+                rewrite = {
+                  "(.*) — Mozilla Firefox" = " $1";
+                  "(.*) - Slack" = " $1";
+                };
+              };
+
+              clock = {
+                tooltip = true;
+                format = "{:%H\n%M}";
+                tooltip-format = "{:%Y-%m-%d}";
+              };
+
+              tray = {
+                icon-size = 20;
+                spacing = 5;
+                show-passive-items = false;
+              };
+
+              temperature = {
+                rotate = 90;
+                hwmon-path = "/sys/class/hwmon/hwmon2/temp1_input";
+                critical-threshold = 80;
+                format = "{icon} {temperatureC}°C";
+                format-icons = [
+                  ""
+                  ""
+                  ""
+                ];
+              };
+
+              pulseaudio = {
+                rotate = 90;
+                format = "{icon} {volume}%";
+                format-bluetooth = "{icon} {volume}%";
+                format-muted = "MUTE ";
+                format-icons = {
+                  headphones = "";
+                  handsfree = "";
+                  headset = "";
+                  phone = "";
+                  portable = "";
+                  car = "";
+                  default = [
+                    ""
+                    ""
+                  ];
+                };
+                scroll-step = 3;
+                on-click = pavucontrol;
+                on-click-right = "${pactl} set-source-mute @DEFAULT_SOURCE@ toggle";
+              };
+            };
+          };
+      };
+
+      home.packages = [
+        pkgs.rofi-power-menu
+      ];
+    };
+}
