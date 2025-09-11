@@ -20,7 +20,6 @@
           hashedPasswordFile = nixosArgs.config.age.secrets."nixos_password_${username}".path;
         }
       );
-    home-manager.sharedModules = [ config.flake.modules.homeManager.base ];
 
     home-manager = {
       useGlobalPkgs = true;
