@@ -29,6 +29,8 @@ let
         qemu.options = [
           "-device virtio-vga-gl"
           "-spice unix=on,addr=/tmp/vm-${config.networking.hostName}-spice.sock,disable-ticketing=on,gl=on"
+          "-global virtio-vga-gl.xres=1920"
+          "-global virtio-vga-gl.yres=1080"
         ];
 
         forwardPorts = [
