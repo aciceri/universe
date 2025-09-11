@@ -22,6 +22,10 @@
           package = pkgs.noto-fonts-emoji;
           name = "Noto Color Emoji";
         };
+
+        sizes = {
+          terminal = 13;
+        };
       };
       fonts.packages =
         with pkgs;
