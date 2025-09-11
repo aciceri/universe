@@ -28,6 +28,11 @@ fpArgs: {
           let user = (whoami | str trim)
           nix run $"universe#nixosConfigurations.\"($host)\".config.home-manager.users.\"($user)\".home.activationPackage"
         }
+
+        def nixos [action: string] {
+          let host = (hostname | str trim)
+          nixos-rebuild $action --flake $"${config.services.git-fetch.repositories.universe.path}#($host)"
+        }
       '';
     };
 }
