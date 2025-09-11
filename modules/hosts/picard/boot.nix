@@ -33,9 +33,7 @@ fpArgs@{ inputs, ... }:
         ];
 
         loader.efi.canTouchEfiVariables = true;
-        loader.systemd-boot = {
-          enable = lib.mkForce false; # needed by lanzaboote
-        };
+        loader.systemd-boot.enable = lib.mkForce false; # needed by lanzaboote
         lanzaboote = {
           enable = true;
           pkiBundle = "/etc/secure";
