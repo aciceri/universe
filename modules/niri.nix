@@ -10,6 +10,7 @@
       };
       niri-flake.cache.enable = false;
       graphicalSessions.niri.exec = lib.getExe' pkgs.niri "niri-session";
+      security.pam.services.swaylock = { };
     };
 
   flake.modules.homeManager.pc =
@@ -346,6 +347,59 @@
               "Mod+Shift+P".action = power-off-monitors;
             };
         };
+      };
+
+      programs.swaylock = {
+        enable = true;
+        package = pkgs.swaylock-effects;
+        settings = {
+          clock = true;
+          screenshots = true;
+          indicator = true;
+          indicator-thickness = "20";
+          indicator-radius = "100";
+          effect-blur = "7x5";
+          effect-vignette = "0.5:0.5";
+          fade-in = "0.2";
+        };
+      };
+
+      services = {
+        swaync.enable = true;
+
+        gammastep = {
+          enable = true;
+          provider = "geoclue2";
+          tray = true;
+        };
+
+        swayidle =
+          let
+            swaylockCommand = lib.getExe config.programs.swaylock.package;
+          in
+          {
+            enable = true;
+            events = [
+              {
+                event = "before-sleep";
+                command = swaylockCommand;
+              }
+              {
+                event = "lock";
+                command = swaylockCommand;
+              }
+            ];
+            timeouts = [
+              {
+                timeout = 600; # 10 minutes
+                command = swaylockCommand;
+              }
+              {
+                timeout = 720; # 12 minutes
+                command = "${lib.getExe' pkgs.systemd "systemctl"} suspend";
+              }
+            ];
+          };
       };
     };
 }
