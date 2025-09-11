@@ -3,7 +3,6 @@
     { pkgs, ... }:
     {
       stylix.fonts = {
-
         serif = {
           package = pkgs.dejavu_fonts;
           name = "DejaVu Serif";
@@ -24,5 +23,15 @@
           name = "Noto Color Emoji";
         };
       };
+      fonts.packages =
+        with pkgs;
+        [
+          powerline-fonts
+          dejavu_fonts
+          etBook
+          vegur
+        ]
+        ++ (builtins.filter lib.attrsets.isDerivation (builtins.attrValues nerd-fonts));
+
     };
 }
