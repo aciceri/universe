@@ -8,11 +8,13 @@ let
   commonModule =
     { config, modulesPath, ... }:
     {
-      facter.detected.dhcp.enable = false;
       imports = [
         "${modulesPath}/virtualisation/qemu-vm.nix"
         "${modulesPath}/profiles/qemu-guest.nix"
       ];
+
+      facter.detected.dhcp.enable = false;
+
       services.openssh.hostKeys = [
         {
           path = "${config.virtualisation.sharedDirectories.ssh-keys.target}/ssh_host_ed25519_key";
