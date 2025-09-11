@@ -14,9 +14,12 @@ fpArgs: {
         interval = 1000;
       };
 
-      nix.registry.universe.to = {
-        type = "path";
-        path = config.services.git-fetch.repositories.universe.path;
+      nix.registry = rec {
+        universe.to = {
+          type = "path";
+          path = config.services.git-fetch.repositories.universe.path;
+        };
+        u = universe;
       };
 
       programs.nushell.extraConfig = ''
