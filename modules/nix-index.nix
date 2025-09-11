@@ -32,5 +32,7 @@
           WantedBy = [ "timers.target" ];
         };
       };
+
+      home.packages = [ pkgs.comma ];
     };
 }
