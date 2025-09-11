@@ -23,9 +23,6 @@ fpArgs@{ inputs, ... }:
         ];
         kernelModules = [
           "kvm-amd"
-          "ddcci"
-          "ddcci-backlight"
-          "i2c-dev" # needed?
         ];
 
         extraModulePackages = [
