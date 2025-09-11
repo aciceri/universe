@@ -17,10 +17,13 @@
         };
       };
 
-      services.git-sync.repositories.password-store = {
-        path = config.programs.password-store.settings.PASSWORD_STORE_DIR;
-        uri = "git@git.sr.ht:~zrsk/pass";
-        interval = 1000;
+      services.git-sync = {
+        enable = true;
+        repositories.password-store = {
+          path = config.programs.password-store.settings.PASSWORD_STORE_DIR;
+          uri = "git@git.sr.ht:~zrsk/pass";
+          interval = 1000;
+        };
       };
     };
 }
