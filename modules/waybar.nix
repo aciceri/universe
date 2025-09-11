@@ -45,7 +45,7 @@
 
               "custom/powermenu" = {
                 on-click = "${rofi} -show menu -modi menu:rofi-power-menu";
-                format = "";
+                format = "";
                 tooltip = false;
               };
 
@@ -53,17 +53,17 @@
                 format = "{icon}";
                 on-click = "activate";
                 format-icons = {
-                  active = "";
-                  urgent = "";
-                  default = "";
+                  active = "";
+                  urgent = "";
+                  default = "";
                 };
               };
 
               "niri/window" = {
                 rotate = 90;
                 rewrite = {
-                  "(.*) — Mozilla Firefox" = " $1";
-                  "(.*) - Slack" = " $1";
+                  "(.*) — Mozilla Firefox" = " $1";
+                  "(.*) - Slack" = " $1";
                 };
               };
 
@@ -85,9 +85,9 @@
                 critical-threshold = 80;
                 format = "{icon} {temperatureC}°C";
                 format-icons = [
-                  ""
-                  ""
-                  ""
+                  ""
+                  ""
+                  ""
                 ];
               };
 
@@ -97,15 +97,15 @@
                 format-bluetooth = "{icon} {volume}%";
                 format-muted = "MUTE ";
                 format-icons = {
-                  headphones = "";
-                  handsfree = "";
-                  headset = "";
-                  phone = "";
-                  portable = "";
-                  car = "";
+                  headphones = "";
+                  handsfree = "";
+                  headset = "";
+                  phone = "";
+                  portable = "";
+                  car = "";
                   default = [
-                    ""
-                    ""
+                    ""
+                    ""
                   ];
                 };
                 scroll-step = 3;
