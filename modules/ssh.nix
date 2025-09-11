@@ -30,7 +30,7 @@
       |> lib.mapAttrs (
         username: _: {
           openssh.authorizedKeys.keys = [
-            config.secrets."ssh_user_key_${username}".sshPublicKey # each user can logged by himself
+            config.secrets."ssh_user_key_${username}".sshPublicKey # each user can accessed by himself
             config.secrets."ssh_host_key_${nArgs.config.networking.hostName}".sshPublicKey # ..and by the host/root
           ];
         }
