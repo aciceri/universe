@@ -2,7 +2,7 @@
   flake.modules.homeManager.base = {
     programs.helix = {
       enable = true;
-      defaultEditor = true;
+      defaultEditor = true; # doesn't seem to work with nushell
       settings = {
         editor = {
           cursor-shape = {
@@ -31,5 +31,7 @@
         };
       };
     };
+
+    programs.nushell.environmentVariables.EDITOR = "hx";
   };
 }
