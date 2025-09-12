@@ -35,6 +35,7 @@
         obs-studio
         tremotesf
         vial
+        trilium-next-desktop
       ];
     };
 }
