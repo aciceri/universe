@@ -41,6 +41,11 @@
             };
           };
 
+          xwayland-satellite = {
+            enable = true;
+            path = lib.getExe pkgs.xwayland-satellite;
+          };
+
           hotkey-overlay.skip-at-startup = true;
           prefer-no-csd = true;
           screenshot-path = "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png";
