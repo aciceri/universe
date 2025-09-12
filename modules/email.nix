@@ -3,7 +3,6 @@
   flake.modules.homeManager.pc = lib.mkMerge [
     {
       programs.thunderbird = {
-        enable = true;
         settings = {
           "calendar.integration.notify" = false; # Disable calendar notifications
           "calendar.registry.enabled" = false; # Disable calendar registry
@@ -60,6 +59,7 @@
     (
       { config, ... }:
       lib.mkIf (config.home.username == "ccr") {
+        programs.thunderbird.enable = true;
         programs.thunderbird.profiles.ccr = {
           isDefault = true;
           userChrome = ''
