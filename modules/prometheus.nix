@@ -7,10 +7,6 @@
 
       services.prometheus = {
         enable = true;
-        pushgateway = {
-          enable = true;
-          web.listen-address = "sisko.wg.aciceri.dev:9094";
-        };
         checkConfig = false; # Otherwise it fails because it cannot access bearer_token_file at build time
         webExternalUrl = "https://status.wg.aciceri.dev";
         globalConfig.scrape_interval = "10s";
