@@ -6,6 +6,8 @@
       lib.elem (lib.getName pkg) [
         "apple_cursor"
         "claude-code"
+        "discord"
+        "slack"
       ];
   };
 }
