@@ -3,6 +3,7 @@
     { pkgs, ... }:
     {
       users.defaultUserShell = pkgs.nushell;
+      programs.mosh.enable = true;
     };
 
   flake.modules.homeManager.base = {

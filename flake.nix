@@ -57,6 +57,7 @@
         flake-compat.follows = "flake-compat_";
       };
     };
+    impermanence.url = "github:nix-community/impermanence";
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";

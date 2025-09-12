@@ -14,6 +14,9 @@ let
       ];
 
       facter.detected.dhcp.enable = false;
+      nixpkgs.hostPlatform = {
+        system = "x86_64-linux";
+      };
 
       services.openssh.hostKeys = [
         {

@@ -8,6 +8,7 @@
         "claude-code"
         "discord"
         "slack"
+        "zerotierone"
       ];
   };
 }
