@@ -381,6 +381,8 @@
         };
       };
 
+      programs.imv.enable = true;
+
       services = {
         swaync.enable = true;
 
