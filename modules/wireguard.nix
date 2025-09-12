@@ -53,6 +53,18 @@
               ip = "10.100.0.2";
               publicKey = "O9V2PI7+vZm7gGn3f9SaTsJbVe9urf/jZkdXFz/mjVU=";
             };
+            oneplus8t = {
+              ip = "10.100.0.4";
+              publicKey = "3odi1jFpq+9Ax43bBlPqQXq3Gc90c1o5ewP//lE2FCE=";
+            };
+            kirk = {
+              ip = "10.100.0.3";
+              publicKey = "GrCpICbC25FQ+7JXgOJ9btvZp8YI/uecyBXx9IevsBo=";
+            };
+            pike = {
+              ip = "10.100.0.8";
+              publicKey = "16ctjunXCXDPLSUhocstJ9z9l45/YuJFxlLkpoxChjI=";
+            };
           };
 
           secrets."wireguard_private_key_${hostName}" = { };
