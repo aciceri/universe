@@ -62,6 +62,7 @@
             getmac
             garminconnect
             tzlocal
+            pyipp
           ];
         config = {
           default_config = { };
