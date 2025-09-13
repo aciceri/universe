@@ -31,7 +31,7 @@ fpArgs: {
 
         def nixos [action: string] {
           let host = (hostname | str trim)
-          nixos-rebuild $action --flake $"${config.services.git-fetch.repositories.universe.path}#($host)" --sudo
+          nixos-rebuild $action --flake $"universe#($host)" --sudo --print-build-logs
         }
       '';
     };
