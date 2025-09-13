@@ -10,9 +10,4 @@
     time.timeZone = lib.mkForce "Europe/Rome";
     services.geoclue2.enable = lib.mkForce false;
   };
-
-  configurations.nixos.picard.module = {
-    time.timeZone = lib.mkForce "Europe/Rome";
-    services.geoclue2.enable = lib.mkForce false;
-  };
 }
