@@ -7,9 +7,12 @@ fpArgs: {
 
   flake.modules.homeManager.base =
     { config, ... }:
+    let
+      universePath = "${config.home.homeDirectory}/universe";
+    in
     {
       services.git-fetch.repositories.universe = {
-        path = "${config.home.homeDirectory}/universe";
+        path = universePath;
         uri = "ssh://forgejo@git.aciceri.dev/aciceri/universe.git";
         interval = 1000;
       };
@@ -17,7 +20,7 @@ fpArgs: {
       nix.registry = rec {
         universe.to = {
           type = "path";
-          path = config.services.git-fetch.repositories.universe.path;
+          path = universePath;
         };
         u = universe;
       };
@@ -26,12 +29,12 @@ fpArgs: {
         def hm-activate [] {
           let host = (hostname | str trim)
           let user = (whoami | str trim)
-          nix run $"universe#nixosConfigurations.\"($host)\".config.home-manager.users.\"($user)\".home.activationPackage"
+          nix run $"${universePath}#nixosConfigurations.\"($host)\".config.home-manager.users.\"($user)\".home.activationPackage"
         }
 
         def nixos [action: string] {
           let host = (hostname | str trim)
-          nixos-rebuild $action --flake $"universe#($host)" --sudo --print-build-logs
+          nixos-rebuild $action --flake $"${universePath}#($host)" --sudo --print-build-logs
         }
       '';
     };
