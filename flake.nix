@@ -88,6 +88,14 @@
         xwayland-satellite-unstable.follows = "";
       };
     };
+    nix-ai-tools = {
+      url = "github:numtide/nix-ai-tools";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "treefmt-nix";
+        blueprint.follows = "blueprint_";
+      };
+    };
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";
@@ -124,6 +132,10 @@
       inputs.systems.follows = "nix-systems_";
     };
     nixpkgs-stable_.url = "github:NixOS/nixpkgs/nixos-25.05";
+    blueprint_ = {
+      url = "github:numtide/blueprint";
+      inputs.systems.follows = "nix-systems_";
+    };
   };
 
   outputs =

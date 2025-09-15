@@ -123,6 +123,27 @@
         "type": "github"
       }
     },
+    "blueprint_": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "systems": [
+          "nix-systems_"
+        ]
+      },
+      "locked": {
+        "lastModified": 1755332143,
+        "narHash": "sha256-jaiZPA5ND7HPJ4U/bzp+BKGOYR14+rIe9tC6XA4jBHU=",
+        "owner": "numtide",
+        "repo": "blueprint",
+        "rev": "3c8bf84e28df2be19cc6623cb3ceeb6fc0839b91",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "blueprint",
+        "type": "github"
+      }
+    },
     "crane_": {
       "locked": {
         "lastModified": 1757183466,
@@ -518,6 +539,32 @@
         "type": "github"
       }
     },
+    "nix-ai-tools": {
+      "inputs": {
+        "blueprint": [
+          "blueprint_"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1757904318,
+        "narHash": "sha256-1mPJXC/D55S7E/MmoSvr0dl5j+IhnQn/3W5bkTGpZ1M=",
+        "owner": "numtide",
+        "repo": "nix-ai-tools",
+        "rev": "a65d1dc6f25c8c91e21c421deb0c1444b0a12fdd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "numtide",
+        "repo": "nix-ai-tools",
+        "type": "github"
+      }
+    },
     "nix-systems_": {
       "locked": {
         "lastModified": 1681028828,
@@ -550,15 +597,15 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1757487488,
-        "narHash": "sha256-zwE/e7CuPJUWKdvvTCB7iunV4E/+G0lKfv4kk/5Izdg=",
-        "owner": "NixOS",
+        "lastModified": 1741513245,
+        "narHash": "sha256-7rTAMNTY1xoBwz0h7ZMtEcd8LELk9R5TzBPoHuhNSCk=",
+        "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "ab0f3607a6c7486ea22229b92ed2d355f1482ee0",
+        "rev": "e3e32b642a31e6714ec1b712de8c91a3352ce7e1",
         "type": "github"
       },
       "original": {
-        "owner": "NixOS",
+        "owner": "nixos",
         "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
@@ -591,6 +638,22 @@
       "original": {
         "owner": "NixOS",
         "ref": "nixos-25.05",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1757487488,
+        "narHash": "sha256-zwE/e7CuPJUWKdvvTCB7iunV4E/+G0lKfv4kk/5Izdg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "ab0f3607a6c7486ea22229b92ed2d355f1482ee0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
@@ -646,6 +709,7 @@
       "inputs": {
         "agenix": "agenix",
         "agenix-shell": "agenix-shell",
+        "blueprint_": "blueprint_",
         "crane_": "crane_",
         "disko": "disko",
         "files": "files",
@@ -661,9 +725,10 @@
         "lanzaboote": "lanzaboote",
         "make-shell": "make-shell",
         "niri": "niri",
+        "nix-ai-tools": "nix-ai-tools",
         "nix-systems_": "nix-systems_",
         "nixos-facter-modules": "nixos-facter-modules",
-        "nixpkgs": "nixpkgs",
+        "nixpkgs": "nixpkgs_2",
         "nixpkgs-stable_": "nixpkgs-stable_",
         "nur": "nur",
         "nuschtos": "nuschtos",
