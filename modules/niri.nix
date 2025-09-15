@@ -135,6 +135,13 @@
               open-focused = true;
             }
 
+            # Claude desktop
+            {
+              matches = [ { title = "^Claude$"; } ];
+              open-floating = true;
+              open-focused = true;
+            }
+
             # Authentication dialogs
             {
               matches = [ { title = "^Authentication Required"; } ];
@@ -146,7 +153,11 @@
           layer-rules = [
             # Rofi shadow
             {
-              matches = [ { namespace = "^rofi$"; } ];
+              matches = [
+                { namespace = "^rofi$"; }
+                { namespace = "^Claude$"; }
+                { namespace = "^bTop$"; }
+              ];
               shadow.enable = true;
             }
           ];
@@ -199,6 +210,7 @@
               "Mod+E".action = toggle-column-tabbed-display;
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
+              "Mod+G".action = spawn "claude-desktop";
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
