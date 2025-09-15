@@ -1,8 +1,10 @@
 { inputs, ... }:
 {
   flake.modules.nixos.base =
-    { pkgs, ... }:
+    { config, pkgs, ... }:
     {
+      secrets.nix-netrc = { };
+
       nix = {
         package = pkgs.nixVersions.latest;
 
@@ -14,6 +16,7 @@
             "root"
             "@wheel"
           ];
+          netrc-file = config.age.secrets.nix-netrc.path;
         };
         nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
         extraOptions = ''
