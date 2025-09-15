@@ -50,7 +50,7 @@
       };
 
       systemd.tmpfiles.rules = [
-        "d config.services.atticd.settings.storage.path 770 atticd atticd"
+        "d ${config.services.atticd.settings.storage.path} 770 atticd atticd"
       ];
     };
 }
