@@ -398,7 +398,14 @@
       programs.imv.enable = true;
 
       services = {
-        swaync.enable = true;
+        swaync = {
+          enable = true;
+          style = lib.mkAfter ''
+            .notification-content {
+              border: none;  /* Remove the external border */
+            }
+          '';
+        };
 
         gammastep = {
           enable = true;
