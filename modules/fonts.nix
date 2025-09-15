@@ -25,6 +25,7 @@
 
         sizes = {
           terminal = 13;
+          desktop = 13;
         };
       };
       fonts.packages =

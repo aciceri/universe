@@ -81,7 +81,6 @@
 
               temperature = {
                 rotate = 90;
-                hwmon-path = "/sys/class/hwmon/hwmon2/temp1_input";
                 critical-threshold = 80;
                 format = "{icon} {temperatureC}°C";
                 format-icons = [
@@ -114,126 +113,124 @@
               };
             };
           };
-        style = ''
-          * {
-            font-size: 1.35rem;
-              font-weight: 600;
-              font-family: "Iosevka Comfy", "Nerd Font";
-            }
+        # lib.mkAfter is needed because in Waybar/GTK whatever is declared after overrides
+        style = lib.mkAfter ''
+          window#waybar {
+            border-top-right-radius: 5px;
+            border-bottom-right-radius: 5px;
+          }
 
-            window#waybar {
-              border-top-right-radius: 5px;
-              border-bottom-right-radius: 5px;
-            }
+          tooltip,
+          tooltip * {
+            text-shadow: none;
+          }
 
-            .modules-left,
-            .modules-right,
-            .modules-center {
-              padding: 12px 4px;
-            }
+          #custom-sep {
+            color: @base03;
+          }
 
-            tooltip,
-            tooltip * {
-              text-shadow: none;
-            }
+          #workspaces button {
+            color: @base04;
+            margin: 0;
+            background: none;
+          }
 
-            #custom-sep {
-              color: @base03;
-            }
+          #workspaces button:hover {
+            color: @base0B;
+            box-shadow: inherit;
+            text-shadow: inherit;
+          }
 
-            #workspaces button {
-              color: @base04;
-              background: none;
-              padding: 0;
-            }
+          .modules-center #workspaces button.active {
+            /* This is because stylix otherwise forcefully adds a border */
+            border-bottom: 0;
+          }
 
-            #workspaces button:hover {
-              color: @base0B;
-              box-shadow: inherit;
-              text-shadow: inherit;
-            }
+          .modules-center #workspaces button {
+              margin: 0;
+              padding: 0 1px;
+          }
 
-            #workspaces button.focused,
-            #workspaces button.active {
-              color: @base0E;
-              border-bottom-color: @base0E;
-            }
+          #workspaces button.focused,
+          #workspaces button.active {
+            color: @base0E;
+          }
 
-            #temperature {
-              color: @base0A;
-            }
+          #temperature {
+            color: @base0A;
+          }
 
-            #clock {
-              font-weight: 600;
-              color: @base0C;
-            }
+          #clock {
+            font-weight: 600;
+            color: @base0C;
+          }
 
-            #custom-bluetooth_devices {
-              color: @base0D;
-            }
+          #custom-bluetooth_devices {
+            color: @base0D;
+          }
 
-            #pulseaudio,
-            #wireplumber,
-            #sndio {
-              color: @base0B;
-            }
+          #pulseaudio,
+          #wireplumber,
+          #sndio {
+            color: @base0B;
+          }
 
-            #pulseaudio.muted,
-            #wireplumber.muted,
-            #sndio.muted {
-              color: @base08;
-            }
+          #pulseaudio.muted,
+          #wireplumber.muted,
+          #sndio.muted {
+            color: @base08;
+          }
 
-            #custom-powermenu {
-              margin: 12px 0 0 0;
-              color: @base04;
-            }
+          #custom-powermenu {
+            margin: 12px 6px 0 0;
+            color: @base04;
+          }
 
-            #upower,
-            #battery {
-              color: @base0A;
-            }
+          #upower,
+          #battery {
+            color: @base0A;
+          }
 
-            #upower.charging,
-            #battery.charging {
-              color: @base0B;
-            }
+          #upower.charging,
+          #battery.charging {
+            color: @base0B;
+          }
 
-            #network {
-              color: @base0D;
-            }
+          #network {
+            color: @base0D;
+          }
 
-            #network.disconnected {
-              color: @base08;
-            }
+          #network.disconnected {
+            color: @base08;
+          }
 
-            #backlight {
-              color: @base09;
-            }
+          #backlight {
+            color: @base09;
+          }
 
-            #cpu {
-              color: @base0E;
-            }
+          #cpu {
+            color: @base0E;
+          }
 
-            #disk {
-              color: @base0C;
-            }
+          #disk {
+            color: @base0C;
+          }
 
-            #mpd {
-              color: @base0E;
-            }
+          #mpd {
+            color: @base0E;
+          }
 
-            #memory {
-              color: @base08;
-            }
+          #memory {
+            color: @base08;
+          }
 
-            #bluetooth {
-              color: @base0D;
-            }
+          #bluetooth {
+            color: @base0D;
+          }
 
-            #bluetooth.disabled {
-              color: @base03;
-            }
+          #bluetooth.disabled {
+            color: @base03;
+          }
         '';
       };
 
