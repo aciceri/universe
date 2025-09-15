@@ -422,5 +422,13 @@
             ];
           };
       };
+
+      xdg.portal = {
+        xdgOpenUsePortal = true;
+        config.common.default = "gnome";
+        extraPortals = [ pkgs.xdg-xdg-desktop-portal-gtk ];
+      };
+
+      home.packages = [ pkgs.nautilus ]; # needed by the portal for the files picker
     };
 }
