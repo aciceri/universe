@@ -429,6 +429,9 @@
         extraPortals = [ pkgs.xdg-xdg-desktop-portal-gtk ];
       };
 
-      home.packages = [ pkgs.nautilus ]; # needed by the portal for the files picker
+      home.packages = with pkgs; [
+        nautilus # needed by the portal for the files picker
+        wl-clipboard-rs
+      ];
     };
 }
