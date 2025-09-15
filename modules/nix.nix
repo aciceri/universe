@@ -17,6 +17,8 @@
             "@wheel"
           ];
           netrc-file = config.age.secrets.nix-netrc.path;
+          substituters = [ "http://ncps.sisko.wg.aciceri.dev:8501" ];
+          trusted-public-keys = [ "ncps.sisko.wg.aciceri.dev:lSep0cd5UkyKvDR9AtYargQslCAqMYI3Xin2w+LiZb0=" ];
         };
         nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
         extraOptions = ''
