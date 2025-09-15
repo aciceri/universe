@@ -85,6 +85,14 @@
             ];
           }
           {
+            job_name = "ncps";
+            static_configs = [
+              {
+                targets = lib.map (host: "${host}.wg.aciceri.dev:8501") [ "sisko" ];
+              }
+            ];
+          }
+          {
             job_name = "smartctl";
             static_configs = [
               {
