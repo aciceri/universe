@@ -26,13 +26,13 @@
             "https://cache.nixos.org"
             "https://nix-community.cachix.org"
             "https://mlabs.cachix.org"
-            "http://sisko.wg.aciceri.dev:8081/nixfleet"
+            "http://sisko.wg.aciceri.dev:8081/sisko"
           ];
           publicKeys = [
             "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
             "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
             "mlabs.cachix.org-1:gStKdEqNKcrlSQw5iMW6wFCj3+b+1ASpBVY2SYuNV2M="
-            "nixfleet:Bud23440n6mMTmgq/7U+mk91zlLjnx2X3lQQrCBCCU4="
+            "sisko:4A3G4hgZVjhfPLh7Hy9V6xhRzRJp1l4fDDbLqQrQsbU="
           ];
         };
         prometheus.enable = true;
