@@ -25,31 +25,29 @@
             name = "Attic login";
             run = "attic login nixfleet http://sisko.wg.aciceri.dev:8081 $\{{secrets.ATTIC_NIXFLEET_TOKEN}}";
           }
-          # {
-          #   name = "Setup SSH";
-          #   run = ''
-          #     mkdir -p ~/.ssh
-          #     echo "$\{{secrets.FORGEJO_SSH_KEY}}" > ~/.ssh/id_ed25519
-          #     chmod 600 ~/.ssh/id_ed25519
-          #     ssh-keyscan github.com >> ~/.ssh/known_hosts
-          #   '';
-          # }
           {
             name = "Build";
-            run = "nix build .#${drvFlakePath} -L";
+            run = ''
+              nix build ".#${drvFlakePath}" -L
+            '';
+          }
+          {
+            name = "Push to Attic";
+            run = "attic push nixfleet result";
           }
         ];
       };
+      toRemove = [ "files/.gitignore" ];
       jobs =
         (
-          config.flake.checks.x86_64-linux
+          (lib.removeAttrs config.flake.checks.x86_64-linux toRemove)
           |> lib.mapAttrs' (
             name: _:
             lib.nameValuePair "x86_64-linux/${name}" (buildDerivationJob "build-x86_64-linux/${name}" "checks.x86_64-linux.${name}")
           )
         )
         // (
-          config.flake.checks.aarch64-linux
+          (lib.removeAttrs config.flake.checks.aarch64-linux toRemove)
           |> lib.mapAttrs' (
             name: _:
             lib.nameValuePair "aarch64-linux/${name}" (
