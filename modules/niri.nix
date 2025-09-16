@@ -192,6 +192,7 @@
               footclient = lib.getExe' config.programs.foot.package "footclient";
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
+              spotube = lib.getExe pkgs.spotube;
               run-floating-btop =
                 with floatingSize.btop;
                 pkgs.writeScriptBin "run-floating-btop" ''
@@ -211,6 +212,7 @@
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn "claude-desktop";
+              "Mod+M".action = spawn spotube;
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
