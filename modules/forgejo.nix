@@ -84,4 +84,33 @@
         locations."/".proxyPass = "http://127.0.0.1:${builtins.toString cfg.settings.server.HTTP_PORT}";
       };
     };
+
+  configurations.nixos.picard.module =
+    { config, pkgs, ... }:
+    {
+      secrets.forgejo-runners-registration-token.owner = "gitea-runner";
+
+      services.gitea-actions-runner =
+        let
+          numInstances = 4;
+          instancesNames = lib.genList (n: "nix-${config.networking.hostName}-${builtins.toString n}") numInstances;
+        in
+        {
+          package = pkgs.forgejo-actions-runner;
+          instances = lib.genAttrs instancesNames (instanceName: {
+            enable = true;
+            name = instanceName;
+            url = "https://git.aciceri.dev";
+            tokenFile = config.age.secrets.forgejo-runners-registration-token.path;
+            labels = [ "native:host" ];
+            hostPackages = with pkgs; [
+              nodejs
+              busybox
+              attic-client
+              openssh
+              nix
+            ];
+          });
+        };
+    };
 }
