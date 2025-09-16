@@ -1,158 +1,260 @@
-jobs:
-  aarch64-linux/claude-desktop:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.claude-desktop" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/configurations/nixos/sisko:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.configurations/nixos/sisko" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/default-shell:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.default-shell" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/pre-commit:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.pre-commit" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/render-workflows:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.render-workflows" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/spotube:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.spotube" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  aarch64-linux/treefmt:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.aarch64-linux.treefmt" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/claude-desktop:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.claude-desktop" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/configurations/nixos/picard:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.configurations/nixos/picard" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/default-shell:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.default-shell" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/pre-commit:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.pre-commit" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/render-workflows:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.render-workflows" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/spotube:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.spotube" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-  x86_64-linux/treefmt:
-    runs-on: native
-    steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-    - name: Attic login
-      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
-    - name: Build
-      run: nix build ".#checks.x86_64-linux.treefmt" -L
-    - name: Push to Attic
-      run: attic push nixfleet result
-'on':
-  push: {}
-  workflow_dispatch: {}
+{
+  "jobs": {
+    "aarch64-linux/claude-desktop": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.claude-desktop\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "aarch64-linux/configurations/nixos/sisko": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.configurations/nixos/sisko\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "aarch64-linux/default-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.default-shell\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "aarch64-linux/pre-commit": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.pre-commit\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "aarch64-linux/spotube": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.spotube\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "aarch64-linux/treefmt": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.treefmt\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/claude-desktop": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.claude-desktop\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/configurations/nixos/picard": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.configurations/nixos/picard\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/default-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.default-shell\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/pre-commit": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.pre-commit\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/spotube": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.spotube\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    },
+    "x86_64-linux/treefmt": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.treefmt\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push nixfleet result"
+        }
+      ]
+    }
+  },
+  "on": {
+    "push": {},
+    "workflow_dispatch": {}
+  }
+}
