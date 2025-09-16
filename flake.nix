@@ -96,6 +96,14 @@
         blueprint.follows = "blueprint_";
       };
     };
+    actions-nix = {
+      url = "github:nialov/actions.nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        git-hooks.follows = "git-hooks";
+      };
+    };
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";

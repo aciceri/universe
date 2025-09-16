@@ -1,0 +1,148 @@
+jobs:
+  aarch64-linux/claude-desktop:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.claude-desktop -L
+  aarch64-linux/configurations/nixos/sisko:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.configurations/nixos/sisko -L
+  aarch64-linux/default-shell:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.default-shell -L
+  aarch64-linux/files/.gitignore:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.files/.gitignore -L
+  aarch64-linux/pre-commit:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.pre-commit -L
+  aarch64-linux/render-workflows:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.render-workflows -L
+  aarch64-linux/spotube:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.spotube -L
+  aarch64-linux/treefmt:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.aarch64-linux.treefmt -L
+  x86_64-linux/claude-desktop:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.claude-desktop -L
+  x86_64-linux/configurations/nixos/picard:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.configurations/nixos/picard -L
+  x86_64-linux/default-shell:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.default-shell -L
+  x86_64-linux/files/.gitignore:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.files/.gitignore -L
+  x86_64-linux/pre-commit:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.pre-commit -L
+  x86_64-linux/render-workflows:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.render-workflows -L
+  x86_64-linux/spotube:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.spotube -L
+  x86_64-linux/treefmt:
+    runs-on: native
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+    - name: Attic login
+      run: attic login nixfleet http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_NIXFLEET_TOKEN}}
+    - name: Build
+      run: nix build .#checks.x86_64-linux.treefmt -L
+'on':
+  push: {}
+  workflow_dispatch: {}
