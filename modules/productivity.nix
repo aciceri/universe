@@ -41,6 +41,7 @@
         vial
         trilium-next-desktop
         nix-ai-tools.claude-desktop
+        spotube
       ];
     };
 }
