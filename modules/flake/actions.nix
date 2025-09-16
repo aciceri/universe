@@ -14,7 +14,7 @@ let
       }
       {
         name = "Attic login";
-        run = "attic login nixfleet http://sisko.wg.aciceri.dev:8081 $\{{secrets.ATTIC_NIXFLEET_TOKEN}}";
+        run = "attic login sisko http://sisko.wg.aciceri.dev:8081 $\{{secrets.ATTIC_SISKO_TOKEN}} --set-default";
       }
       {
         name = "Build";
@@ -22,7 +22,7 @@ let
       }
       {
         name = "Push to Attic";
-        run = "attic push nixfleet result";
+        run = "attic push sisko result";
       }
     ];
   };

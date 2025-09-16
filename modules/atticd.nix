@@ -12,6 +12,16 @@
         };
       };
 
+      services.postgresql = {
+        ensureDatabases = [ "atticd" ];
+        ensureUsers = [
+          {
+            name = "atticd";
+            ensureDBOwnership = true;
+          }
+        ];
+      };
+
       secrets.atticd-environment-file.owner = "atticd";
 
       services.atticd = {
@@ -22,14 +32,17 @@
           soft-delete-caches = false;
           require-proof-of-possession = true;
 
-          database.url = "sqlite://${config.services.atticd.settings.storage.path}/server.db?mode=rwc";
+          database.url = "postgres://atticd@_/atticd?host=/run/postgresql";
+
+          compression = {
+            type = "zstd";
+            level = 8;
+          };
 
           storage = {
             type = "local";
-            path = "/mnt/hd/attic";
+            path = "/mnt/hd/atticd";
           };
-
-          compression.type = "none";
 
           garbage-collection.interval = "0 hours"; # disable garbage collection
 
