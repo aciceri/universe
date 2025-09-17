@@ -1,3 +1,4 @@
+# TODO re-generate the workflows as a pre-commit-hook
 {
   config,
   lib,
@@ -26,11 +27,14 @@ let
       }
     ];
   };
+
   toRemove = [
     "files/.gitignore"
     "files/.forgejo/workflows/main.yaml"
+    "files/.forgejo/workflows/update-flake-lock.yaml"
   ]; # FIXME `nix build` doesn't like dots in the derivation path
-  jobs =
+
+  buildJobs =
     (
       (lib.removeAttrs config.flake.checks.x86_64-linux toRemove)
       |> lib.mapAttrs' (
@@ -62,7 +66,7 @@ in
               push = { };
               workflow_dispatch = { };
             };
-            inherit jobs;
+            jobs = buildJobs;
           };
         }
       ];
