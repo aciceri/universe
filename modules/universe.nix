@@ -34,11 +34,11 @@ fpArgs: {
 
         def nixos [action: string] {
           let host = (hostname | str trim)
-          nixos-rebuild $action --flake $"${universePath}#($host)" --sudo --print-build-logs --no-reexec
+          nixos-rebuild $action --flake $"${universePath}#($host)" --sudo --print-build-logs --no-reexec --fast
         }
 
         def nixos-deploy [action: string, host: string] {
-          nixos-rebuild $action --flake $"${universePath}#($host)" --target-host $"root@($host).wg.aciceri.dev" --sudo --print-build-logs --no-reexec
+          nixos-rebuild $action --flake $"${universePath}#($host)" --target-host $"root@($host).wg.aciceri.dev" --sudo --print-build-logs --no-reexec --fast
          }
       '';
     };
