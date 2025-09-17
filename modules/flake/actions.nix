@@ -60,8 +60,8 @@ in
 
       files.files = [
         {
-          path_ = ".forgejo/workflows/main.yaml";
-          drv = pkgs.writers.writeJSON "forgejo-workflow-main.yaml" {
+          path_ = ".forgejo/workflows/build-checks.yaml";
+          drv = pkgs.writers.writeJSON "forgejo-workflow-build-checks.yaml" {
             on = {
               push = { };
               workflow_dispatch = { };
