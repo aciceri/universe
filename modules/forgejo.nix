@@ -109,6 +109,8 @@
               attic-client
               openssh
               nix
+              git
+              tea
             ];
           });
         };
