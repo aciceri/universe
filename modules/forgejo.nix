@@ -92,7 +92,7 @@
 
       services.gitea-actions-runner =
         let
-          numInstances = 4;
+          numInstances = 8;
           instancesNames = lib.genList (n: "nix-${config.networking.hostName}-${builtins.toString n}") numInstances;
         in
         {
