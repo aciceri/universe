@@ -111,6 +111,7 @@
               nix
               git
               tea
+              nixos-rebuild
             ];
           });
         };

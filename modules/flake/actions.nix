@@ -32,7 +32,6 @@ let
     "files/.gitignore"
     "files/.forgejo/workflows/build-checks.yaml"
     "files/.forgejo/workflows/update-flake-lock.yaml"
-    "files/.forgejo/workflows/deploy.yaml"
   ]; # FIXME `nix build` doesn't like dots in the derivation path
 
   buildJobs =
