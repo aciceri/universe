@@ -193,6 +193,7 @@
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotube = lib.getExe pkgs.spotube;
+              thunderbird = lib.getExe config.programs.thunderbird.package;
               run-floating-btop =
                 with floatingSize.btop;
                 pkgs.writeScriptBin "run-floating-btop" ''
@@ -213,6 +214,7 @@
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn "claude-desktop";
               "Mod+M".action = spawn spotube;
+              "Mod+Shift+M".action = spawn thunderbird;
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
