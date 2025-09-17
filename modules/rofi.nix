@@ -8,7 +8,6 @@
     {
       programs.rofi = {
         enable = true;
-        package = pkgs.rofi-wayland;
         extraConfig = {
           modi = "drun,window,ssh";
           combi-modes = [
@@ -22,10 +21,7 @@
           inputbar.spacing = mkLiteral "1ch";
         };
         terminal = lib.getExe' pkgs.foot "footclient";
-        pass = {
-          enable = true;
-          package = pkgs.rofi-pass-wayland;
-        };
+        pass.enable = true;
         plugins = [ pkgs.rofi-calc ];
       };
     };

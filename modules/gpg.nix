@@ -4,9 +4,7 @@
     {
       services.gpg-agent = {
         enable = true;
-        pinentry.package = pkgs.pinentry-rofi.override {
-          rofi = pkgs.rofi-wayland;
-        };
+        pinentry.package = pkgs.pinentry-rofi;
         extraConfig = ''
           allow-loopback-pinentry
         '';
