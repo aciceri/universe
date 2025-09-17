@@ -209,6 +209,7 @@
               "Mod+T".action.spawn = footclient;
               "Mod+D".action = spawn rofi "-show" "drun";
               "Mod+W".action = spawn rofi "-show" "window";
+              "Mod+Shift+S".action = spawn rofi "-show" "ssh";
               "Mod+E".action = toggle-column-tabbed-display;
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
