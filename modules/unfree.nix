@@ -9,6 +9,7 @@
         "discord"
         "slack"
         "zerotierone"
+        "google-chrome"
       ];
   };
 }
