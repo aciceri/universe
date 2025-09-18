@@ -23,6 +23,7 @@
 
       fd.enable = true;
 
+      ripgrep.enable = true;
       ripgrep-all.enable = true;
 
       broot.enable = true;
