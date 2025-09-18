@@ -2,7 +2,7 @@
   configurations.nixos.sisko.module =
     { config, ... }:
     {
-      secrets.cloudflare-api-tokens = { };
+      secrets.cloudflare_api_tokens = { };
 
       security.acme = {
         acceptTerms = true;
@@ -18,7 +18,7 @@
             dnsProvider = "cloudflare";
             dnsPropagationCheck = true;
             group = config.services.nginx.group;
-            environmentFile = config.age.secrets.cloudflare-api-tokens.path;
+            environmentFile = config.age.secrets.cloudflare_api_tokens.path;
           };
         };
       };

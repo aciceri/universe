@@ -7,14 +7,14 @@
     in
     {
       secrets = {
-        autistici-password = {
+        autistici_password = {
           mode = "770";
           group = "autistici";
         };
-        grafana-admin-password.owner = user;
+        grafana_admin_password.owner = user;
       };
 
-      users.groups.autistici.members = [ user ]; # Group who has access to the autistici-password secret
+      users.groups.autistici.members = [ user ]; # Group who has access to the autistici_password secret
 
       services.grafana = {
         enable = true;
@@ -27,14 +27,14 @@
           };
           security = {
             admin_user = "andrea";
-            admin_password = "$__file{${config.age.secrets.grafana-admin-password.path}}";
+            admin_password = "$__file{${config.age.secrets.grafana_admin_password.path}}";
           };
           smtp = {
             enabled = true;
             host = "smtp.autistici.org:587";
             user = "andrea.ciceri@autistici.org";
             from_address = "andrea.ciceri@autistici.org";
-            password = "$__file{${config.age.secrets.autistici-password.path}}";
+            password = "$__file{${config.age.secrets.autistici_password.path}}";
           };
         };
       };

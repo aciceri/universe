@@ -22,7 +22,7 @@
         ];
       };
 
-      secrets.atticd-environment-file.owner = "atticd";
+      secrets.atticd_environment_file.owner = "atticd";
 
       services.atticd = {
         enable = true;
@@ -53,7 +53,7 @@
             max-size = 256 * 1024; # 256 KiB
           };
         };
-        environmentFile = config.age.secrets.atticd-environment-file.path;
+        environmentFile = config.age.secrets.atticd_environment_file.path;
       };
 
       systemd.services.atticd = {

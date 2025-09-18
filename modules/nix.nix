@@ -3,7 +3,7 @@
   flake.modules.nixos.base =
     { config, pkgs, ... }:
     {
-      secrets.nix-netrc = { };
+      secrets.nix_netrc = { };
 
       nix = {
         package = pkgs.nixVersions.latest;
@@ -16,7 +16,7 @@
             "root"
             "@wheel"
           ];
-          netrc-file = config.age.secrets.nix-netrc.path;
+          netrc-file = config.age.secrets.nix_netrc.path;
           substituters = [
             "http://ncps.sisko.wg.aciceri.dev:8501"
             "https://mlabs.cachix.org" # TODO move to ncps when https://github.com/kalbasit/ncps/discussions/223 is addressed

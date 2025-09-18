@@ -12,8 +12,8 @@ in
     { config, pkgs, ... }:
     {
       secrets = {
-        hetzner-storage-box-ssh-password = { };
-        sisko-restic-password = { };
+        hetzner_storage_box_ssh_password = { };
+        sisko_restic_password = { };
       };
 
       services.openssh.knownHosts."${host}".publicKey =
@@ -46,9 +46,9 @@ in
             "/mnt/hd/roam"
           ];
           exclude = [ " /persist/var/lib/containers" ];
-          passwordFile = config.age.secrets.sisko-restic-password.path;
+          passwordFile = config.age.secrets.sisko_restic_password.path;
           extraOptions = [
-            "sftp.command='${lib.getExe pkgs.sshpass} -f ${config.age.secrets.hetzner-storage-box-ssh-password.path} ssh -p${port} ${user}@${host} -s sftp'"
+            "sftp.command='${lib.getExe pkgs.sshpass} -f ${config.age.secrets.hetzner_storage_box_ssh_password.path} ssh -p${port} ${user}@${host} -s sftp'"
           ];
           repository = "sftp://${user}@${host}:${port}/";
           initialize = true;

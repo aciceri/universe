@@ -18,8 +18,8 @@
     in
     {
       secrets = {
-        home-assistant-ssh-key.owner = "hass";
-        home-assistant-planimetry.owner = "hass";
+        home_assistant_ssh_key.owner = "hass";
+        home_assistant_planimetry.owner = "hass";
       };
 
       services.home-assistant = {
@@ -103,10 +103,10 @@
         "C+ ${config.services.home-assistant.configDir}/custom_components/garmin_connect 770 hass hass - ${garmin_connect}/custom_components/garmin_connect"
 
         "d ${config.services.home-assistant.configDir}/.ssh 770 hass hass"
-        "C ${config.services.home-assistant.configDir}/.ssh/id_ed25519 700 hass hass - ${config.age.secrets.home-assistant-ssh-key.path}"
+        "C ${config.services.home-assistant.configDir}/.ssh/id_ed25519 700 hass hass - ${config.age.secrets.home_assistant_ssh_key.path}"
 
         "d ${config.services.home-assistant.configDir}/www 770 hass hass"
-        "C ${config.services.home-assistant.configDir}/www/home.png 770 hass hass - - ${config.age.secrets.home-assistant-planimetry.path}"
+        "C ${config.services.home-assistant.configDir}/www/home.png 770 hass hass - - ${config.age.secrets.home_assistant_planimetry.path}"
       ];
 
       networking.firewall.interfaces."wg0" = {

@@ -12,12 +12,12 @@
       inherit (cfg) stateDir;
     in
     {
-      secrets.autistici-password = {
+      secrets.autistici_password = {
         mode = "770";
         group = "autistici";
       };
 
-      users.groups.autistici.members = [ cfg.user ]; # Group who has access to the autistici-password secret
+      users.groups.autistici.members = [ cfg.user ]; # Group who has access to the autistici_password secret
 
       services.forgejo = {
         # TODO migrate to Postgres
@@ -60,7 +60,7 @@
             KEYWORDS = "git,self-hosted,forgejo,open-source,nix,nixos";
           };
         };
-        secrets.mailer.PASSWD = config.age.secrets.autistici-password.path;
+        secrets.mailer.PASSWD = config.age.secrets.autistici_password.path;
         dump = {
           enable = true;
           backupDir = "/mnt/hd/forgejo-dumps";
@@ -88,7 +88,7 @@
   configurations.nixos.picard.module =
     { config, pkgs, ... }:
     {
-      secrets.forgejo-runners-registration-token.owner = "gitea-runner";
+      secrets.forgejo_runners_registration_token.owner = "gitea-runner";
 
       services.gitea-actions-runner =
         let
@@ -101,7 +101,7 @@
             enable = true;
             name = instanceName;
             url = "https://git.aciceri.dev";
-            tokenFile = config.age.secrets.forgejo-runners-registration-token.path;
+            tokenFile = config.age.secrets.forgejo_runners_registration_token.path;
             labels = [ "native:host" ];
             hostPackages = with pkgs; [
               nodejs

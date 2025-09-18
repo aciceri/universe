@@ -3,7 +3,7 @@
   configurations.nixos.sisko.module =
     { config, ... }:
     {
-      secrets.home-assistant-api-token.owner = config.systemd.services.prometheus.serviceConfig.User;
+      secrets.home_assistant_api_token.owner = config.systemd.services.prometheus.serviceConfig.User;
 
       services.prometheus = {
         enable = true;
@@ -14,7 +14,7 @@
           {
             job_name = "hass";
             metrics_path = "/api/prometheus";
-            bearer_token_file = config.age.secrets.home-assistant-api-token.path;
+            bearer_token_file = config.age.secrets.home_assistant_api_token.path;
             static_configs = [
               {
                 targets = [
@@ -125,7 +125,7 @@
       mkFor = hosts: lib.mkIf (lib.elem hostname hosts);
     in
     {
-      secrets.sisko-restic-password = { };
+      secrets.sisko_restic_password = { };
 
       services.prometheus.exporters = {
         node =
@@ -192,7 +192,7 @@
           # https://github.com/ngosang/restic-exporter/issues/31
           enable = false;
           repository = config.services.restic.backups.sisko.repository;
-          passwordFile = config.age.secrets.sisko-restic-password.path;
+          passwordFile = config.age.secrets.sisko_restic_password.path;
         };
         postgres = mkFor [ "sisko" ] {
           enable = true;
