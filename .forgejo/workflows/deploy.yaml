@@ -1,0 +1,30 @@
+name: Deploy
+on:
+  workflow_dispatch:
+    inputs:
+      host:
+        description: 'Host'
+        required: true
+        type: choice
+        options:
+          - sisko
+          - picard
+          - pike
+          - kirk
+jobs:
+  deploy:
+    runs-on: native
+    outputs:
+      checks: ${{ steps.get-check-names.outputs.checks }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Deploy
+        run: |
+          eval "$(ssh-agent -s)"
+          echo "${{ secrets.FORGEJO_SSH_KEY }}" | ssh-add -
+          export NIX_SSHOPTS="-o StrictHostKeyChecking=no"
+          nixos-rebuild switch \
+            --flake ".#${{ inputs.host }}" \
+            --target-host "root@${{ inputs.host }}.wg.aciceri.dev" \
+            --print-build-logs \
+            --fast
