@@ -9,11 +9,19 @@
   flake.modules.homeManager.base =
     { pkgs, ... }:
     {
+      config,
+      lib,
+      ...
+    }:
+    {
       programs = {
         nushell = {
           enable = true;
           settings = {
             show_banner = false;
+          };
+          environmentVariables = {
+            PAGER = lib.getExe config.programs.bat.package;
           };
         };
 
