@@ -7,9 +7,9 @@
     };
 
   flake.modules.homeManager.base =
-    { pkgs, ... }:
     {
       config,
+      pkgs,
       lib,
       ...
     }:
@@ -23,6 +23,11 @@
           environmentVariables = {
             PAGER = lib.getExe config.programs.bat.package;
           };
+          plugins = with pkgs.nushellPlugins; [
+            gstat
+            highlight
+            query
+          ];
         };
 
         carapace.enable = true;
