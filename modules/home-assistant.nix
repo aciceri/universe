@@ -51,14 +51,12 @@
           "openai_conversation"
         ];
         customComponents = with pkgs.home-assistant-custom-components; [
-          tuya_local
           localtuya
         ];
         extraPackages =
           python3Packages: with python3Packages; [
             holidays
             beautifulsoup4
-            tuya-device-sharing-sdk
             getmac
             garminconnect
             tzlocal
