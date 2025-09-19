@@ -28,6 +28,15 @@
             highlight
             query
           ];
+          extraConfig = # nushell
+            ''
+              $env.PROMPT_COMMAND_RIGHT = {|| 
+                let user = (whoami)
+                let host = (hostname)
+                let time = (date now | format date "%H:%M:%S")
+                $"(ansi green)($user)(ansi reset)(ansi cyan)@(ansi reset)(ansi green)($host)(ansi reset) (ansi cyan)($time)(ansi reset)"
+              }
+            '';
         };
 
         carapace.enable = true;
