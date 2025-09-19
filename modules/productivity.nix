@@ -38,6 +38,7 @@
         trilium-next-desktop
         claude-desktop
         spotube
+        yt-dlp # needed by spotube
       ];
     };
 }
