@@ -420,7 +420,7 @@
 
         swayidle =
           let
-            swaylockCommand = lib.getExe config.programs.swaylock.package;
+            swaylockCommand = "${lib.getExe config.programs.swaylock.package} --daemonize";
           in
           {
             enable = true;
