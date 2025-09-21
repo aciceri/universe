@@ -17,5 +17,7 @@
       enable = true;
       algorithm = "zstd";
     };
+
+    services.zfs.autoScrub.enable = true;
   };
 }
