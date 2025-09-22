@@ -24,4 +24,9 @@
         };
       };
     };
+
+  # TODO enable once qtwebengine used by jellyfin-media-player is secure again
+  # flake.modules.homeManager.pc = {pkgs, ...}: {
+  #   home.packages = [ pkgs.jellyfin-media-player];
+  # };
 }
