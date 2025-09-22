@@ -52,6 +52,7 @@
       "riscv64-linux"
       "armv6l-linux"
     ];
+
     nix = {
       extraOptions = ''
         extra-platforms = aarch64-linux arm-linux i686-linux riscv64-linux armv6l-linux
@@ -76,5 +77,6 @@
     };
 
     programs.nix-ld.enable = true;
+    services.envfs.enable = true;
   };
 }
