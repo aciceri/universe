@@ -4,9 +4,10 @@
     {
       programs.firefox = {
         enable = true;
-        nativeMessagingHosts = [
-          pkgs.tridactyl-native
-          pkgs.vdhcoapp
+        nativeMessagingHosts = with pkgs; [
+          tridactyl-native
+          vdhcoapp
+          firefoxpwa
         ];
         policies = {
           DisableTelemetry = true;
