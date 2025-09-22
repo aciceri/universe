@@ -10,6 +10,8 @@
         "slack"
         "zerotierone"
         "google-chrome"
+        "nvidia-x11"
+        "nvidia-settings"
       ];
   };
 }

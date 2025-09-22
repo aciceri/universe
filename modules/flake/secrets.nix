@@ -81,6 +81,7 @@ in
   config.secrets = {
     ssh_host_key_picard.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ1+1z1IsLVJ6aGarMgzw3NbmFKcpYVgdUjl7xDsewxT";
     ssh_host_key_sisko.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIKPBaKPx0HsJpGmMT//vo2GXvGh4ULoItq49ltCMzVw4";
+    ssh_host_key_pike.sshPublicKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPx3Hy9L8w4mpr5HFcqLOr/wUk/wJeB9HjcLy2tt0U+x ";
   };
 
   # SSH user keys

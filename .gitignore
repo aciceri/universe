@@ -1,5 +1,6 @@
 .direnv
 .pre-commit-config.yaml
 picard.qcow2
+pike.qcow2
 result
 sisko.qcow2
