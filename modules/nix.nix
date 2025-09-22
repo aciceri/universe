@@ -70,8 +70,7 @@
           ];
           protocol = "ssh-ng";
           sshUser = "root";
-          sshKey = "/run/agenix/ssh_user_key_ccr";
-          # sshKey = "/etc/ssh/ssh_host_ed25519_key";  # TODO use this once sisko is re-deployed
+          sshKey = "/etc/ssh/ssh_host_ed25519_key";
         }
       ];
     };
