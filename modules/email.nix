@@ -4,11 +4,6 @@
     {
       programs.thunderbird = {
         settings = {
-          "calendar.integration.notify" = false; # Disable calendar notifications
-          "calendar.registry.enabled" = false; # Disable calendar registry
-          "calendar.startup.service" = false; # Don't start calendar service on startup
-          "extensions.calendar.enabled" = false; # Disable calendar extension
-
           "messenger.startup.action" = 0; # Don't open chat on startup (0=no action)
           "purple.conversations.im.send_typing" = false; # Don't send "typing" notification
 
@@ -22,10 +17,6 @@
           "mailnews.start_page.enabled" = false; # Disable welcome/start page
           "mail.tabs.autoHide" = true; # Hide tab bar when only one tab is open
           "mail.pane_config.dynamic" = 0; # Classic 3-pane layout (0=classic, 1=wide, 2=vertical)
-
-          # "mail.biff.show_alert" = false;               # Disable new email popup notifications
-          # "mail.biff.play_sound" = false;               # Disable notification sounds
-          # "mail.server.default.check_new_mail" = false; # Disable automatic new mail checking
 
           "privacy.donottrackheader.enabled" = true; # Send "Do Not Track" header
           "mail.spam.manualMark" = true; # Mark spam manually (not automatically)
@@ -60,18 +51,7 @@
       { config, ... }:
       lib.mkIf (config.home.username == "ccr") {
         programs.thunderbird.enable = true;
-        programs.thunderbird.profiles.ccr = {
-          isDefault = true;
-          userChrome = ''
-            /* Hide calendar buttons */
-            #calendar-tab-button,
-            #task-tab-button,
-            #calendar-toolbar,
-            .calendar-sidebar {
-              display: none !important;
-            }
-          '';
-        };
+        programs.thunderbird.profiles.ccr.isDefault = true;
 
         accounts.email = {
           accounts.autistici = {
