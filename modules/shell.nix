@@ -30,6 +30,14 @@
           ];
           extraConfig = # nushell
             ''
+              $env.PROMPT_INDICATOR = {|| 
+                if $env.LAST_EXIT_CODE != 0 { 
+                  $"(ansi red)〉(ansi reset)" 
+                } else { 
+                  "〉" 
+                }
+              }
+
               $env.PROMPT_COMMAND_RIGHT = {|| 
                 let user = (whoami)
                 let host = (hostname)
