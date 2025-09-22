@@ -216,6 +216,7 @@
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotube = lib.getExe pkgs.spotube;
               birdtray = lib.getExe pkgs.birdtray;
+              trilium = lib.getExe pkgs.trilium-desktop;
               run-floating-btop =
                 with floatingSize.btop;
                 pkgs.writeScriptBin "run-floating-btop" ''
@@ -237,6 +238,7 @@
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn "claude-desktop";
               "Mod+M".action = spawn spotube;
+              "Mod+N".action = spawn trilium;
               "Mod+Shift+M".action = spawn birdtray "--toggle-tb";
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
