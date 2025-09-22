@@ -60,6 +60,9 @@
                 "fill"
               ];
             }
+            {
+              argv = [ (lib.getExe pkgs.birdtray) ];
+            }
           ];
 
           outputs = {
