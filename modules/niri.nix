@@ -61,7 +61,26 @@
               ];
             }
             {
-              argv = [ (lib.getExe pkgs.birdtray) ];
+              argv = [
+                (lib.getExe (
+                  pkgs.writeShellScriptBin "start-birdtray.sh" ''
+                    sleep 5
+                    ${lib.getExe pkgs.birdtray}
+                  ''
+                ))
+              ];
+            }
+            {
+              argv = [
+                (lib.getExe pkgs.telegram-desktop)
+                "-startintray"
+              ];
+            }
+            {
+              argv = [
+                "discord"
+                "--start-minimized"
+              ];
             }
           ];
 
