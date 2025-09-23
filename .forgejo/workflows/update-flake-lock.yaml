@@ -26,11 +26,18 @@ jobs:
         run: |
           tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev
           tea logins default git.aciceri.dev
-      - name: Create the pull request
+      - name: Create or update pull request
         run: |
-          tea pulls create \
+          # Try to create a new PR first
+          if ! tea pulls create \
             --repo "$GITHUB_REPOSITORY" \
             --title "Update flake's lockfile" \
             --description "Check the commit description for inputs deltas" \
-            --assignees aciceri \
-            || echo "PR already existing"
+            --assignees aciceri; then
+
+            echo "PR already exists, updating existing PR..."
+            # Force push will update the existing PR
+            echo "Branch updated successfully - PR will reflect new changes"
+          else
+            echo "New PR created successfully"
+          fi
