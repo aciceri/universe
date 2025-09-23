@@ -1,10 +1,11 @@
 { config, ... }:
 {
   perSystem =
-    { inputs', ... }:
+    { pkgs, inputs', ... }:
     {
       packages = {
         inherit (inputs'.nix-ai-tools.packages) claude-desktop;
+        mirror-checks = pkgs.callPackage ./mirror-checks/_package.nix { };
       };
     };
 

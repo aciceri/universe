@@ -63,6 +63,27 @@
         }
       ]
     },
+    "aarch64-linux/mirror-checks": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.mirror-checks\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "aarch64-linux/pre-commit": {
       "runs-on": "native",
       "steps": [
@@ -102,6 +123,39 @@
         {
           "name": "Push to Attic",
           "run": "attic push sisko result"
+        }
+      ]
+    },
+    "mirror-checks": {
+      "if": "always()",
+      "needs": [
+        "aarch64-linux/claude-desktop",
+        "aarch64-linux/configurations/nixos/sisko",
+        "aarch64-linux/default-shell",
+        "aarch64-linux/mirror-checks",
+        "aarch64-linux/pre-commit",
+        "aarch64-linux/treefmt",
+        "x86_64-linux/claude-desktop",
+        "x86_64-linux/configurations/nixos/picard",
+        "x86_64-linux/configurations/nixos/pike",
+        "x86_64-linux/default-shell",
+        "x86_64-linux/mirror-checks",
+        "x86_64-linux/pre-commit",
+        "x86_64-linux/treefmt"
+      ],
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "env": {
+            "FORGEJO_URL": "https://git.aciceri.dev",
+            "GITHUB_TOKEN": "${{secrets.ACICERI_GITHUB_TOKEN}}"
+          },
+          "name": "Sync checks to GitHub",
+          "run": "nix run .#mirror-checks -- --repo ${{forge.repository}} --commit ${{forge.sha}}"
         }
       ]
     },
@@ -189,6 +243,27 @@
         }
       ]
     },
+    "x86_64-linux/mirror-checks": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.mirror-checks\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "x86_64-linux/pre-commit": {
       "runs-on": "native",
       "steps": [
@@ -232,6 +307,7 @@
       ]
     }
   },
+  "name": "Build flake checks",
   "on": {
     "push": {},
     "workflow_dispatch": {}

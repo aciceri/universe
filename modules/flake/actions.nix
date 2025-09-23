@@ -5,7 +5,6 @@
   ...
 }:
 let
-
   buildDerivationJob = name: drvFlakePath: {
     runs-on = "native";
     steps = [
@@ -24,6 +23,26 @@ let
       {
         name = "Push to Attic";
         run = "attic push sisko result";
+      }
+    ];
+  };
+
+  syncToGitHubJob = {
+    runs-on = "native";
+    needs = lib.attrNames buildJobs;
+    "if" = "always()";
+    steps = [
+      {
+        name = "Checkout repository";
+        uses = "actions/checkout@v4";
+      }
+      {
+        name = "Sync checks to GitHub";
+        env = {
+          GITHUB_TOKEN = "$\{{secrets.ACICERI_GITHUB_TOKEN}}";
+          FORGEJO_URL = "https://git.aciceri.dev";
+        };
+        run = "nix run .#mirror-checks -- --repo $\{{forge.repository}} --commit $\{{forge.sha}}";
       }
     ];
   };
@@ -62,11 +81,14 @@ in
         {
           path_ = ".forgejo/workflows/build-checks.yaml";
           drv = pkgs.writers.writeJSON "forgejo-workflow-build-checks.yaml" {
+            name = "Build flake checks";
             on = {
               push = { };
               workflow_dispatch = { };
             };
-            jobs = buildJobs;
+            jobs = buildJobs // {
+              mirror-checks = syncToGitHubJob;
+            };
           };
         }
       ];
