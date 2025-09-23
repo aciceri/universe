@@ -17,10 +17,6 @@
         libreoffice
 
         # Chats
-        (pkgs.discord.override {
-          withOpenASAR = true;
-          withVencord = true;
-        })
         fluffychat
         telegram-desktop
         slack
@@ -31,14 +27,26 @@
 
         # Other
         calibre
-        remmina
-        obs-studio
         tremotesf
         vial
         trilium-next-desktop
         claude-desktop
         spotube
-        yt-dlp # needed by spotube
       ];
+
+      programs = {
+        vesktop.enable = true;
+
+        yt-dlp.enable = true;
+
+        claude-code.enable = true; # TODO move in a separate module from here and configure properly
+
+        obs-studio = {
+          enable = true;
+          plugins = with pkgs.obs-studio-plugins; [ wlrobs ];
+        };
+      };
+
+      services.remmina.enable = true;
     };
 }

@@ -78,7 +78,7 @@
             }
             {
               argv = [
-                "discord"
+                (lib.getExe config.programs.vesktop.package)
                 "--start-minimized"
               ];
             }
