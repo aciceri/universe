@@ -19,11 +19,9 @@
           netrc-file = config.age.secrets.nix_netrc.path;
           substituters = [
             "http://ncps.sisko.wg.aciceri.dev:8501"
-            "https://mlabs.cachix.org" # TODO move to ncps when https://github.com/kalbasit/ncps/discussions/223 is addressed
           ];
           trusted-public-keys = [
             "ncps.sisko.wg.aciceri.dev:lSep0cd5UkyKvDR9AtYargQslCAqMYI3Xin2w+LiZb0="
-            "mlabs.cachix.org-1:gStKdEqNKcrlSQw5iMW6wFCj3+b+1ASpBVY2SYuNV2M="
           ];
         };
         nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];

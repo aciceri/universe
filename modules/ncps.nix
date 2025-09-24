@@ -1,9 +1,30 @@
 {
   configurations.nixos.sisko.module =
+    { config, pkgs, ... }:
     let
       dir = "/mnt/hd/ncps";
+      nixpkgs-ncps = builtins.getFlake "github:NixOS/nixpkgs/80bbbdc3be59657b46f797e0dac92e6df0694d90";
     in
     {
+      # FIXME remove once https://github.com/NixOS/nixpkgs/pull/445875 is merged
+      disabledModules = [ "services/networking/ncps.nix" ];
+      imports = [ "${nixpkgs-ncps}/nixos/modules/services/networking/ncps.nix" ];
+      services.ncps.package = pkgs.ncps.overrideAttrs {
+        vendorHash = "sha256-7bu9nXkS4Xfd2wEXIX+ANbVec1Lrh2w/zikOPeuAHzo=";
+        src = pkgs.fetchFromGitHub {
+          owner = "kalbasit";
+          repo = "ncps";
+          rev = "9de11fe9197404b66f0d51c2ee1f30fd9b6bbe59";
+          hash = "sha256-krSbPECsdH91CtE5/MNNXRbPpTt1HZ5lqOGs3xG5WjM=";
+        };
+        doCheck = false;
+      };
+
+      secrets.nix_netrc = {
+        mode = "770";
+        group = "ncps";
+      };
+
       systemd.tmpfiles.rules = [
         "d ${dir} 770 ncps ncps"
       ];
@@ -25,15 +46,18 @@
           caches = [
             "https://cache.nixos.org"
             "https://nix-community.cachix.org"
+            "https://mlabs.cachix.org"
             "http://sisko.wg.aciceri.dev:8081/sisko"
           ];
           publicKeys = [
             "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
             "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
+            "mlabs.cachix.org-1:gStKdEqNKcrlSQw5iMW6wFCj3+b+1ASpBVY2SYuNV2M="
             "sisko:4A3G4hgZVjhfPLh7Hy9V6xhRzRJp1l4fDDbLqQrQsbU="
           ];
         };
         prometheus.enable = true;
+        netrcFile = config.age.secrets.nix_netrc.path;
       };
     };
 }
