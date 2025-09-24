@@ -3,7 +3,7 @@
     { config, pkgs, ... }:
     let
       dir = "/mnt/hd/ncps";
-      nixpkgs-ncps = builtins.getFlake "github:NixOS/nixpkgs/80bbbdc3be59657b46f797e0dac92e6df0694d90";
+      nixpkgs-ncps = builtins.getFlake "github:NixOS/nixpkgs/f5eabeba449f2c8ef60c2b273a759dd192df06ad";
     in
     {
       # FIXME remove once https://github.com/NixOS/nixpkgs/pull/445875 is merged
