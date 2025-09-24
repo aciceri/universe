@@ -71,7 +71,7 @@
           ];
           protocol = "ssh-ng";
           sshUser = "root";
-          sshKey = "/etc/ssh/ssh_host_ed25519_key";
+          sshKey = "/run/agenix/ssh_user_key_ccr"; # FIXME even if it works conceptually we shouldn't use this key
         }
       ];
     };
