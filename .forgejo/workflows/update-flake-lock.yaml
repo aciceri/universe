@@ -18,12 +18,17 @@ jobs:
         run: |
           git config --global user.email "sevenofnine@stronzi.org"
           git config --global user.name "Seven of Nine"
+          git config --global url."https://${{secrets.ACICERI_GITHUB_TOKEN}}@github.com/".insteadOf "https://github.com/"
       - name: Update flake's lockfile and create commit
-        run: nix flake update --commit-lock-file
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{secrets.ACICERI_GITHUB_TOKEN}}" >> ~/.config/nix/nix.conf
+          nix flake update --commit-lock-file
       - name: Push commit to the `update-flake-lock` remote branch
         run: git push origin --force update-flake-lock # sevenOfNix needs write access to the repository
       - name: Login as `Seven of Nix`
         run: |
+          tea logins delete git.aciceri.dev_sevenOfNine || true
           tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev
           tea logins default git.aciceri.dev
       - name: Create or update pull request
