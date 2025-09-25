@@ -111,6 +111,7 @@
               nix
               git
               tea
+              jq
               nixos-rebuild
             ];
           });
