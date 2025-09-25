@@ -2,7 +2,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
-    import-tree.url = "github:vic/import-tree";
 
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -139,12 +138,18 @@
   };
 
   outputs =
-    inputs@{ import-tree, ... }:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [
-        (./. |> import-tree.matchNot ".*flake\\.nix.*" |> import-tree)
-      ];
+    inputs:
+    inputs.flake-parts.lib.mkFlake { inherit inputs; } (
+      { lib, ... }:
+      {
+        imports =
+          lib.filesystem.listFilesRecursive ./.
+          |> lib.map builtins.toString
+          |> lib.filter (lib.hasSuffix ".nix")
+          |> lib.filter (f: !lib.hasSuffix "flake.nix" f)
+          |> lib.filter (f: !lib.hasInfix "/_" f);
 
-      _module.args.rootPath = ./.;
-    };
+        _module.args.rootPath = ./.;
+      }
+    );
 }
