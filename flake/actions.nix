@@ -1,4 +1,3 @@
-# TODO re-generate the workflows as a pre-commit-hook
 {
   config,
   lib,
