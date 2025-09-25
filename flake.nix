@@ -139,9 +139,11 @@
   };
 
   outputs =
-    inputs:
+    inputs@{ import-tree, ... }:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      imports = [ (inputs.import-tree ./modules) ];
+      imports = [
+        (./. |> import-tree.matchNot ".*flake\\.nix.*" |> import-tree)
+      ];
 
       _module.args.rootPath = ./.;
     };
