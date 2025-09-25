@@ -17,7 +17,6 @@
         libreoffice
 
         # Chats
-        fluffychat
         telegram-desktop
         slack
 
@@ -45,6 +44,8 @@
           enable = true;
           plugins = with pkgs.obs-studio-plugins; [ wlrobs ];
         };
+
+        element-desktop.enable = true;
       };
 
       services.remmina.enable = true;

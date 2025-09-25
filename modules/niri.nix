@@ -82,6 +82,12 @@
                 "--start-minimized"
               ];
             }
+            {
+              argv = [
+                (lib.getExe config.programs.element-desktop.package)
+                "--hidden"
+              ];
+            }
           ];
 
           outputs = {
