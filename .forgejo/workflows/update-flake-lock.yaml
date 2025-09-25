@@ -28,21 +28,20 @@ jobs:
         run: git push origin --force update-flake-lock # sevenOfNix needs write access to the repository
       - name: Login as `Seven of Nix`
         run: |
-          tea logins delete git.aciceri.dev_sevenOfNine || true
-          tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev
-          tea logins default git.aciceri.dev
+          # Clean up any existing tea config
+          rm -rf ~/.config/tea || true
+          tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev --name sevenOfNine
+          tea logins default sevenOfNine
       - name: Create or update pull request
         run: |
           # Try to create a new PR first
-          if ! tea pulls create \
+          if tea pulls create \
             --repo "$GITHUB_REPOSITORY" \
             --title "Update flake's lockfile" \
             --description "Check the commit description for inputs deltas" \
             --assignees aciceri; then
-
-            echo "PR already exists, updating existing PR..."
-            # Force push will update the existing PR
-            echo "Branch updated successfully - PR will reflect new changes"
-          else
             echo "New PR created successfully"
+          else
+            echo "PR already exists or error occurred - branch update will reflect new changes"
           fi
+

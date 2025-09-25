@@ -1,0 +1,27 @@
+name: Merge PR
+on:
+  workflow_call:
+
+jobs:
+  merge:
+    runs-on: native
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+      - name: Auto-merge flake update PR
+        run: |
+          # Clean up any existing tea config
+          rm -rf ~/.config/tea || true
+          tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev --name sevenOfNine
+          tea logins default sevenOfNine
+
+          # Find the PR by title
+          PR_NUMBER=$(tea pr -r "${{github.repository}}" --fields "title,index" --output json | jq -r '.[] | select(.title == "Update flake'\''s lockfile") | .index')
+
+          if [ -n "$PR_NUMBER" ]; then
+            echo "All checks passed! Merging PR #$PR_NUMBER..."
+            tea pulls merge --repo "${{github.repository}}" "$PR_NUMBER" --style rebase
+            echo "PR merged successfully!"
+          else
+            echo "No flake update PR found to merge"
+          fi

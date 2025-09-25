@@ -126,6 +126,29 @@
         }
       ]
     },
+    "call-merge-pr": {
+      "if": "${{ success() && github.ref == 'refs/heads/update-flake-lock' }}",
+      "needs": [
+        "aarch64-linux/claude-desktop",
+        "aarch64-linux/configurations/nixos/sisko",
+        "aarch64-linux/default-shell",
+        "aarch64-linux/mirror-checks",
+        "aarch64-linux/pre-commit",
+        "aarch64-linux/treefmt",
+        "x86_64-linux/claude-desktop",
+        "x86_64-linux/configurations/nixos/picard",
+        "x86_64-linux/configurations/nixos/pike",
+        "x86_64-linux/default-shell",
+        "x86_64-linux/mirror-checks",
+        "x86_64-linux/pre-commit",
+        "x86_64-linux/treefmt"
+      ],
+      "runs-on": "native",
+      "secrets": {
+        "SEVENOFNINE_TOKEN": "${{secrets.SEVENOFNINE_TOKEN}}"
+      },
+      "uses": "./.forgejo/workflows/merge-pr.yaml"
+    },
     "mirror-checks": {
       "if": "always()",
       "needs": [

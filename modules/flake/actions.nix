@@ -47,6 +47,16 @@ let
     ];
   };
 
+  callMergePrJob = {
+    runs-on = "native";
+    needs = lib.attrNames buildJobs;
+    "if" = "$\{{ success() && github.ref == 'refs/heads/update-flake-lock' }}";
+    uses = "./.forgejo/workflows/merge-pr.yaml";
+    secrets = {
+      SEVENOFNINE_TOKEN = "$\{{secrets.SEVENOFNINE_TOKEN}}";
+    };
+  };
+
   toRemove = [
     "files/.gitignore"
     "files/.forgejo/workflows/build-checks.yaml"
@@ -88,6 +98,7 @@ in
             };
             jobs = buildJobs // {
               mirror-checks = syncToGitHubJob;
+              call-merge-pr = callMergePrJob;
             };
           };
         }
