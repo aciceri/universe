@@ -60,7 +60,8 @@ let
     "files/.gitignore"
     "files/.forgejo/workflows/build-checks.yaml"
     "files/.forgejo/workflows/update-flake-lock.yaml"
-  ]; # FIXME `nix build` doesn't like dots in the derivation path
+    "files/packages/_nur.nix"
+  ]; # FIXME `nix build` doesn't like dots and underscores in the derivation path
 
   buildJobs =
     (
