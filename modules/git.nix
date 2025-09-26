@@ -6,6 +6,7 @@
       {
         programs.git = {
           enable = true;
+          lfs.enable = true;
           extraConfig = {
             ui.color = "auto";
             pull.rebase = true;
