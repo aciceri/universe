@@ -1,0 +1,57 @@
+@media only screen and (max-width: 768px) {
+
+    header, main {
+	      padding: 0 1.1rem;
+    }
+
+    header nav a{
+	      font-size: 1.1rem;
+	      margin-right: 0.5rem;
+    }
+
+    main {
+	      width: calc(100% - 2.2rem) !important;
+	      p {
+	          line-height: 1.3rem !important;
+	      }
+	      p, pre, li, figcaption {
+	          font-size: 1.1rem !important;
+	      }
+	      span.math {
+	          font-size: 0.9rem;
+	      }
+	      table {
+	          font-size: 1rem;
+	          display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+	      }
+    }
+
+    footer {
+	      display: block;
+	      font-size: 1rem;
+	      .left {
+	          float: none;
+	          margin-left: 0;
+	          padding: 0 1rem;
+	      }
+	      .right {
+	          margin-right: 0;
+	          float: none;
+	          padding: 0 1rem;
+	      }
+    }
+
+    div.proof::after {
+
+	      right: 1rem;
+	      display: none;
+    }
+    .verse, .note, .warning {
+	      margin: 1rem 0;
+	      padding: 0 0 0 1rem;
+	      color: inherit;
+    }
+}
+

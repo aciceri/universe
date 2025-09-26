@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang='$language$'>
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title>$title$ - Andrea Ciceri's blog</title> 
+
+        	<!-- KaTeX -->
+        <link rel="stylesheet" href="/thirdparty/katex/katex.min.css">
+        <script defer src="/thirdparty/katex/katex.min.js"></script>
+        <script defer src="/thirdparty/katex/contrib/auto-render.min.js"></script>
+
+        <!-- asciinema -->
+        <link rel="stylesheet" type="text/css" href="/thirdparty/asciinema-player/asciinema-player.css" />
+
+        <!-- Custom -->
+        <link rel="stylesheet" href="/css/custom.css" />
+        <script src="/js/custom.js"></script>
+
+        <!-- Hyphenopoly -->
+        <script src="/thirdparty/hyphenopoly/Hyphenopoly_Loader.js"></script>
+    </head>
+    <body class="theme-light">
+      <script src="/thirdparty/asciinema-player/asciinema-player.min.js"></script>
+      <div id="main-wrapper">
+        <header>
+            <nav>
+                <a $if(home)$ class="current" $endif$ href="/">Home</a>
+                <a $if(contacts)$ class="current" $endif$ href="/contacts/">Contacts</a>
+                <a $if(archive)$ class="current" $endif$ href="/archive">Archive</a>
+                <a href="/rss/rss.xml">RSS</a>
+                <a href="/atom/atom.xml">Atom</a>
+            </nav>
+        </header>
+
+        <main>
+            <h1>$title$</h1>
+            $body$
+        </main>
+
+        <footer>
+	  <div class='left'>
+	  Built with &hearts; using 
+          <a href="https://nixos.org/">Nix</a> and
+          <a href="https://jaspervdj.be/hakyll">Hakyll</a>
+	  <br>
+	  Distributed also on
+          <a href="https://ipfs.io/">IPFS</a> and
+          <a href="https://www.torproject.org/">Tor</a>
+	  </div>
+	  <div class='right'>
+	   $nix-hash$
+	   <br>
+	   <a id='theme-switcher'>Switch theme</a>
+	  </div>
+        </footer>
+      </div>
+    </body>
+</html>

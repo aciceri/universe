@@ -1,0 +1,14 @@
+<article>
+    <section class="header">
+        Posted on $date$
+	$if(tags)$
+	with tags
+        $for(tags)$
+        <a href="$url$">$name$</a>$sep$,
+        $endfor$
+        $endif$
+    </section>
+    <section>
+        $body$
+    </section>
+</article>

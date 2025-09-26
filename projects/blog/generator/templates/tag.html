@@ -1,0 +1,26 @@
+<table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Date</th>
+      <th>Language</th>
+      <th>Tags</th>
+    </tr>
+  </thead>
+  <tbody>
+    $for(posts)$
+    <tr>
+      <td><a href='$url$'>$title$</td>
+      <td>$date$</td>
+      <td>$language$</td>
+      <td>
+	$if(tags)$
+        $for(tags)$
+	<a href="$url$">$name$</a>$sep$,
+        $endfor$
+        $endif$
+      </td>
+    </tr>
+    $endfor$
+  </tbody>
+</table>

@@ -1,0 +1,32 @@
+// Latin Modern
+
+@font-face {
+  font-family: 'Latin Modern';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../thirdparty/fonts/cmunrm.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Latin Modern';
+  font-style: italic;
+  font-weight: 400;
+  src: url('../thirdparty/fonts/cmunti.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Latin Modern';
+  font-style: normal;
+  font-weight: 700;
+  src: url('../thirdparty/fonts/cmunbx.woff2') format('woff2');
+}
+
+
+// Iosevka Comfy
+
+@font-face {
+  font-family: 'Iosevka Comfy';
+  font-style: normal;
+  font-weight: 400;
+  src: url('../thirdparty/fonts/iosevka-comfy-normalregularupright.woff2') format('woff2');
+}

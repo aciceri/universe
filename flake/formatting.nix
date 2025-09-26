@@ -8,12 +8,19 @@
   perSystem =
     { config, ... }:
     {
-      treefmt.programs = {
-        nixfmt = {
-          enable = true;
-          width = 120;
+      treefmt = {
+        enableDefaultExcludes = true;
+        programs = {
+          nixfmt = {
+            enable = true;
+            width = 120;
+            includes = [ "*/**.nix" ];
+          };
+          nixf-diagnose = {
+            enable = true;
+            includes = [ "*/**.nix" ];
+          };
         };
-        nixf-diagnose.enable = true;
       };
 
       pre-commit.settings.hooks.treefmt.enable = true;

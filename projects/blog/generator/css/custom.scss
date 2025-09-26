@@ -1,0 +1,97 @@
+$site-width: 768px;
+
+$themes: (
+    light: (
+        color-background: #fff,
+	color-text: #000,
+	color-header: #333,
+	color-header-text: #fff
+    ),
+    dark: (
+        color-background: #000,
+        color-text: #fff,
+	color-header: #333,
+	color-header-text: #fff
+    ),
+    yellow: (
+	color-background: #ffffe0,
+	color-text: #000,
+	color-header: #ffe0e0,
+	color-header-text: #000
+    )	    
+);
+
+@mixin theme-aware($key, $color) {
+    @each $theme-name, $theme-color in $themes {
+        .theme-#{$theme-name} & {
+            #{$key}: map-get(map-get($themes, $theme-name), $color)
+        }
+    }
+}
+
+
+@import "navigation.scss";
+@import "typography.scss";
+@import "mobile.scss";
+@import "syntax-highlighting.scss";
+@import "lightbox.scss";
+@import "math.scss";
+@import "videos.scss";
+
+// Asciinema
+.asciinema-container {
+    margin: 1rem 0;
+    text-align: center;
+}
+
+.asciinema-container > div[id^="cast-"] {
+    min-height: 300px;
+}
+
+html {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    min-height: 100%;
+    min-width: 100%;
+    font-family: 'Latin Modern';
+}
+
+#main-wrapper {
+  @include theme-aware('background-color', 'color-background');
+  width: 100%;
+  display: flex;
+  flex-direction:column; 
+  position: absolute;
+  min-height: 100%;
+}
+
+main {
+    width: $site-width;
+  margin: 0 auto;
+  @include theme-aware('color', 'color-text');
+  flex-grow: 1;
+}
+
+header {
+    @include theme-aware('color', 'color-header-text');
+    @include theme-aware('background-color', 'color-header');
+}
+
+footer {
+    @include theme-aware('color', 'color-header-text');
+    @include theme-aware('background-color', 'color-header');
+}
+
+::selection {
+  @include theme-aware('background', 'color-text');
+  @include theme-aware('color', 'color-background');
+}
+
+.noscroll {
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+}

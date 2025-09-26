@@ -9,6 +9,7 @@
         ipv6 = false; # not anymore 😭
         domains = [
           "aciceri.dev"
+          "blog.aciceri.dev"
           "git.aciceri.dev"
           "home.aciceri.dev"
           "photos.aciceri.dev"

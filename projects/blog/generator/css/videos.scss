@@ -1,0 +1,18 @@
+.youtube-wrapper {
+    padding-bottom: 56.25%;
+    position: relative;
+    width: 100%
+}
+
+.youtube-wrapper > iframe {
+    border: 0;
+    height: 100%;
+    left: 0;
+    position: absolute;
+    top: 0;
+    width: 100%
+}
+
+video {
+    width: 100%;
+}

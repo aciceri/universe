@@ -1,0 +1,76 @@
+footref::after {
+    content: "]";
+}
+
+.footref:first-child::before {
+    content: "[";
+}
+
+span.math {
+    font-size: 1.1rem;
+}
+
+span.katex {
+    overflow: auto;
+}
+
+span.katex::-webkit-scrollbar {
+  display: none;
+}
+
+span.katex {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+div.theorem {
+    p:first-child::before {
+    content: "Theorem ";
+    font-weight: bold;
+    }
+}
+
+div.lemma {
+    p:first-child::before {
+    content: "Lemma ";
+    font-weight: bold;
+    }
+}
+
+div.proposition {
+    p:first-child::before {
+    content: "Proposition ";
+    font-weight: bold;
+    }
+}
+
+div.observation {
+    p:first-child::before {
+    content: "Observation ";
+    font-weight: bold;
+    }
+}
+
+div.definition {
+    p:first-child::before {
+    content: "Definition ";
+    font-weight: bold;
+    }
+}
+
+div.proof {
+    p:first-child::before {
+    content: "Proof ";
+    font-weight: bold;
+    }
+}
+
+div.proof::after {
+    font-weight: bold;
+    content: "□";
+    position: relative;
+    font-size: 1.5rem;
+    left: calc(#{$site-width} - 1rem);
+    top: -1rem;
+}
+

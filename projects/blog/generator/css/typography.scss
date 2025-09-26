@@ -1,0 +1,142 @@
+@import "fonts.scss";
+
+main {
+    p, li {
+        font-size: 1.3rem;
+        text-align: justify;
+        -ms-hyphens: auto;
+        -moz-hyphens: auto;
+        -webkit-hyphens: auto;
+
+        @include theme-aware('color', 'color-text');
+        line-height: 1.5rem;
+    }
+
+    li::marker {
+        font-size: 1.2rem;
+    }
+
+    a, a:visited {
+        @include theme-aware('color', 'color-text');
+        text-decoration-line: underline;
+        text-decoration-style: dotted;
+    }
+
+    a:hover, a:focus {
+    }
+
+    code {
+        font-family: "Iosevka Comfy";
+        font-size: 0.9rem;
+    }
+
+    pre {
+        overflow: auto;
+    }
+
+    pre.sourceCode {
+        overflow: initial !important;
+    }
+
+    //Images
+
+    img {
+        display: block !important;
+        margin: 1rem auto;
+        max-width: 100%;
+        cursor: pointer;
+    }
+
+    // Caption for images
+    p img + em {
+        display: block;
+        text-align: center;
+        font-style: italic;
+        margin-top: 0.5rem;
+    }
+
+    //Footnotes
+
+    .footnotes {
+        hr {
+	          visibility: hidden;
+        }
+        .footnote-back {
+	          margin-left: 0.5rem;
+        }
+    }
+
+    //Tables
+
+    table {
+        margin: 1em auto;
+        border-top: 2px solid;
+        border-bottom: 2px solid;
+        border-collapse: collapse;
+        font-size: 1.3rem;
+    }
+
+    thead {
+        border-bottom: 2px solid;
+    }
+
+    table td + td, table th + th {
+        border-left: 1px solid var(--color-dark-onyx);
+    }
+
+    table tr {
+        border-top: 1px solid var(--color-onyx);
+    }
+
+    td,th {
+        padding: 0.3em 0.6em;
+        vertical-align: middle;
+    }
+
+    caption.t-bottom {
+        margin-top: 1rem;
+    }
+
+
+    // Boxes
+
+    div.line-block {
+        font-size: 1.3rem;
+    }
+
+
+    .verse, .note, .warning {
+        margin: 1rem 0 1rem 1rem;
+        padding: 0 1rem;
+        color: inherit;
+    }
+
+    .note {
+        border-left: 0.2rem solid grey;
+    }
+
+    .warning {
+        border-left: 0.2rem solid red;
+    }
+
+
+    // Org-mode specifics
+
+    span.done, span.todo {
+        font-size: 1.1rem;
+        color: white;
+        padding: .1em 0.3em;
+        border-radius: 3px;
+        background-clip: padding-box;
+        line-height: 1;
+    }
+
+    span.done {
+        background-color: green;
+    }
+
+    span.todo {
+        background-color: red;
+    }
+
+}
