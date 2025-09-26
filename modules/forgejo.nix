@@ -34,6 +34,7 @@
           server = {
             HTTP_PORT = 3002;
             ROOT_URL = "https://git.aciceri.dev";
+            LFS_MAX_FILE_SIZE = 0; # no limit
           };
           federation.ENABLED = true;
           mailer = {
@@ -86,6 +87,11 @@
         enableACME = true;
         forceSSL = true;
         locations."/".proxyPass = "http://127.0.0.1:${builtins.toString cfg.settings.server.HTTP_PORT}";
+        extraConfig = ''
+          client_max_body_size 100M;
+          client_body_timeout 300s;
+          client_body_buffer_size 128k;
+        '';
       };
     };
 
