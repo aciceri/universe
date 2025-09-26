@@ -60,6 +60,10 @@
             KEYWORDS = "git,self-hosted,forgejo,open-source,nix,nixos";
           };
         };
+        lfs = {
+          enable = true;
+          contentDir = "/mnt/hd/forgejo-lfs";
+        };
         secrets.mailer.PASSWD = config.age.secrets.autistici_password.path;
         dump = {
           enable = true;
