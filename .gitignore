@@ -2,5 +2,9 @@
 .pre-commit-config.yaml
 picard.qcow2
 pike.qcow2
+projects/blog/_cache
+projects/blog/generator/dist-newstyle
+projects/blog/generator/thirdparty
+projects/blog/out
 result
 sisko.qcow2
