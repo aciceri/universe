@@ -126,6 +126,27 @@
         }
       ]
     },
+    "aarch64-linux/yt-dlp-latest": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.yt-dlp-latest\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "call-merge-pr": {
       "if": "${{ success() && github.ref == 'refs/heads/update-flake-lock' }}",
       "needs": [
@@ -135,13 +156,15 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
+        "aarch64-linux/yt-dlp-latest",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/default-shell",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
-        "x86_64-linux/treefmt"
+        "x86_64-linux/treefmt",
+        "x86_64-linux/yt-dlp-latest"
       ],
       "runs-on": "native",
       "secrets": {
@@ -158,13 +181,15 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
+        "aarch64-linux/yt-dlp-latest",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/default-shell",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
-        "x86_64-linux/treefmt"
+        "x86_64-linux/treefmt",
+        "x86_64-linux/yt-dlp-latest"
       ],
       "runs-on": "native",
       "steps": [
@@ -322,6 +347,27 @@
         {
           "name": "Build",
           "run": "nix build \".#checks.x86_64-linux.treefmt\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/yt-dlp-latest": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.yt-dlp-latest\" -L"
         },
         {
           "name": "Push to Attic",

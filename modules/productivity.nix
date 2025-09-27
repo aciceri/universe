@@ -36,7 +36,10 @@
       programs = {
         vesktop.enable = true;
 
-        yt-dlp.enable = true;
+        yt-dlp = {
+          enable = true;
+          package = pkgs.yt-dlp-latest;
+        };
 
         claude-code.enable = true; # TODO move in a separate module from here and configure properly
 

@@ -40,15 +40,9 @@
       treefmt.settings.global.excludes = [ "packages/_nur.nix" ];
     };
 
-  flake.modules.nixos.base =
-    { pkgs, ... }:
-    {
-      nixpkgs.overlays = [
-        (_: _: {
-          inherit (config.allSystems.${pkgs.system}.packages)
-            claude-desktop
-            ;
-        })
-      ];
-    };
+  flake.modules.nixos.base = nArgs: {
+    nixpkgs.overlays = [
+      (_: _: config.allSystems.${nArgs.config.nixpkgs.hostPlatform.system}.packages)
+    ];
+  };
 }
