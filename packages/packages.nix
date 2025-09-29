@@ -1,4 +1,4 @@
-{ config, ... }:
+{ getSystem, ... }:
 {
   perSystem =
     {
@@ -40,9 +40,11 @@
       treefmt.settings.global.excludes = [ "packages/_nur.nix" ];
     };
 
-  flake.modules.nixos.base = nArgs: {
-    nixpkgs.overlays = [
-      (_: _: config.allSystems.${nArgs.config.nixpkgs.hostPlatform.system}.packages)
-    ];
-  };
+  flake.modules.nixos.base =
+    { config, ... }:
+    {
+      nixpkgs.overlays = [
+        (_: _: (getSystem config.nixpkgs.hostPlatform.system).packages)
+      ];
+    };
 }

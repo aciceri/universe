@@ -1,4 +1,4 @@
-{ config, ... }:
+{ getSystem, ... }:
 {
   gitignore =
     [
@@ -110,7 +110,7 @@
       services.nginx.virtualHosts."blog.aciceri.dev" = {
         forceSSL = true;
         enableACME = true;
-        locations."/".root = config.flake.packages.${pkgs.stdenv.system}.blog;
+        locations."/".root = (getSystem pkgs.stdenv.system).packages.blog;
       };
     };
 }
