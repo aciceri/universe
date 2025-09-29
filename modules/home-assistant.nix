@@ -49,6 +49,7 @@
           "wake_on_lan"
           "prometheus"
           "openai_conversation"
+          "mcp_server"
         ];
         customComponents = with pkgs.home-assistant-custom-components; [
           localtuya
