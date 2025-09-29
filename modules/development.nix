@@ -13,6 +13,7 @@
         nix-fast-build
         nix-update
         nix-melt
+        nix-tree
       ];
 
       programs.gh = {
