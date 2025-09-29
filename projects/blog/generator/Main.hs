@@ -277,7 +277,7 @@ applyFilter :: (String -> String) -> Item String -> Compiler (Item String)
 applyFilter f item = return $ fmap f item
 
 createEmbedFilter :: String -> Parsec Void String String -> (String -> String) -> String -> String
-createEmbedFilter prefix parser embedder = streamEdit macro embedder
+createEmbedFilter prefix parser = streamEdit macro
   where
     macro = do
       string ("{" ++ prefix ++ ":")
