@@ -42,8 +42,6 @@
           package = pkgs.yt-dlp-latest;
         };
 
-        claude-code.enable = true; # TODO move in a separate module from here and configure properly
-
         obs-studio = {
           enable = true;
           plugins = with pkgs.obs-studio-plugins; [ wlrobs ];
