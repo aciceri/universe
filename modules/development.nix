@@ -11,6 +11,7 @@
         vtsls
         devenv
         nixpkgs-review
+        nurl
       ];
 
       programs.gh = {
