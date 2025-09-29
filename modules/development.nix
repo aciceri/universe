@@ -10,6 +10,7 @@
         python3Packages.python-lsp-server
         vtsls
         devenv
+        nixpkgs-review
       ];
 
       programs.gh = {
