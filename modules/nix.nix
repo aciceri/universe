@@ -31,7 +31,7 @@
         gc = {
           automatic = true;
           dates = "weekly";
-          options = "--delete-older-than 180d";
+          options = "--delete-older-than 14d";
         };
         registry = rec {
           nixpkgs.to = {
