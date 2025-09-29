@@ -5,6 +5,7 @@ import os
 import argparse
 from github import Github
 import github
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class CheckSyncer:
@@ -42,8 +43,38 @@ class CheckSyncer:
             print(f"Error creating status on GitHub: {e}")
             return False
 
+    def _sync_single_check(self, repo, commit_sha, check, state_mapping):
+        """Synchronize a single check"""
+        raw_context = check.get('context', 'check')
+
+        # Skip mirror-checks job to avoid self-sync loop
+        if 'mirror-checks' in raw_context:
+            return None
+
+        # Create cleaner context names
+        context = self._create_clean_context(raw_context)
+
+        # Build absolute target URL
+        target_url = check.get('target_url', f"/{repo}")
+        if target_url.startswith('/'):
+            target_url = f"{self.forgejo_url}{target_url}"
+
+        # Map state and create status
+        state = state_mapping.get(
+            check.get('status', 'pending'), 'pending')
+        description = check.get('description', '')[:140]
+
+        if self.create_github_status(
+                repo, commit_sha, state, description,
+                context, target_url):
+            print(f"✅ Synchronized: {context}")
+            return True
+        else:
+            print(f"❌ Error: {context}")
+            return False
+
     def sync_checks(self, repo, commit_sha):
-        """Synchronize all checks"""
+        """Synchronize all checks in parallel"""
         print(f"Synchronizing checks for {repo}@{commit_sha}")
 
         # Retrieve checks from Forgejo
@@ -63,35 +94,21 @@ class CheckSyncer:
 
         success_count = 0
 
-        # Synchronize each check
+        # Synchronize checks in parallel
         if 'statuses' in forgejo_data:
-            for check in forgejo_data['statuses']:
-                raw_context = check.get('context', 'check')
+            with ThreadPoolExecutor(max_workers=5) as executor:
+                futures = [
+                    executor.submit(
+                        self._sync_single_check, repo, commit_sha,
+                        check, state_mapping
+                    )
+                    for check in forgejo_data['statuses']
+                ]
 
-                # Skip mirror-checks job to avoid self-sync loop
-                if 'mirror-checks' in raw_context:
-                    continue
-
-                # Create cleaner context names
-                context = self._create_clean_context(raw_context)
-
-                # Build absolute target URL
-                target_url = check.get('target_url', f"/{repo}")
-                if target_url.startswith('/'):
-                    target_url = f"{self.forgejo_url}{target_url}"
-
-                # Map state and create status
-                state = state_mapping.get(
-                    check.get('status', 'pending'), 'pending')
-                description = check.get('description', '')[:140]
-
-                if self.create_github_status(
-                        repo, commit_sha, state, description,
-                        context, target_url):
-                    print(f"✅ Synchronized: {context}")
-                    success_count += 1
-                else:
-                    print(f"❌ Error: {context}")
+                for future in as_completed(futures):
+                    result = future.result()
+                    if result is True:
+                        success_count += 1
 
         print(f"Synchronized {success_count} checks")
         return success_count > 0
