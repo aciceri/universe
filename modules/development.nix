@@ -12,6 +12,7 @@
         devenv
         nixpkgs-review
         nurl
+        nix-fast-build
       ];
 
       programs.gh = {
