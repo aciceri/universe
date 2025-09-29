@@ -10,6 +10,7 @@
         domains = [
           "aciceri.dev"
           "blog.aciceri.dev"
+          "cv.aciceri.dev"
           "git.aciceri.dev"
           "home.aciceri.dev"
           "photos.aciceri.dev"

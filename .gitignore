@@ -6,5 +6,9 @@ projects/blog/_cache
 projects/blog/generator/dist-newstyle
 projects/blog/generator/thirdparty
 projects/blog/out
+projects/cv/**/*.aux
+projects/cv/**/*.log
+projects/cv/**/*.out
+projects/cv/**/*.pdf
 result
 sisko.qcow2
