@@ -6,7 +6,6 @@
         nixd
         nixfmt
         claude-code
-        gemini-cli
         python3Packages.python-lsp-server
         vtsls
         devenv
