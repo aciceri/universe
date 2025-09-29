@@ -95,6 +95,10 @@
           enable = true;
           settings.update_ms = 100;
         };
+
+        jq.enable = true;
+
+        jqp.enable = true;
       };
 
       home.packages = with pkgs; [
