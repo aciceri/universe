@@ -19,7 +19,6 @@ script.overrideAttrs (oldAttrs: {
       description = "Utility to synchronize CI checks from Forgejo to GitHub";
       license = licenses.gpl3Plus;
       maintainers = [ maintainers.aciceri ];
-      sourceProvenance = with sourceTypes; [ fromSource ];
       # mainProgram is set automatically by writePython3Bin
     };
 })

@@ -60,6 +60,5 @@ buildNpmPackage rec {
     license = licenses.asl20;
     maintainers = [ maintainers.aciceri ];
     platforms = platforms.all;
-    sourceProvenance = with sourceTypes; [ fromSource ];
   };
 }
