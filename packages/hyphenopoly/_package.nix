@@ -2,6 +2,7 @@
   lib,
   buildNpmPackage,
   fetchFromGitHub,
+  nix-update-script,
 }:
 
 buildNpmPackage rec {
@@ -46,12 +47,13 @@ buildNpmPackage rec {
     runHook postInstall
   '';
 
+  passthru.updateScript = nix-update-script { };
+
   meta = with lib; {
     description = "Hyphenation for node and Polyfill for client-side hyphenation";
     homepage = "https://mnater.github.io/Hyphenopoly/";
     repository = "https://github.com/mnater/Hyphenopoly";
     license = licenses.mit;
     maintainers = with maintainers; [ aciceri ];
-    sourceProvenance = with sourceTypes; [ fromSource ];
   };
 }

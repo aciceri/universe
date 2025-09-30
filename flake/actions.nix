@@ -49,7 +49,8 @@ let
   callMergePrJob = {
     runs-on = "native";
     needs = lib.attrNames buildJobs;
-    "if" = "$\{{ success() && github.ref == 'refs/heads/update-flake-lock' }}";
+    "if" =
+      "$\{{ success() && (github.ref == 'refs/heads/update-flake-lock' || github.ref == 'refs/heads/nix-update-script') }}";
     uses = "./.forgejo/workflows/merge-pr.yaml";
     secrets = {
       SEVENOFNINE_TOKEN = "$\{{secrets.SEVENOFNINE_TOKEN}}";

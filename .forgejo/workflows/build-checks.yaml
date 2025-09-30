@@ -252,7 +252,7 @@
         }
       ]
     },
-    "aarch64-linux/yt-dlp-latest": {
+    "aarch64-linux/update-packages": {
       "runs-on": "native",
       "steps": [
         {
@@ -265,7 +265,28 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.yt-dlp-latest\" -L"
+          "run": "nix build \".#checks.aarch64-linux.update-packages\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "aarch64-linux/yt-dlp-master": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.yt-dlp-master\" -L"
         },
         {
           "name": "Push to Attic",
@@ -274,7 +295,7 @@
       ]
     },
     "call-merge-pr": {
-      "if": "${{ success() && github.ref == 'refs/heads/update-flake-lock' }}",
+      "if": "${{ success() && (github.ref == 'refs/heads/update-flake-lock' || github.ref == 'refs/heads/nix-update-script') }}",
       "needs": [
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
@@ -288,7 +309,8 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
-        "aarch64-linux/yt-dlp-latest",
+        "aarch64-linux/update-packages",
+        "aarch64-linux/yt-dlp-master",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
@@ -302,7 +324,8 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
         "x86_64-linux/treefmt",
-        "x86_64-linux/yt-dlp-latest"
+        "x86_64-linux/update-packages",
+        "x86_64-linux/yt-dlp-master"
       ],
       "runs-on": "native",
       "secrets": {
@@ -325,7 +348,8 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
-        "aarch64-linux/yt-dlp-latest",
+        "aarch64-linux/update-packages",
+        "aarch64-linux/yt-dlp-master",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
@@ -339,7 +363,8 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
         "x86_64-linux/treefmt",
-        "x86_64-linux/yt-dlp-latest"
+        "x86_64-linux/update-packages",
+        "x86_64-linux/yt-dlp-master"
       ],
       "runs-on": "native",
       "steps": [
@@ -630,7 +655,7 @@
         }
       ]
     },
-    "x86_64-linux/yt-dlp-latest": {
+    "x86_64-linux/update-packages": {
       "runs-on": "native",
       "steps": [
         {
@@ -643,7 +668,28 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.yt-dlp-latest\" -L"
+          "run": "nix build \".#checks.x86_64-linux.update-packages\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/yt-dlp-master": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.yt-dlp-master\" -L"
         },
         {
           "name": "Push to Attic",

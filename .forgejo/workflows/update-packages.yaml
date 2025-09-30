@@ -1,0 +1,70 @@
+name: Update packages
+on:
+  schedule:
+    - cron: "0 14 * * *"
+  workflow_dispatch:
+
+jobs:
+  update-packages:
+    runs-on: native
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout repository
+        with:
+          token: ${{secrets.SEVENOFNINE_TOKEN}}
+      - name: Create new branch from the checked out one
+        run: git switch -c nix-update-script
+      - name: Configure git as `Seven of Nix`
+        run: |
+          git config --global user.email "sevenofnine@stronzi.org"
+          git config --global user.name "Seven of Nine"
+          git config --global url."https://${{secrets.ACICERI_GITHUB_TOKEN}}@github.com/".insteadOf "https://github.com/"
+      - name: Update packages and create commit
+        run: |
+          mkdir -p ~/.config/nix
+          echo "access-tokens = github.com=${{secrets.ACICERI_GITHUB_TOKEN}}" >> ~/.config/nix/nix.conf
+          echo "Running update-packages script..."
+          nix run .#update-packages || {
+            echo "Update script failed with exit code $?"
+            exit 1
+          }
+          # Add and commit changes if any
+          if ! git diff --quiet HEAD; then
+            git add -A
+            git commit -m "Automatically update packages using nix-update-script"
+          fi
+      - name: Check if changes were made
+        id: check-changes
+        run: |
+          echo "Checking for changes..."
+          git status
+          # Check if there are new commits compared to origin/main
+          if git log origin/main..HEAD --oneline | grep -q .; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+            echo "New commits detected:"
+            git log origin/main..HEAD --oneline
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+            echo "No new commits made by update script"
+          fi
+      - name: Push commit to the `nix-update-script` remote branch
+        if: steps.check-changes.outputs.changes == 'true'
+        run: git push origin --force nix-update-script
+      - name: Login as `Seven of Nix`
+        if: steps.check-changes.outputs.changes == 'true'
+        run: |
+          rm -rf ~/.config/tea || true
+          tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev --name sevenOfNine
+          tea logins default sevenOfNine
+      - name: Create or update pull request
+        if: steps.check-changes.outputs.changes == 'true'
+        run: |
+          if tea pulls create \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "Update packages" \
+            --description "Automated package updates using nix-update-script" \
+            --assignees aciceri; then
+            echo "New PR created successfully"
+          else
+            echo "PR already exists or error occurred - branch update will reflect new changes"
+          fi

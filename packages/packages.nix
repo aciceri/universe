@@ -2,6 +2,7 @@
 {
   perSystem =
     {
+      config,
       pkgs,
       inputs',
       lib,
@@ -20,13 +21,23 @@
       ''
       + (
         personalPackagePaths
-        |> lib.concatMapAttrsStringSep "\n" (name: path: "  ${name} = pkgs.callPackage ./${name}/_package.nix { };")
+        |> lib.concatMapAttrsStringSep "\n" (name: _: "  ${name} = pkgs.callPackage ./${name}/_package.nix { };")
       )
       + "\n}";
+
+      update-packages =
+        personalPackagePaths
+        |> lib.attrNames
+        |> lib.map (name: config.packages.${name})
+        |> lib.filter (package: package.passthru ? updateScript)
+        |> lib.map (package: lib.concatStringsSep " " package.passthru.updateScript + " --flake ${package.pname}")
+        |> lib.concatStringsSep "\n"
+        |> pkgs.writeShellScriptBin "update-packages";
     in
     {
       packages = {
         inherit (inputs'.nix-ai-tools.packages) claude-desktop;
+        inherit update-packages;
       }
       // (personalPackagePaths |> lib.mapAttrs (_: path: pkgs.callPackage path { }));
 

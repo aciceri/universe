@@ -3,5 +3,5 @@
   asciinema-player = pkgs.callPackage ./asciinema-player/_package.nix { };
   hyphenopoly = pkgs.callPackage ./hyphenopoly/_package.nix { };
   mirror-checks = pkgs.callPackage ./mirror-checks/_package.nix { };
-  yt-dlp-latest = pkgs.callPackage ./yt-dlp-latest/_package.nix { };
+  yt-dlp-master = pkgs.callPackage ./yt-dlp-master/_package.nix { };
 }

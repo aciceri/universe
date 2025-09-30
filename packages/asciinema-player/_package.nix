@@ -7,6 +7,7 @@
   wasm-bindgen-cli_0_2_92,
   cargo,
   makeWrapper,
+  nix-update-script,
 }:
 
 buildNpmPackage rec {
@@ -50,6 +51,8 @@ buildNpmPackage rec {
 
     runHook postInstall
   '';
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "A web player for terminal session recordings";
