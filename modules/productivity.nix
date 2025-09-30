@@ -39,7 +39,7 @@
 
         yt-dlp = {
           enable = true;
-          package = pkgs.yt-dlp-latest;
+          package = pkgs.yt-dlp-master;
         };
 
         obs-studio = {
