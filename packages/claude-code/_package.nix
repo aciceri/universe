@@ -15,6 +15,7 @@ lib.traceIf ((lib.strings.compareVersions claude-code.version "2.0.1") != -1)
           hash = "sha256-LUbDPFa0lY74MBU4hvmYVntt6hVZy6UUZFN0iB4Eno8=";
         };
         npmDepsHash = "sha256-DehkeMZvzn+hvcCDzJfd4p9oYc1GSZm8gu8vKS4Uncw=";
+        passthru = { };
         meta.maintainers = previousAttrs.meta.maintainers ++ [ lib.maintainers.aciceri ];
       }
     )
