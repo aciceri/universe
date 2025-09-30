@@ -63,6 +63,27 @@
         }
       ]
     },
+    "aarch64-linux/claude-code": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.claude-code\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "aarch64-linux/claude-desktop": {
       "runs-on": "native",
       "steps": [
@@ -161,6 +182,27 @@
         {
           "name": "Build",
           "run": "nix build \".#checks.aarch64-linux.default-shell\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "aarch64-linux/files/README.md": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.aarch64-linux.files/README.md\" -L"
         },
         {
           "name": "Push to Attic",
@@ -300,11 +342,13 @@
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
+        "aarch64-linux/claude-code",
         "aarch64-linux/claude-desktop",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
+        "aarch64-linux/files/README.md",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
@@ -314,12 +358,14 @@
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
+        "x86_64-linux/claude-code",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
+        "x86_64-linux/files/README.md",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
@@ -339,11 +385,13 @@
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
+        "aarch64-linux/claude-code",
         "aarch64-linux/claude-desktop",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
+        "aarch64-linux/files/README.md",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
@@ -353,12 +401,14 @@
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
+        "x86_64-linux/claude-code",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
+        "x86_64-linux/files/README.md",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
@@ -438,6 +488,27 @@
         {
           "name": "Build",
           "run": "nix build \".#checks.x86_64-linux.blog-shell\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/claude-code": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.claude-code\" -L"
         },
         {
           "name": "Push to Attic",
@@ -564,6 +635,27 @@
         {
           "name": "Build",
           "run": "nix build \".#checks.x86_64-linux.default-shell\" -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/files/README.md": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build \".#checks.x86_64-linux.files/README.md\" -L"
         },
         {
           "name": "Push to Attic",
