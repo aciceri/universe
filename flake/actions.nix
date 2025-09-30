@@ -59,6 +59,7 @@ let
 
   toRemove = [
     "files/.gitignore"
+    "files/README.md"
     "files/.forgejo/workflows/build-checks.yaml"
     "files/.forgejo/workflows/update-flake-lock.yaml"
     "files/packages/_nur.nix"
