@@ -70,4 +70,16 @@
         locations."/".root = (getSystem pkgs.stdenv.system).packages.cv;
       };
     };
+
+  readme.parts.projects = ''
+    ### Curriculum Vitae
+
+    My CV is built using LaTeX and continuously served at https://cv.aciceri.dev
+
+    To build the served derivation, run:
+
+    ```bash
+      nix build .#cv
+    ```
+  '';
 }

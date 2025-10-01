@@ -43,6 +43,7 @@ in
       order = [
         "intro"
         "nixos"
+        "projects"
         "files"
       ];
       parts.intro = ''
@@ -54,6 +55,9 @@ in
         meaning each file is a [flake-parts](https://flake.parts/) module.
         Also, this README is dynamically generated using a flake-parts module, with its
         source distributed throughout the repository.
+      '';
+      parts.projects = lib.mkBefore ''
+        ## Projects 
       '';
     };
   };

@@ -113,4 +113,26 @@
         locations."/".root = (getSystem pkgs.stdenv.system).packages.blog;
       };
     };
+
+  readme.parts.projects = ''
+    ### Blog
+
+    My blog is reachable at https://blog.aciceri.dev, the website is continuously deployed.
+
+    #### Development
+
+    Enter the project directory and development shell to access Cabal and dependencies.
+
+    To build the served derivation, run:
+
+    ```bash
+      nix build .#blog
+    ```
+
+    To start a development server with hot reload, run:
+
+    ```bash
+      nix run .#blog.watch
+    ```
+  '';
 }
