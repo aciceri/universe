@@ -92,7 +92,7 @@
 
               pulseaudio = {
                 rotate = 90;
-                format = "{icon} {volume}%";
+                format = "{icon}  {volume}%";
                 format-bluetooth = "{icon} {volume}%";
                 format-muted = "MUTE ";
                 format-icons = {
