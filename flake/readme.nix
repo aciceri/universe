@@ -12,7 +12,7 @@ in
     };
     _renderedText = lib.mkOption {
       type = lib.types.str;
-      internal = true;
+      readOnly = true;
       default = cfg.order |> lib.map (e: cfg.parts.${e}) |> lib.concatLines;
     };
   };
