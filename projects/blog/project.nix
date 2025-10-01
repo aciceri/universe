@@ -1,4 +1,7 @@
-{ getSystem, ... }:
+{ getSystem, getCurrentDir, ... }:
+let
+  currentDir = getCurrentDir __curPos;
+in
 {
   gitignore =
     [
@@ -7,7 +10,7 @@
       "generator/dist-newstyle"
       "generator/thirdparty"
     ]
-    |> builtins.map (path: "projects/blog/${path}");
+    |> builtins.map (path: "${currentDir}/${path}");
 
   perSystem =
     {
@@ -50,7 +53,7 @@
 
         mkdir -p out
         ln -sf ${thirdparty} out/thirdparty
-        ln -sf /home/ccr/universe/projects/blog/assets/* out/
+        ln -sf /home/ccr/universe/projects/blog/assets/* out/   # FIXME hardcoded path
 
         ${lib.getExe generator} watch --no-server &
         WATCH_PID=$!
@@ -99,7 +102,7 @@
       treefmt.programs = {
         ormolu = {
           enable = true;
-          includes = [ "projects/blog/**/*.hs" ];
+          includes = [ "${currentDir}/**/*.hs" ];
         };
       };
     };
@@ -118,6 +121,7 @@
     ### Blog
 
     My blog is reachable at https://blog.aciceri.dev, the website is continuously deployed.
+    The project is stored under [${currentDir}](${currentDir}).
 
     #### Development
 

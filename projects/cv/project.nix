@@ -1,4 +1,7 @@
-{ getSystem, ... }:
+{ getSystem, getCurrentDir, ... }:
+let
+  currentDir = getCurrentDir __curPos;
+in
 {
   gitignore =
     [
@@ -7,7 +10,7 @@
       "*.out"
       "*.pdf"
     ]
-    |> builtins.map (path: "projects/cv/**/${path}");
+    |> builtins.map (path: "${currentDir}/**/${path}");
 
   perSystem =
     {
@@ -56,7 +59,7 @@
               "bib"
               "cmh"
             ]
-            |> lib.map (ext: "projects/cv/**/*.${ext}");
+            |> lib.map (ext: "${currentDir}/**/*.${ext}");
         };
       };
     };
@@ -75,6 +78,7 @@
     ### Curriculum Vitae
 
     My CV is built using LaTeX and continuously served at https://cv.aciceri.dev
+    The project is stored under [${currentDir}](${currentDir}).
 
     To build the served derivation, run:
 

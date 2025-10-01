@@ -35,6 +35,7 @@ connected via an NVMe-to-SATA adapter.
 ### Curriculum Vitae
 
 My CV is built using LaTeX and continuously served at https://cv.aciceri.dev
+The project is stored under [projects/cv](projects/cv).
 
 To build the served derivation, run:
 
@@ -45,6 +46,7 @@ To build the served derivation, run:
 ### Blog
 
 My blog is reachable at https://blog.aciceri.dev, the website is continuously deployed.
+The project is stored under [projects/blog](projects/blog).
 
 #### Development
 
