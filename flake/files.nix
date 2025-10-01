@@ -101,8 +101,6 @@
           packages = [ writer ];
         };
 
-        packages.write-files = writer;
-
         pre-commit.settings.hooks.write-files = {
           enable = true;
           stages = [ "pre-commit" ];
@@ -114,7 +112,7 @@
           # but this implied the need to reload the shell before commiting,
           # otherwise in some cases the files weren't correcty updated.
           # Doing `nix run .#write-files` on the other hand takes more time
-          entry = "nix run .#write-files";
+          entry = lib.getExe writer;
         };
       };
 
