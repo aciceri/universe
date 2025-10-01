@@ -42,11 +42,10 @@ in
     readme = {
       order = [
         "intro"
+        "nixos"
         "files"
       ];
       parts.intro = ''
-        # Universe
-
         This repository is my comprehensive monorepo containing personal projects
         and configurations that aren't intended for external contributions,
         though contributions are always welcome.
