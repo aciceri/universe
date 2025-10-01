@@ -84,8 +84,12 @@
             }
             {
               argv = [
-                (lib.getExe config.programs.element-desktop.package)
-                "--hidden"
+                (lib.getExe (
+                  pkgs.writeShellScriptBin "start-element.sh" ''
+                    sleep 5
+                    ${lib.getExe config.programs.element-desktop.package} --hidden
+                  ''
+                ))
               ];
             }
           ];
