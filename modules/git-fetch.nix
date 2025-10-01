@@ -25,8 +25,8 @@
         };
         Service = {
           Type = "oneshot";
-          ExecStart = "${
-            pkgs.writeShellApplication {
+          ExecStart =
+            (pkgs.writeShellApplication {
               name = "git-fetch-${name}";
               runtimeInputs = with pkgs; [
                 git
@@ -42,8 +42,8 @@
                   git fetch --all
                 fi
               '';
-            }
-          }/bin/git-fetch-${name}";
+            })
+            |> lib.getExe;
         };
       };
 
@@ -53,7 +53,7 @@
         };
         Timer = {
           OnUnitActiveSec = "${toString repo.interval}s";
-          OnBootSec = "10s";
+          OnStartupSec = "10s";
           Persistent = true;
         };
         Install = {
