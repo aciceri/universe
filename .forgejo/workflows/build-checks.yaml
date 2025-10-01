@@ -378,6 +378,27 @@
         }
       ]
     },
+    "aarch64-linux/write-files": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"write-files\"' -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "aarch64-linux/yt-dlp-master": {
       "runs-on": "native",
       "steps": [
@@ -420,6 +441,7 @@
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
         "aarch64-linux/update-packages",
+        "aarch64-linux/write-files",
         "aarch64-linux/yt-dlp-master",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
@@ -440,6 +462,7 @@
         "x86_64-linux/pre-commit",
         "x86_64-linux/treefmt",
         "x86_64-linux/update-packages",
+        "x86_64-linux/write-files",
         "x86_64-linux/yt-dlp-master"
       ],
       "runs-on": "native",
@@ -469,6 +492,7 @@
         "aarch64-linux/pre-commit",
         "aarch64-linux/treefmt",
         "aarch64-linux/update-packages",
+        "aarch64-linux/write-files",
         "aarch64-linux/yt-dlp-master",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
@@ -489,6 +513,7 @@
         "x86_64-linux/pre-commit",
         "x86_64-linux/treefmt",
         "x86_64-linux/update-packages",
+        "x86_64-linux/write-files",
         "x86_64-linux/yt-dlp-master"
       ],
       "runs-on": "native",
@@ -899,6 +924,27 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"update-packages\"' -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/write-files": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"write-files\"' -L"
         },
         {
           "name": "Push to Attic",

@@ -100,6 +100,8 @@
           packages = [ writer ];
         };
 
+        packages.write-files = writer;
+
         pre-commit.settings.hooks.write-files = {
           enable = true;
           stages = [ "pre-commit" ];
@@ -107,7 +109,11 @@
           always_run = true;
           verbose = true;
           pass_filenames = false;
-          entry = lib.getExe writer;
+          # XXX: Previously I was directly setting entry = lib.getExe writer
+          # but this implied the need to reload the shell before commiting,
+          # otherwise in some cases the files weren't correcty updated.
+          # Doing `nix run .#write-files` on the other hand takes more time
+          entry = "nix run .#write-files";
         };
       };
 
