@@ -7,7 +7,7 @@
 yt-dlp.overrideAttrs (
   finalAttrs: previousAttrs: {
     pname = "yt-dlp-master";
-    version = "2025.09.26-unstable-2025-09-29";
+    version = "unstable-2025-09-29";
     src = fetchFromGitHub {
       owner = "yt-dlp";
       repo = "yt-dlp";
