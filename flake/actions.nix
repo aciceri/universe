@@ -17,7 +17,7 @@ let
       }
       {
         name = "Build";
-        run = ''nix build ".#${drvFlakePath}" -L'';
+        run = ''nix build ${lib.escapeShellArg ".#${drvFlakePath}"} -L'';
       }
       {
         name = "Push to Attic";
@@ -62,7 +62,9 @@ let
       config.flake.checks.x86_64-linux
       |> lib.mapAttrs' (
         name: _:
-        lib.nameValuePair "x86_64-linux/${name}" (buildDerivationJob "build-x86_64-linux/${name}" "checks.x86_64-linux.${name}")
+        lib.nameValuePair "x86_64-linux/${name}" (
+          buildDerivationJob "build-x86_64-linux/${name}" ''checks.x86_64-linux."${name}"''
+        )
       )
     )
     // (
@@ -70,7 +72,7 @@ let
       |> lib.mapAttrs' (
         name: _:
         lib.nameValuePair "aarch64-linux/${name}" (
-          buildDerivationJob "build-aarch64-linux/${name}" "checks.aarch64-linux.${name}"
+          buildDerivationJob "build-aarch64-linux/${name}" ''checks.aarch64-linux."${name}"''
         )
       )
     );

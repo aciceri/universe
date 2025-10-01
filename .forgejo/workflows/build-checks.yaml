@@ -13,7 +13,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.asciinema-player\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"asciinema-player\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -34,7 +34,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.blog\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"blog\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -55,7 +55,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.blog-shell\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"blog-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -76,7 +76,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.claude-code\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"claude-code\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -97,7 +97,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.claude-desktop\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"claude-desktop\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -118,7 +118,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.configurations/nixos/sisko\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"configurations/nixos/sisko\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -139,7 +139,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.cv\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"cv\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -160,7 +160,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.cv-shell\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"cv-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -181,7 +181,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.default-shell\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"default-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -189,7 +189,7 @@
         }
       ]
     },
-    "aarch64-linux/files-.forgejo/workflows/build-checks.yaml": {
+    "aarch64-linux/files/.forgejo/workflows/build-checks.yaml": {
       "runs-on": "native",
       "steps": [
         {
@@ -202,7 +202,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.files-.forgejo/workflows/build-checks.yaml\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"files/.forgejo/workflows/build-checks.yaml\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -210,7 +210,7 @@
         }
       ]
     },
-    "aarch64-linux/files-.gitignore": {
+    "aarch64-linux/files/.gitignore": {
       "runs-on": "native",
       "steps": [
         {
@@ -223,7 +223,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.files-.gitignore\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"files/.gitignore\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -231,7 +231,7 @@
         }
       ]
     },
-    "aarch64-linux/files-README.md": {
+    "aarch64-linux/files/README.md": {
       "runs-on": "native",
       "steps": [
         {
@@ -244,7 +244,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.files-README.md\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"files/README.md\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -252,7 +252,7 @@
         }
       ]
     },
-    "aarch64-linux/files-packages/_nur.nix": {
+    "aarch64-linux/files/packages/_nur.nix": {
       "runs-on": "native",
       "steps": [
         {
@@ -265,7 +265,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.files-packages/_nur.nix\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"files/packages/_nur.nix\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -286,7 +286,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.hyphenopoly\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"hyphenopoly\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -307,7 +307,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.mirror-checks\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"mirror-checks\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -328,7 +328,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.pre-commit\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"pre-commit\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -349,7 +349,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.treefmt\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"treefmt\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -370,7 +370,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.update-packages\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"update-packages\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -391,7 +391,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.aarch64-linux.yt-dlp-master\" -L"
+          "run": "nix build '.#checks.aarch64-linux.\"yt-dlp-master\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -411,10 +411,10 @@
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
-        "aarch64-linux/files-.forgejo/workflows/build-checks.yaml",
-        "aarch64-linux/files-.gitignore",
-        "aarch64-linux/files-README.md",
-        "aarch64-linux/files-packages/_nur.nix",
+        "aarch64-linux/files/.forgejo/workflows/build-checks.yaml",
+        "aarch64-linux/files/.gitignore",
+        "aarch64-linux/files/README.md",
+        "aarch64-linux/files/packages/_nur.nix",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
@@ -431,10 +431,10 @@
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
-        "x86_64-linux/files-.forgejo/workflows/build-checks.yaml",
-        "x86_64-linux/files-.gitignore",
-        "x86_64-linux/files-README.md",
-        "x86_64-linux/files-packages/_nur.nix",
+        "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
+        "x86_64-linux/files/.gitignore",
+        "x86_64-linux/files/README.md",
+        "x86_64-linux/files/packages/_nur.nix",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
@@ -460,10 +460,10 @@
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
-        "aarch64-linux/files-.forgejo/workflows/build-checks.yaml",
-        "aarch64-linux/files-.gitignore",
-        "aarch64-linux/files-README.md",
-        "aarch64-linux/files-packages/_nur.nix",
+        "aarch64-linux/files/.forgejo/workflows/build-checks.yaml",
+        "aarch64-linux/files/.gitignore",
+        "aarch64-linux/files/README.md",
+        "aarch64-linux/files/packages/_nur.nix",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
         "aarch64-linux/pre-commit",
@@ -480,10 +480,10 @@
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
-        "x86_64-linux/files-.forgejo/workflows/build-checks.yaml",
-        "x86_64-linux/files-.gitignore",
-        "x86_64-linux/files-README.md",
-        "x86_64-linux/files-packages/_nur.nix",
+        "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
+        "x86_64-linux/files/.gitignore",
+        "x86_64-linux/files/README.md",
+        "x86_64-linux/files/packages/_nur.nix",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
         "x86_64-linux/pre-commit",
@@ -520,7 +520,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.asciinema-player\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"asciinema-player\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -541,7 +541,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.blog\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"blog\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -562,7 +562,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.blog-shell\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"blog-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -583,7 +583,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.claude-code\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"claude-code\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -604,7 +604,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.claude-desktop\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"claude-desktop\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -625,7 +625,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.configurations/nixos/picard\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"configurations/nixos/picard\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -646,7 +646,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.configurations/nixos/pike\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"configurations/nixos/pike\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -667,7 +667,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.cv\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"cv\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -688,7 +688,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.cv-shell\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"cv-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -709,7 +709,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.default-shell\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"default-shell\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -717,7 +717,7 @@
         }
       ]
     },
-    "x86_64-linux/files-.forgejo/workflows/build-checks.yaml": {
+    "x86_64-linux/files/.forgejo/workflows/build-checks.yaml": {
       "runs-on": "native",
       "steps": [
         {
@@ -730,7 +730,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.files-.forgejo/workflows/build-checks.yaml\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"files/.forgejo/workflows/build-checks.yaml\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -738,7 +738,7 @@
         }
       ]
     },
-    "x86_64-linux/files-.gitignore": {
+    "x86_64-linux/files/.gitignore": {
       "runs-on": "native",
       "steps": [
         {
@@ -751,7 +751,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.files-.gitignore\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"files/.gitignore\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -759,7 +759,7 @@
         }
       ]
     },
-    "x86_64-linux/files-README.md": {
+    "x86_64-linux/files/README.md": {
       "runs-on": "native",
       "steps": [
         {
@@ -772,7 +772,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.files-README.md\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"files/README.md\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -780,7 +780,7 @@
         }
       ]
     },
-    "x86_64-linux/files-packages/_nur.nix": {
+    "x86_64-linux/files/packages/_nur.nix": {
       "runs-on": "native",
       "steps": [
         {
@@ -793,7 +793,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.files-packages/_nur.nix\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"files/packages/_nur.nix\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -814,7 +814,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.hyphenopoly\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"hyphenopoly\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -835,7 +835,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.mirror-checks\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"mirror-checks\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -856,7 +856,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.pre-commit\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"pre-commit\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -877,7 +877,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.treefmt\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"treefmt\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -898,7 +898,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.update-packages\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"update-packages\"' -L"
         },
         {
           "name": "Push to Attic",
@@ -919,7 +919,7 @@
         },
         {
           "name": "Build",
-          "run": "nix build \".#checks.x86_64-linux.yt-dlp-master\" -L"
+          "run": "nix build '.#checks.x86_64-linux.\"yt-dlp-master\"' -L"
         },
         {
           "name": "Push to Attic",
