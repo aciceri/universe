@@ -19,7 +19,6 @@
       url = "github:nicknovitski/make-shell";
       inputs.flake-compat.follows = "";
     };
-    files.url = "github:mightyiam/files";
     agenix-shell = {
       url = "github:aciceri/agenix-shell";
       inputs = {

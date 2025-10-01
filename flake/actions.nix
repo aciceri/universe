@@ -57,24 +57,16 @@ let
     };
   };
 
-  toRemove = [
-    "files/.gitignore"
-    "files/README.md"
-    "files/.forgejo/workflows/build-checks.yaml"
-    "files/.forgejo/workflows/update-flake-lock.yaml"
-    "files/packages/_nur.nix"
-  ]; # FIXME `nix build` doesn't like dots and underscores in the derivation path
-
   buildJobs =
     (
-      (lib.removeAttrs config.flake.checks.x86_64-linux toRemove)
+      config.flake.checks.x86_64-linux
       |> lib.mapAttrs' (
         name: _:
         lib.nameValuePair "x86_64-linux/${name}" (buildDerivationJob "build-x86_64-linux/${name}" "checks.x86_64-linux.${name}")
       )
     )
     // (
-      (lib.removeAttrs config.flake.checks.aarch64-linux toRemove)
+      config.flake.checks.aarch64-linux
       |> lib.mapAttrs' (
         name: _:
         lib.nameValuePair "aarch64-linux/${name}" (
