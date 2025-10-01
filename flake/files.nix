@@ -47,6 +47,7 @@
               type = lib.types.package;
               default = pkgs.writeShellApplication {
                 name = cfg.writer.exeFilename;
+                derivationArgs.preferLocalBuild = true;
                 runtimeInputs = [ pkgs.git ];
                 text =
                   cfg.files
@@ -87,7 +88,7 @@
           |> lib.map (
             { path_, drv }:
             lib.nameValuePair "files/${path_}" (
-              pkgs.runCommand "check-file-${path_}" { nativeBuildInputs = [ pkgs.difftastic ]; } ''
+              pkgs.runCommandNoCCLocal "check-file-${path_}" { nativeBuildInputs = [ pkgs.difftastic ]; } ''
                 difft --exit-code --display inline ${drv} ${cfg.gitToplevel + "/${path_}"}
                 touch $out
               ''
