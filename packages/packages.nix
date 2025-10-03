@@ -39,7 +39,7 @@ in
         |> lib.map (name: config.packages.${name})
         |> lib.filter (package: package.passthru ? updateScript)
         |> lib.map (package: lib.concatStringsSep " " package.passthru.updateScript + " --flake ${package.pname}")
-        |> lib.concatStringsSep "\n"
+        |> lib.concatLines
         |> pkgs.writeShellScriptBin "update-packages";
     in
     {
