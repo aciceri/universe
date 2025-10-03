@@ -1,4 +1,13 @@
-{ getSystem, ... }:
+{
+  config,
+  lib,
+  getSystem,
+  getCurrentDir,
+  ...
+}:
+let
+  currentDir = getCurrentDir __curPos;
+in
 {
   perSystem =
     {
@@ -9,7 +18,6 @@
       ...
     }:
     let
-
       personalPackagePaths =
         builtins.readDir ./.
         |> lib.filterAttrs (_: type: type == "directory")
@@ -39,7 +47,17 @@
         inherit (inputs'.nix-ai-tools.packages) claude-desktop;
         inherit update-packages;
       }
-      // (personalPackagePaths |> lib.mapAttrs (_: path: pkgs.callPackage path { }));
+      // (
+        personalPackagePaths
+        |> lib.mapAttrs (
+          _: path:
+          (pkgs.callPackage path { }).overrideAttrs (old: {
+            passthru = (old.passthru or { }) // {
+              nur = true; # mark packages from this packages set
+            };
+          })
+        )
+      );
 
       files.files = [
         {
@@ -58,4 +76,24 @@
         (_: _: (getSystem config.nixpkgs.hostPlatform.system).packages)
       ];
     };
+
+  readme.parts.packages =
+    (getSystem (lib.head config.systems)).packages
+    |> lib.filterAttrs (_: pkg: pkg.passthru.nur or false)
+    |> lib.mapAttrsToList (
+      name: pkg: ''
+        ### [${name}](${currentDir}/${name}/_package.nix) (version ${pkg.version})
+
+        ${pkg.meta.longDescription or pkg.meta.description}
+      ''
+    )
+    |> lib.concat [
+      ''
+        ## NUR packages
+
+        This repository also acts as a NUR repository. Note that not all packages in the `packages`
+        flake output are included in the [_nur.nix file](${currentDir}/_nur.nix).
+      ''
+    ]
+    |> lib.concatLines;
 }

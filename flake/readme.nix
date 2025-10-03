@@ -44,6 +44,7 @@ in
         "intro"
         "nixos"
         "projects"
+        "packages"
         "files"
       ];
       parts.intro = ''
