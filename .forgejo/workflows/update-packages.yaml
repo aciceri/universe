@@ -32,6 +32,16 @@ jobs:
           if ! git diff --quiet HEAD; then
             git add -A
             git commit -m "Automatically update packages using nix-update-script"
+
+            # Run writer to regenerate files
+            nix run .#writer
+
+            # Check if writer modified files
+            if ! git diff --quiet HEAD; then
+              echo "Writer modified files, amending commit..."
+              git add -A
+              git commit --amend --no-edit
+            fi
           fi
       - name: Check if changes were made
         id: check-changes

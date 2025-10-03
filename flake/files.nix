@@ -114,6 +114,8 @@
           # Doing `nix run .#write-files` on the other hand takes more time
           entry = lib.getExe writer;
         };
+
+        packages = { inherit writer; };
       };
 
     readme.parts.files =
