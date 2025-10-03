@@ -45,6 +45,7 @@ let
   };
 in
 script.overrideAttrs (oldAttrs: {
+  version = "1.0.0";
   meta =
     with lib;
     oldAttrs.meta or { }
