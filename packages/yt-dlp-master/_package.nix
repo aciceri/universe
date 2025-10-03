@@ -19,6 +19,8 @@ yt-dlp.overrideAttrs (
         extraArgs = [ "--version=branch" ];
       };
     };
-    meta.maintainers = previousAttrs.meta.maintainers ++ [ lib.maintainers.aciceri ];
+    meta = previousAttrs.meta // {
+      maintainers = previousAttrs.meta.maintainers ++ [ lib.maintainers.aciceri ];
+    };
   }
 )
