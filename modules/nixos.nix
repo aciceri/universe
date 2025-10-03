@@ -8,13 +8,8 @@
   options.configurations.nixos = lib.mkOption {
     type = lib.types.lazyAttrsOf (
       lib.types.submodule {
-        options = {
-          module = lib.mkOption {
-            type = lib.types.deferredModule;
-          };
-          description = lib.mkOption {
-            type = lib.types.str;
-          };
+        options.module = lib.mkOption {
+          type = lib.types.deferredModule;
         };
       }
     );
@@ -38,24 +33,10 @@
         |> lib.mkMerge;
     };
 
-    readme.parts.nixos =
-      let
-        configurations =
-          config.configurations.nixos
-          |> lib.concatMapAttrsStringSep "\n" (
-            name: nixos: ''
-              ### `${name}`
+    readme.parts.nixos = lib.mkBefore ''
+      ## NixOS configurations
 
-              ${nixos.description}          
-            ''
-          );
-      in
-      ''
-        ## NixOS configurations
-
-        As you can notice I'm a big Star Trek fan...
-
-        ${configurations}
-      '';
+      As you can notice I'm a big Star Trek fan...
+    '';
   };
 }

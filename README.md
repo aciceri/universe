@@ -11,24 +11,50 @@ source distributed throughout the repository.
 
 As you can notice I'm a big Star Trek fan...
 
-### `picard`
-
-My main workstation—a custom-built powerhouse featuring an AMD Ryzen 9 7900X,
-64GB of DDR5 RAM, and blazing-fast NVMe storage.
-
-### `pike`
-
-My mobile workstation—an Acer Nitro V15 laptop equipped with an i5-13420H CPU,
-32GB of DDR5 RAM, and an Nvidia RTX 2050 GPU.
-Configured to closely mirror my main workstation `picard` for seamless work when away from home.
-
-### `sisko`
+### Sisko
 
 My homeserver hosting a wide variety of private and public services.
 Built on a [Radxa Rock5B](https://wiki.radxa.com/Rock5/hardware/5b)—an ARM single-board computer
 featuring a Rockchip RK3588, 16GB of DDR4 memory, and 2.5GBit ethernet connectivity.
 Storage consists of an SATA SSD for the OS and an enterprise-grade 12TB HDD for data,
 connected via an NVMe-to-SATA adapter.
+
+#### Web services
+
+##### Public
+
+- [auth.aciceri.dev](https://auth.aciceri.dev)
+- [blog.aciceri.dev](https://blog.aciceri.dev)
+- [cv.aciceri.dev](https://cv.aciceri.dev)
+- [git.aciceri.dev](https://git.aciceri.dev)
+- [home.aciceri.dev](https://home.aciceri.dev)
+- [jelly.aciceri.dev](https://jelly.aciceri.dev)
+- [photos.aciceri.dev](https://photos.aciceri.dev)
+
+##### WireGuard
+
+- [adguard.sisko.wg.aciceri.dev](https://adguard.sisko.wg.aciceri.dev)
+- [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
+- [atuin.sisko.wg.aciceri.dev](https://atuin.sisko.wg.aciceri.dev)
+- [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
+- [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
+- [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
+- [radarr.sisko.wg.aciceri.dev](https://radarr.sisko.wg.aciceri.dev)
+- [sonarr.sisko.wg.aciceri.dev](https://sonarr.sisko.wg.aciceri.dev)
+- [status.sisko.wg.aciceri.dev](https://status.sisko.wg.aciceri.dev)
+- [torrent.sisko.wg.aciceri.dev](https://torrent.sisko.wg.aciceri.dev)
+- [trilium.sisko.wg.aciceri.dev](https://trilium.sisko.wg.aciceri.dev)
+
+### Pike
+
+My mobile workstation—an Acer Nitro V15 laptop equipped with an i5-13420H CPU,
+32GB of DDR5 RAM, and an Nvidia RTX 2050 GPU.
+Configured to closely mirror my main workstation `picard` for seamless work when away from home.
+
+### Picard
+
+My main workstation—a custom-built powerhouse featuring an AMD Ryzen 9 7900X,
+64GB of DDR5 RAM, and blazing-fast NVMe storage.
 
 ## Projects
 
