@@ -15,8 +15,9 @@ jobs:
           tea logins add --token ${{secrets.SEVENOFNINE_TOKEN}} --url https://git.aciceri.dev --name sevenOfNine
           tea logins default sevenOfNine
 
-          # Find the PR by title (either flake lockfile update or package update)
-          PR_NUMBER=$(tea pr -r "${{github.repository}}" --fields "title,index" --output json | jq -r '.[] | select(.title == "Update flake'\''s lockfile" or .title == "Update packages") | .index')
+          # Extract branch name from ref and find the PR with that head branch
+          BRANCH_NAME=$(echo "${{github.ref}}" | sed 's#refs/heads/##')
+          PR_NUMBER=$(tea pr -r "${{github.repository}}" --fields "head,index" --output json | jq -r ".[] | select(.head == \"$BRANCH_NAME\") | .index")
 
           if [ -n "$PR_NUMBER" ]; then
             echo "All checks passed! Merging PR #$PR_NUMBER..."
