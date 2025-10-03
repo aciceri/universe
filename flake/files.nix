@@ -127,7 +127,7 @@
           The following files are automatically generated:
         ''
       ]
-      |> lib.concatStringsSep "\n";
+      |> lib.concatLines;
   };
 
 }
