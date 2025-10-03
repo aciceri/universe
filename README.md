@@ -95,7 +95,7 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.10.0)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.11.0)
 
 A web player for terminal session recordings
 
