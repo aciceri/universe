@@ -15,6 +15,7 @@
         "/var/log"
         "/var/lib/containers"
         "/var/lib/postgresql"
+        "/var/cache"
       ];
       files = [
         "/etc/machine-id"
