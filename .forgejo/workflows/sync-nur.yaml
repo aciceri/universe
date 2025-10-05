@@ -1,0 +1,46 @@
+name: Sync packages to NUR
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: native
+    steps:
+      - name: Checkout universe repository
+        uses: actions/checkout@v4
+        with:
+          path: universe
+          token: ${{secrets.SEVENOFNINE_TOKEN}}
+
+      - name: Checkout NUR repository
+        uses: actions/checkout@v4
+        with:
+          repository: aciceri/nur
+          path: nur
+          token: ${{secrets.SEVENOFNINE_TOKEN}}
+
+      - name: Configure git as `Seven of Nine`
+        run: |
+          git config --global user.email "sevenofnine@stronzi.org"
+          git config --global user.name "Seven of Nine"
+
+      - name: Sync packages to NUR
+        run: |
+          # Copy all packages from universe to NUR root
+          cp -r universe/packages/* nur/
+          # Remove packages.nix from NUR root
+          rm -f nur/packages.nix
+
+      - name: Commit and push changes
+        working-directory: nur
+        run: |
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Automatic update from universe repository"
+          git push origin main
