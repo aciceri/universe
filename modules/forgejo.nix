@@ -93,6 +93,8 @@
               client_max_body_size 100M;
               client_body_timeout 300s;
               client_body_buffer_size 128k;
+
+              rewrite ^/user/login$ /user/oauth2/kanidm;
             '';
           };
         };
