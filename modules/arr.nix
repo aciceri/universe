@@ -19,13 +19,19 @@
       };
     };
 
+    services.lidarr = {
+      enable = true;
+    };
+
     users.users.radarr.extraGroups = [ "transmission" ];
     users.users.sonarr.extraGroups = [ "transmission" ];
+    users.users.lidarr.extraGroups = [ "transmission" ];
 
     environment.persistence."/persist".directories = [
       "/var/lib/radarr"
       "/var/lib/prowlarr"
       "/var/lib/sonarr"
+      "/var/lib/lidarr"
     ];
 
     services.nginx.virtualHosts = {
@@ -52,6 +58,14 @@
           proxyPass = "http://localhost:8989"; # FIXME hardcoded port
         };
         serverAliases = [ "sonarr.sisko.zt.aciceri.dev" ];
+      };
+      "lidarr.sisko.wg.aciceri.dev" = {
+        forceSSL = true;
+        useACMEHost = "aciceri.dev";
+        locations."/" = {
+          proxyPass = "http://localhost:8686"; # FIXME hardcoded port
+        };
+        serverAliases = [ "lidarr.sisko.zt.aciceri.dev" ];
       };
     };
   };
