@@ -6,33 +6,11 @@
       cfg = config.services.kanidm;
       defaultGroups = [
         "forgejo.user"
+        "immich.user"
       ];
-      mkOAuth2 =
-        {
-          displayName,
-          originUrl,
-          originLanding,
-          scopes ? [
-            "openid"
-            "profile"
-            "email"
-          ],
-          groups ? [ ],
-          extraConfig ? { },
-        }:
-        {
-          inherit displayName;
-          inherit originUrl;
-          inherit originLanding;
-          preferShortUsername = true;
-          scopeMaps = lib.genAttrs groups (_group: scopes);
-        }
-        // extraConfig;
     in
     {
-      secrets.kanidm_admin_password = {
-        owner = "kanidm";
-      };
+      secrets.kanidm_admin_password.owner = "kanidm";
 
       users.users.kanidm.extraGroups = [
         "acme"
@@ -74,32 +52,62 @@
             displayName = "andrea";
             legalName = "Andrea Ciceri";
             mailAddresses = [ "andrea.ciceri@autistici.org" ];
-            groups = defaultGroups ++ [ "forgejo.admin" ];
+            groups = defaultGroups ++ [ "god" ];
           };
 
           groups = {
+            "god" = { }; # utility group used to easily make myself admin everywhere
             "forgejo.user" = { };
             "forgejo.admin" = { };
+            "immich.user" = { };
+            "immich.admin" = { };
           };
 
+          # TODO would it make sense for each oauth2 app to live in the same file defining the service?
+          # To retrieve the client secrets run
+          # kanidm system oauth2 show-basic-secret <appName> --url https://auth.aciceri.dev
           systems.oauth2 = {
-            # TODO add home-assistant, immich and jellyfin
-            forgejo = mkOAuth2 {
+            # TODO add home-assistant and jellyfin
+            forgejo = {
               displayName = "Forgejo";
               originUrl = "${config.services.forgejo.settings.server.ROOT_URL}/user/oauth2/kanidm/callback";
               originLanding = config.services.forgejo.settings.server.ROOT_URL;
-              groups = [
-                "forgejo.user"
-                "forgejo.admin"
+              preferShortUsername = true;
+              scopeMaps = lib.genAttrs [ "forgejo.user" "forgejo.admin" "god" ] (_: [
+                "openid"
+                "profile"
+                "email"
+              ]);
+              allowInsecureClientDisablePkce = true;
+              claimMaps.groups = {
+                joinType = "array";
+                valuesByGroup = {
+                  "forgejo.admin" = [ "admin" ];
+                  "forgejo.user" = [ "user" ];
+                  "god" = [ "admin" ];
+                };
+              };
+            };
+            immich = {
+              displayName = "Immich";
+              originUrl = [
+                "https://photos.aciceri.dev/auth/login"
+                "https://photos.aciceri.dev/api/oauth/mobile-redirect"
               ];
-              extraConfig = {
-                allowInsecureClientDisablePkce = true;
-                claimMaps.groups = {
-                  joinType = "array";
-                  valuesByGroup = {
-                    "forgejo.admin" = [ "admin" ];
-                    "forgejo.user" = [ "user" ];
-                  };
+              originLanding = "https://photos.aciceri.dev";
+              allowInsecureClientDisablePkce = true;
+              preferShortUsername = true;
+              scopeMaps = lib.genAttrs [ "immich.user" "immich.admin" "god" ] (_: [
+                "openid"
+                "profile"
+                "email"
+              ]);
+              claimMaps.groups = {
+                joinType = "array";
+                valuesByGroup = {
+                  "immich.admin" = [ "admin" ];
+                  "immich.user" = [ "user" ];
+                  "god" = [ "admin" ];
                 };
               };
             };
