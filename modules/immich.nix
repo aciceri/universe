@@ -9,13 +9,6 @@
       services.immich = {
         enable = true;
         mediaLocation = "/mnt/hd/immich";
-        # TODO try using immich from the latest nixpkgs
-        # package =
-        #   let
-        #     pkgsImmich =
-        #       (builtins.getFlake "github:NixOS/nixpkgs/7fd36ee82c0275fb545775cc5e4d30542899511d").legacyPackages.${pkgs.system};
-        #   in
-        #   pkgsImmich.immich;
       };
 
       # The reason for this hack is quite bad
