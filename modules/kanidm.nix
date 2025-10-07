@@ -48,11 +48,18 @@
           # To manually create a reset token run:
           # kanidm login --url https://auth.aciceri.dev --name idm_admin
           # kanidm person credential create-reset-token <person> 86400 --name idm_admin
-          persons."andrea" = {
-            displayName = "andrea";
-            legalName = "Andrea Ciceri";
-            mailAddresses = [ "andrea.ciceri@autistici.org" ];
-            groups = defaultGroups ++ [ "god" ];
+          persons = {
+            andrea = {
+              displayName = "andrea";
+              legalName = "Andrea Ciceri";
+              mailAddresses = [ "andrea.ciceri@autistici.org" ];
+              groups = defaultGroups ++ [ "god" ];
+            };
+            mara = {
+              displayName = "mara";
+              mailAddresses = [ "mara.savastano@gmail.com" ];
+              groups = defaultGroups;
+            };
           };
 
           groups = {
