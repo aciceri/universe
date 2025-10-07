@@ -37,6 +37,7 @@ connected via an NVMe-to-SATA adapter.
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
 - [atuin.sisko.wg.aciceri.dev](https://atuin.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
+- [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
 - [radarr.sisko.wg.aciceri.dev](https://radarr.sisko.wg.aciceri.dev)
@@ -95,7 +96,7 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.11.0)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.11.1)
 
 A web player for terminal session recordings
 
