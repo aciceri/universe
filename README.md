@@ -104,6 +104,10 @@ A web player for terminal session recordings
 
 Utility for quickly opening Claude Desktop when minimized to tray
 
+### [helix-master](packages/helix-master/_package.nix) (version master-5b0563419eeeaf0595c848865c46be4abad246a7)
+
+Post-modern modal text editor
+
 ### [hyphenopoly](packages/hyphenopoly/_package.nix) (version 6.0.0)
 
 Hyphenation for node and Polyfill for client-side hyphenation
