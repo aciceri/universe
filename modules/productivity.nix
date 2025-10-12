@@ -1,3 +1,4 @@
+{ config, lib, ... }:
 {
   flake.modules.homeManager.workstation =
     { pkgs, ... }:
@@ -51,5 +52,22 @@
       };
 
       services.remmina.enable = true;
+    };
+
+  flake.modules.nixos.workstation =
+    { pkgs, ... }:
+    {
+      virtualisation.libvirtd = {
+        enable = true;
+        qemu.vhostUserPackages = [ pkgs.virtiofsd ];
+      };
+      programs.virt-manager.enable = true;
+      users.users =
+        config.users
+        |> lib.mapAttrs (
+          _: user: {
+            extraGroups = lib.optional user.god "libvirtd";
+          }
+        );
     };
 }
