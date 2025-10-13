@@ -36,9 +36,7 @@ let
   );
 in
 rustPlatform.buildRustPackage (self: {
-  cargoLock = {
-    lockFile = "${helixSource}/Cargo.lock";
-  };
+  cargoHash = "sha256-bWO6TNT0CA8DXm06popoSTh7KIL7eFED//e6zlTNRZE=";
 
   propagatedBuildInputs = [ runtimeDir ];
 
