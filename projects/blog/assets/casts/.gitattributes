@@ -1,3 +1,0 @@
-brainfuck.cast filter=lfs diff=lfs merge=lfs -text
-demo.cast filter=lfs diff=lfs merge=lfs -text
-neofetch.cast filter=lfs diff=lfs merge=lfs -text
