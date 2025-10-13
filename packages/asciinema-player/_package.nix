@@ -7,7 +7,8 @@
   wasm-bindgen-cli_0_2_92,
   cargo,
   makeWrapper,
-  nix-update-script,
+  writeShellScript,
+  nix-update,
 }:
 
 buildNpmPackage rec {
@@ -52,7 +53,7 @@ buildNpmPackage rec {
     runHook postInstall
   '';
 
-  passthru.updateScript = nix-update-script { };
+  passthru.updateScript = writeShellScript "update-script.sh" "${lib.getExe nix-update} --flake asciinema-player";
 
   meta = with lib; {
     description = "A web player for terminal session recordings";

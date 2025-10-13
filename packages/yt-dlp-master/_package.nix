@@ -2,7 +2,8 @@
   yt-dlp,
   fetchFromGitHub,
   lib,
-  nix-update-script,
+  nix-update,
+  writeShellScript,
 }:
 yt-dlp.overrideAttrs (
   finalAttrs: previousAttrs: {
@@ -15,9 +16,7 @@ yt-dlp.overrideAttrs (
       hash = "sha256-U0jrjzFTEqrnfgS6PPUAHqd61exbjmqIu2MkomKiPAE=";
     };
     passthru = previousAttrs.passthru // {
-      updateScript = nix-update-script {
-        extraArgs = [ "--version=branch" ];
-      };
+      updateScript = writeShellScript "update-script.sh" "${lib.getExe nix-update} --flake yt-dlp-master --version=branch";
     };
     meta = previousAttrs.meta // {
       maintainers = previousAttrs.meta.maintainers ++ [ lib.maintainers.aciceri ];
