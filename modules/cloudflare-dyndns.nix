@@ -17,6 +17,8 @@
           "jelly.aciceri.dev"
           "vpn.aciceri.dev"
           "auth.aciceri.dev"
+          "talks.aciceri.dev"
+          "*.talks.aciceri.dev"
         ];
         apiTokenFile = config.age.secrets.cloudflare_dyndns_api_token.path;
       };
