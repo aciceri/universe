@@ -5,13 +5,13 @@
   runCommand,
   installShellFiles,
   git,
-  gitRev ? null,
-  grammarOverlays ? [ ],
-  includeGrammarIf ? _: true,
   fetchFromGitHub,
-  nix-update-script,
   helix,
   lib,
+  writeShellScript,
+  python3,
+  nix-update,
+  nurl,
 }:
 let
   helixSource = fetchFromGitHub {
@@ -21,14 +21,19 @@ let
     hash = "sha256-fYHIxjTvVIAEDWzenUROuzDPxy1rBCXZNPgh4b1dfgo=";
   };
 
-  grammars = callPackage ./_grammars.nix { inherit grammarOverlays includeGrammarIf helixSource; };
+  grammars = callPackage ./_grammars.nix { };
 
-  runtimeDir = runCommand "helix-runtime" { } ''
-    mkdir -p $out
-    ln -s ${helixSource}/runtime/* $out
-    rm -r $out/grammars
-    ln -s ${grammars} $out/grammars
-  '';
+  runtimeDir = runCommand "helix-runtime" { } (
+    ''
+      mkdir -p $out
+      ln -s ${helixSource}/runtime/* $out
+      rm -r $out/grammars
+      mkdir $out/grammars
+    ''
+    + lib.concatMapAttrsStringSep "\n" (name: grammar: ''
+      ln -s ${grammar}/${name}.so $out/grammars/${name}.so
+    '') (lib.filterAttrs (n: v: lib.isDerivation v) grammars)
+  );
 in
 rustPlatform.buildRustPackage (self: {
   cargoLock = {
@@ -51,7 +56,7 @@ rustPlatform.buildRustPackage (self: {
 
   HELIX_DISABLE_AUTO_GRAMMAR_BUILD = "1";
 
-  HELIX_NIX_BUILD_REV = gitRev;
+  HELIX_NIX_BUILD_REV = helixSource.rev;
 
   doCheck = false;
   strictDeps = true;
@@ -78,8 +83,29 @@ rustPlatform.buildRustPackage (self: {
   };
 
   passthru = {
-    updateScript = nix-update-script {
-      extraArgs = [ "--version=branch" ];
-    };
+    tree-sitter-grammars = grammars;
+    inherit helixSource;
+    updateScript = writeShellScript "update-script.sh" ''
+      set -euo pipefail
+      export PATH="${lib.makeBinPath [ nurl ]}:$PATH"
+
+      echo "Updating helix-master source..."
+      ${lib.getExe nix-update} --flake helix-master --version=branch
+
+      echo "Fetching updated helixSource..."
+      HELIX_SRC=$(nix eval .#helix-master.src.outPath --raw)
+
+      echo "Generating grammars.json..."
+      ${lib.getExe python3} ${./generate_grammars.py} \
+        "$HELIX_SRC/languages.toml" \
+        -o packages/helix-master/grammars.json \
+
+      if [ $? -ne 0 ]; then
+        echo "Error: Failed to generate grammars.json" >&2
+        exit 1
+      fi
+
+      echo "Done! Updated grammars.json"
+    '';
   };
 })
