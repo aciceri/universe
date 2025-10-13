@@ -17,8 +17,8 @@ let
   helixSource = fetchFromGitHub {
     owner = "helix-editor";
     repo = "helix";
-    rev = "5b0563419eeeaf0595c848865c46be4abad246a7";
-    hash = "sha256-fYHIxjTvVIAEDWzenUROuzDPxy1rBCXZNPgh4b1dfgo=";
+    rev = "10c6a100c6e93b0dc175bf2f8b5a1afd66aebe2a";
+    hash = "sha256-HqVZwIwpDviDB1daJY/pPzkMKAC+dj5y0rDWEJbuKsE=";
   };
 
   grammars = callPackage ./_grammars.nix { };

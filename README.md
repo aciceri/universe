@@ -96,7 +96,7 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.11.1)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.12.1)
 
 A web player for terminal session recordings
 
@@ -104,7 +104,7 @@ A web player for terminal session recordings
 
 Utility for quickly opening Claude Desktop when minimized to tray
 
-### [helix-master](packages/helix-master/_package.nix) (version master-5b0563419eeeaf0595c848865c46be4abad246a7)
+### [helix-master](packages/helix-master/_package.nix) (version master-10c6a100c6e93b0dc175bf2f8b5a1afd66aebe2a)
 
 Post-modern modal text editor
 
@@ -116,7 +116,7 @@ Hyphenation for node and Polyfill for client-side hyphenation
 
 Utility to synchronize CI checks from Forgejo to GitHub
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.09.26-unstable-2025-10-01)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.09.26-unstable-2025-10-12)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
