@@ -49,7 +49,7 @@ rustPlatform.buildRustPackage (self: {
 
   buildType = "release";
 
-  name = with builtins; (fromTOML (readFile "${helixSource}/helix-term/Cargo.toml")).package.name;
+  name = "helix-master";
   version = "master-${helixSource.rev}";
   pname = "helix-master";
   src = helixSource;
