@@ -1,0 +1,5 @@
+dist
+result
+.direnv
+node_modules
+.pre-commit-config.yaml
