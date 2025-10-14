@@ -104,6 +104,7 @@
       home.packages = with pkgs; [
         repgrep
         tokei
+        fx
       ];
     };
 }
