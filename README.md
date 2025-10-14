@@ -132,7 +132,7 @@ A web player for terminal session recordings
 
 Utility for quickly opening Claude Desktop when minimized to tray
 
-### [helix-master](packages/helix-master/_package.nix) (version master-50e4385aefdd1cea80a3a50af62d5eefcb42b4e8)
+### [helix-master](packages/helix-master/_package.nix) (version master-6e07bcc04dd5a0bb5ae04677823a5b3821f622c5)
 
 Post-modern modal text editor
 
@@ -144,7 +144,7 @@ Hyphenation for node and Polyfill for client-side hyphenation
 
 Utility to synchronize CI checks from Forgejo to GitHub
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.09.26-unstable-2025-10-12)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.09.26-unstable-2025-10-14)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
