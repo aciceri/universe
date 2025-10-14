@@ -31,6 +31,7 @@ connected via an NVMe-to-SATA adapter.
 - [home.aciceri.dev](https://home.aciceri.dev)
 - [jelly.aciceri.dev](https://jelly.aciceri.dev)
 - [nixos-devops.talks.aciceri.dev](https://nixos-devops.talks.aciceri.dev)
+- [nixos-tests.talks.aciceri.dev](https://nixos-tests.talks.aciceri.dev)
 - [photos.aciceri.dev](https://photos.aciceri.dev)
 
 ##### WireGuard
@@ -60,6 +61,26 @@ My main workstation—a custom-built powerhouse featuring an AMD Ryzen 9 7900X,
 64GB of DDR5 RAM, and blazing-fast NVMe storage.
 
 ## Projects
+
+### `agenix-shell` talk
+
+Talk about the NixOS tests framework for 2025 Milan Linux Day.
+
+#### Running the Slides
+
+```bash
+pnpm install  # Install dependencies
+pnpm dev      # Start development server
+```
+
+This will start a development server for the presentation slides.
+
+#### Building
+
+```bash
+pnpm build                        # Build for production
+nix build .#nixos-tests-talk      # Build presentation as a completely self-contained derivation
+```
 
 ### "NixOS per DevOps" talk
 

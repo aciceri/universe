@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NixOS testing framework</title>
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/reveal.css" />
+    <link rel="stylesheet" href="node_modules/reveal.js/dist/theme/serif.css" />
+    <link
+      rel="stylesheet"
+      href="node_modules/reveal.js/plugin/highlight/monokai.css"
+    />
+    <link
+      rel="stylesheet"
+      href="node_modules/asciinema-player/dist/bundle/asciinema-player.css"
+    />
+    <style>
+      .reveal .slides section pre.code-tall {
+        max-height: 85vh;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <section
+          data-markdown="slides.md"
+          data-separator="^---$"
+          data-separator-vertical="^--$"
+        ></section>
+      </div>
+    </div>
+
+    <script type="module">
+      import Reveal from "reveal.js";
+      import RevealMarkdown from "reveal.js/plugin/markdown/markdown.js";
+      import RevealHighlight from "reveal.js/plugin/highlight/highlight.js";
+      import RevealNotes from "reveal.js/plugin/notes/notes.js";
+      import QRCode from "qrcode";
+      import { create } from "asciinema-player";
+
+      Reveal.initialize({
+        hash: true,
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes],
+      });
+
+      // Generate QR code after slides are loaded
+      Reveal.on("ready", () => {
+        const canvas = document.getElementById("qr-canvas");
+        if (canvas) {
+          QRCode.toCanvas(canvas, "https://milano.nix.pizza", {
+            width: 160,
+            margin: 1,
+            color: {
+              dark: "#000000",
+              light: "#0000", // Transparent background
+            },
+          });
+        }
+
+        // Initialize asciinema player
+        const playerDiv = document.getElementById("demo-player");
+        let player = null;
+        if (playerDiv) {
+          player = create("casts/demo.cast", playerDiv, {
+            autoplay: false,
+            loop: false,
+            controls: true,
+            theme: "monokai",
+            fit: "width",
+          });
+        }
+
+        // Auto-play when entering demo slide
+        Reveal.on("slidechanged", (event) => {
+          const currentSlide = event.currentSlide;
+          if (currentSlide.querySelector("#demo-player") && player) {
+            player.play();
+          }
+        });
+      });
+    </script>
+  </body>
+</html>

@@ -13,5 +13,8 @@ projects/cv/**/*.pdf
 projects/talks/agenix-shell/**/dist
 projects/talks/agenix-shell/**/node_modules
 projects/talks/nixos-devops/**/*.html
+projects/talks/nixos-tests/**/.vite
+projects/talks/nixos-tests/**/dist
+projects/talks/nixos-tests/**/node_modules
 result
 sisko.qcow2

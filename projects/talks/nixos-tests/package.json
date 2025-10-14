@@ -1,0 +1,29 @@
+{
+  "name": "nixos-tests-talk",
+  "version": "1.0.0",
+  "description": "Presentazione stupidissima con reveal.js",
+  "main": "presentation.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "reveal.js": "^5.2.1",
+    "qrcode": "^1.5.4",
+    "asciinema-player": "^3.8.0"
+  },
+  "devDependencies": {
+    "vite": "^5.4.2"
+  },
+  "keywords": [
+    "presentation",
+    "reveal.js",
+    "NixOS",
+    "tests",
+    "testing framework",
+    "nix"
+  ],
+  "author": "ccr",
+  "license": "MIT"
+}
