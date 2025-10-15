@@ -11,6 +11,8 @@
         "google-chrome"
         "nvidia-x11"
         "nvidia-settings"
+        "android-studio-stable"
+        "android-studio-tools"
       ];
   };
 }
