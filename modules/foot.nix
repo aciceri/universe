@@ -2,7 +2,6 @@
   flake.modules.homeManager.pc = {
     programs.foot = {
       enable = true;
-      server.enable = true;
       settings = {
         main = {
           login-shell = "yes";
