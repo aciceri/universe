@@ -34,6 +34,10 @@
             };
           };
         };
+
+        programs.nushell.shellAliases = {
+          lg = lib.getExe config.programs.lazygit.package;
+        };
       }
     )
     (
