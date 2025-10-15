@@ -399,6 +399,27 @@
         }
       ]
     },
+    "aarch64-linux/reinstall-magisk-on-lineageos": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"reinstall-magisk-on-lineageos\"' -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
     "aarch64-linux/talks-agenix-shell-shell": {
       "runs-on": "native",
       "steps": [
@@ -526,6 +547,7 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/nixos-devops-talk",
         "aarch64-linux/pre-commit",
+        "aarch64-linux/reinstall-magisk-on-lineageos",
         "aarch64-linux/talks-agenix-shell-shell",
         "aarch64-linux/treefmt",
         "aarch64-linux/update-packages",
@@ -551,6 +573,7 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/pre-commit",
+        "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
         "x86_64-linux/treefmt",
         "x86_64-linux/update-packages",
@@ -585,6 +608,7 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/nixos-devops-talk",
         "aarch64-linux/pre-commit",
+        "aarch64-linux/reinstall-magisk-on-lineageos",
         "aarch64-linux/talks-agenix-shell-shell",
         "aarch64-linux/treefmt",
         "aarch64-linux/update-packages",
@@ -610,6 +634,7 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/pre-commit",
+        "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
         "x86_64-linux/treefmt",
         "x86_64-linux/update-packages",
@@ -1045,6 +1070,27 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"pre-commit\"' -L"
+        },
+        {
+          "name": "Push to Attic",
+          "run": "attic push sisko result"
+        }
+      ]
+    },
+    "x86_64-linux/reinstall-magisk-on-lineageos": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Attic login",
+          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"reinstall-magisk-on-lineageos\"' -L"
         },
         {
           "name": "Push to Attic",
