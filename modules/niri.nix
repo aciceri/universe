@@ -161,7 +161,10 @@
 
             # bTop
             {
-              matches = [ { title = "^bTop$"; } ];
+              matches = [
+                { title = "^bTop$"; }
+                { title = "^lazyGit$"; }
+              ];
               opacity = 0.95;
               open-floating = true;
               open-focused = true;
@@ -221,7 +224,7 @@
               rofi = lib.getExe config.programs.rofi.package;
               rofi-pass = lib.getExe config.programs.rofi.pass.package;
               firefox = lib.getExe config.programs.firefox.package;
-              footclient = lib.getExe' config.programs.foot.package "footclient";
+              footclient = lib.getExe config.programs.foot.package;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotube = lib.getExe pkgs.spotube;
@@ -233,6 +236,21 @@
                 pkgs.writeScriptBin "run-floating-btop" ''
                   foot --title='bTop' -W ${cols}x${rows} btop
                 ''
+                |> lib.getExe;
+              run-floating-lazygit =
+                with floatingSize.btop;
+                pkgs.writeScriptBin "run-floating-lazygit" # nu
+                  ''
+                    #!${lib.getExe pkgs.nushell}
+
+                    let focused_window_pid = niri msg -j focused-window | from json | get pid
+                    let is_foot = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "foot" | any {}
+
+                    if $is_foot {
+                      let cwd = ps -l | where ppid == $focused_window_pid and name == "nu" | first | get cwd
+                      foot --title "lazyGit" -W ${cols}x${rows} sh -c $"${lib.getExe pkgs.lazygit} -w ($cwd)"
+                    }
+                  ''
                 |> lib.getExe;
             in
             {
@@ -248,6 +266,7 @@
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn claude-desktop-toggle;
+              "Ctrl+Shift+G".action = spawn run-floating-lazygit;
               "Mod+M".action = spawn spotube;
               "Mod+N".action = spawn trilium;
               "Mod+Shift+M".action = spawn birdtray "--toggle-tb";
