@@ -25,20 +25,19 @@
           };
           plugins = with pkgs.nushellPlugins; [
             gstat
-            highlight
             query
           ];
           extraConfig = # nushell
             ''
-              $env.PROMPT_INDICATOR = {|| 
-                if $env.LAST_EXIT_CODE != 0 { 
-                  $"(ansi red)〉(ansi reset)" 
-                } else { 
-                  "〉" 
+              $env.PROMPT_INDICATOR = {||
+                if $env.LAST_EXIT_CODE != 0 {
+                  $"(ansi red)〉(ansi reset)"
+                } else {
+                  "〉"
                 }
               }
 
-              $env.PROMPT_COMMAND_RIGHT = {|| 
+              $env.PROMPT_COMMAND_RIGHT = {||
                 let user = (whoami)
                 let host = (hostname)
                 let time = (date now | format date "%H:%M:%S")
