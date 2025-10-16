@@ -230,7 +230,7 @@
               spotube = lib.getExe pkgs.spotube;
               birdtray = lib.getExe pkgs.birdtray;
               trilium = lib.getExe pkgs.trilium-desktop;
-              claude-desktop-toggle = lib.getExe pkgs.claude-desktop-toggle;
+              claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
                 with floatingSize.btop;
                 pkgs.writeScriptBin "run-floating-btop" ''
@@ -265,7 +265,7 @@
               "Mod+E".action = toggle-column-tabbed-display;
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
-              "Mod+G".action = spawn claude-desktop-toggle;
+              "Mod+G".action = spawn claude-desktop;
               "Ctrl+Shift+G".action = spawn run-floating-lazygit;
               "Mod+M".action = spawn spotube;
               "Mod+N".action = spawn trilium;

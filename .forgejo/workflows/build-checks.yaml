@@ -105,27 +105,6 @@
         }
       ]
     },
-    "aarch64-linux/claude-desktop-toggle": {
-      "runs-on": "native",
-      "steps": [
-        {
-          "name": "Checkout repository",
-          "uses": "actions/checkout@v4"
-        },
-        {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
-          "name": "Build",
-          "run": "nix build '.#checks.aarch64-linux.\"claude-desktop-toggle\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
-        }
-      ]
-    },
     "aarch64-linux/configurations/nixos/sisko": {
       "runs-on": "native",
       "steps": [
@@ -533,7 +512,6 @@
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
         "aarch64-linux/claude-desktop",
-        "aarch64-linux/claude-desktop-toggle",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
@@ -558,7 +536,6 @@
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
         "x86_64-linux/claude-desktop",
-        "x86_64-linux/claude-desktop-toggle",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
@@ -594,7 +571,6 @@
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
         "aarch64-linux/claude-desktop",
-        "aarch64-linux/claude-desktop-toggle",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
@@ -619,7 +595,6 @@
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
         "x86_64-linux/claude-desktop",
-        "x86_64-linux/claude-desktop-toggle",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
@@ -755,27 +730,6 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"claude-desktop\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
-        }
-      ]
-    },
-    "x86_64-linux/claude-desktop-toggle": {
-      "runs-on": "native",
-      "steps": [
-        {
-          "name": "Checkout repository",
-          "uses": "actions/checkout@v4"
-        },
-        {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
-          "name": "Build",
-          "run": "nix build '.#checks.x86_64-linux.\"claude-desktop-toggle\"' -L"
         },
         {
           "name": "Push to Attic",

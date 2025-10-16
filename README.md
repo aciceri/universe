@@ -128,10 +128,6 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
-### [claude-desktop-toggle](packages/claude-desktop-toggle/_package.nix) (version 1.0.0)
-
-Utility for quickly opening Claude Desktop when minimized to tray
-
 ### [helix-master](packages/helix-master/_package.nix) (version master-f6f8634eb07f35f02bd2881666925a90513f6f3b)
 
 Post-modern modal text editor
