@@ -132,7 +132,7 @@ A web player for terminal session recordings
 
 Utility for quickly opening Claude Desktop when minimized to tray
 
-### [helix-master](packages/helix-master/_package.nix) (version master-4547133b95dbae0084db4f651bc08956710f1309)
+### [helix-master](packages/helix-master/_package.nix) (version master-f6f8634eb07f35f02bd2881666925a90513f6f3b)
 
 Post-modern modal text editor
 
