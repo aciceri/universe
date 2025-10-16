@@ -13,6 +13,9 @@
         "nvidia-settings"
         "android-studio-stable"
         "android-studio-tools"
+        "brscan4"
+        "brother-udev-rule-type1"
+        "brscan4-etc-files"
       ];
   };
 }

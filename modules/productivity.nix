@@ -16,6 +16,7 @@
 
         # Office
         libreoffice
+        simple-scan
 
         # Chats
         telegram-desktop
@@ -61,13 +62,32 @@
         enable = true;
         qemu.vhostUserPackages = [ pkgs.virtiofsd ];
       };
+
       programs.virt-manager.enable = true;
+
       users.users =
         config.users
         |> lib.mapAttrs (
           _: user: {
-            extraGroups = lib.optional user.god "libvirtd";
+            extraGroups = [
+              "lp"
+              "scanner"
+            ]
+            ++ (lib.optional user.god "libvirtd");
           }
         );
+
+      hardware.sane = {
+        enable = true;
+        brscan4 = {
+          enable = true;
+          netDevices = {
+            brother = {
+              model = "MFC-L2710DW";
+              ip = "10.1.1.39";
+            };
+          };
+        };
+      };
     };
 }
