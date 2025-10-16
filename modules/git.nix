@@ -30,7 +30,7 @@
             git.paging = {
               colorArg = "always";
               useConfig = false;
-              pager = "${pkgs.delta}/bin/delta --dark --paging=never";
+              pager = "${lib.getExe pkgs.delta} --dark --paging=never";
             };
           };
         };
