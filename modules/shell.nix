@@ -104,6 +104,7 @@
         repgrep
         tokei
         fx
+        dust
       ];
     };
 }
