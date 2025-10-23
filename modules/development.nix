@@ -14,6 +14,7 @@
         nix-update
         nix-melt
         nix-tree
+        google-cloud-sdk
       ];
 
       programs.gh = {
