@@ -224,7 +224,7 @@ Note:
   <li class="fragment">
     <code>nixpkgs</code> colleziona anche questi moduli che permettono di attivare e configurare ogni aspetto del sistema
   </li>
-</ul>
+</ul>foo
 
 Note:
 
