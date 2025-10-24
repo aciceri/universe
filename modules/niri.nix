@@ -396,6 +396,11 @@
               "Mod+Ctrl+Shift+WheelScrollDown".action = move-column-right;
               "Mod+Ctrl+Shift+WheelScrollUp".action = move-column-left;
 
+              "Mod+TouchpadScrollLeft".action = focus-monitor-left;
+              "Mod+TouchpadScrollRight".action = focus-monitor-right;
+              "Mod+TouchpadScrollUp".action = focus-monitor-up;
+              "Mod+TouchpadScrollDown".action = focus-monitor-down;
+
               # Numbered workspaces
               "Mod+1".action = focus-workspace 1;
               "Mod+2".action = focus-workspace 2;
