@@ -119,6 +119,7 @@ E infine è un build system: ogni build è puramente funzionale, lo stesso input
     owner = "foo";
     repo = "bar";
     rev = "v${version}";
+    hash = "sha256-xxx";
   };
 
   nativeBuildInputs = with pkgs; [ gcc gnumake ];
@@ -177,7 +178,7 @@ Note:
 
 Grafo delle dipendenze di `glibc`
 
-<img src="public/images/drv-graph.svg" />
+<img src="images/drv-graph.svg" />
 
 Note:
 
@@ -200,7 +201,7 @@ Note:
 
 #### `nixpkgs`
 
-![nixpkgs](public/images/nixpkgs-screenshot.png)
+![nixpkgs](images/nixpkgs-screenshot.png)
 
 <!-- .element: class="r-stretch" style="max-height: 80vh; object-fit: contain;" -->
 
@@ -315,7 +316,7 @@ pkgs.nixosTest {
     foo.wait_for_open_port(80)
     foo.wait_for_open_port(3000)
 
-    foo.succeed("curl --fail http://127.0.0.1:80/login | grep 'Grafana'")
+    foo.succeed("curl --fail http://127.0.0.1:3000/login | grep 'Grafana'")
     foo.succeed(
       "curl --fail --header 'Host: grafana.example.test' http://127.0.0.1/ | grep 'Grafana'"
     )
@@ -355,12 +356,14 @@ Note:
 </div>
 
 Note:
-Per la fase di demo:
+Per la fase di demo:foo
 
 - https://nixos.org/manual/nixos/unstable/#sec-nixos-tests
 - https://github.com/NixOS/nixpkgs/blob/master/nixos/tests/bittorrent.nix
 - nix build nixpkgs#nixosTests.bittorrent -L --rebuild
+- https://github.com/NixOS/nixpkgs/blob/master/nixos/tests/openarena.nix
 - nix run nixpkgs#nixosTests.openarena.driverInteractive
+- https://github.com/NixOS/nixpkgs/blob/master/nixos/tests/openarena.nix
 - nix run nixpkgs#nixosTests.firefox.driverInteractive
 - start_all()
 - run_tests()
