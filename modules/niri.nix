@@ -94,27 +94,32 @@
             }
           ];
 
-          outputs = {
-            "eDP-1" = {
-              mode = {
-                width = 1920;
-                height = 1080;
-                refresh = 59.999;
+          outputs =
+            {
+              picard = {
+                "Dell Inc. DELL U2515H 9X2VY5170PJL" = {
+                  mode = {
+                    width = 2560;
+                    height = 1440;
+                    refresh = 59.951;
+                  };
+                  scale = 1.0;
+                  transform.rotation = 0;
+                };
               };
-              scale = 1.1;
-              transform.rotation = 0;
-            };
-
-            "Dell Inc. DELL U2515H 9X2VY5170PJL" = {
-              mode = {
-                width = 2560;
-                height = 1440;
-                refresh = 59.951;
+              pike = {
+                "eDP-1" = {
+                  mode = {
+                    width = 1920;
+                    height = 1080;
+                    refresh = 59.999;
+                  };
+                  scale = 1.1;
+                  transform.rotation = 0;
+                };
               };
-              scale = 1.0;
-              transform.rotation = 0;
-            };
-          };
+            }
+            .${osConfig.networking.hostName};
 
           layout = {
             gaps = 16;
@@ -509,6 +514,7 @@
 
       home.packages = with pkgs; [
         nautilus # needed by the portal for the files picker
+        wdisplays
         wl-clipboard-rs
       ];
     };
