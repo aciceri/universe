@@ -91,7 +91,7 @@ in
     };
 
   readme.parts.projects = ''
-    ### `agenix-shell` talk
+    ### NixOS testing framework talk
 
     Talk about the NixOS tests framework for 2025 Milan Linux Day.
 
