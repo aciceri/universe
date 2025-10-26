@@ -53,7 +53,10 @@
           extraPackages = with pkgs.bat-extras; [
             batdiff
             batman
-            batgrep
+            (batgrep.overrideAttrs {
+              # FIXME https://github.com/NixOS/nixpkgs/issues/454391
+              doCheck = false;
+            })
             batwatch
           ];
         };
