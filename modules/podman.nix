@@ -1,3 +1,4 @@
+{ config, lib, ... }:
 {
   flake.modules.nixos.base =
     { pkgs, ... }:
@@ -13,5 +14,15 @@
       environment.systemPackages = with pkgs; [
         podman-compose
       ];
+
+      # Winboat expects the user to be in the docker group
+      users.groups.docker = { };
+      users.users =
+        config.users
+        |> lib.mapAttrs (
+          _: user: {
+            extraGroups = lib.optional user.god "docker";
+          }
+        );
     };
 }
