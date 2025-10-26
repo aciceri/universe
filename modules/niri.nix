@@ -435,8 +435,11 @@
               "Mod+Shift+Equal".action = set-window-height "+10%";
 
               # Screenshots
-              "Mod+S".action = screenshot;
-              "Mod+Ctrl+S".action = screenshot-window;
+              "Mod+S".action.screenshot = [ ];
+              "Mod+Ctrl+S".action.screenshot-window = [ ];
+              # Revert to this after https://github.com/sodiboo/niri-flake/issues/1380 has been addressed
+              # "Mod+S".action = screenshot;
+              # "Mod+Ctrl+S".action = screenshot-window;
 
               # System
               "Mod+Shift+E".action = quit;
