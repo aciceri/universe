@@ -26,6 +26,7 @@ connected via an NVMe-to-SATA adapter.
 - [agenix-shell.talks.aciceri.dev](https://agenix-shell.talks.aciceri.dev)
 - [auth.aciceri.dev](https://auth.aciceri.dev)
 - [blog.aciceri.dev](https://blog.aciceri.dev)
+- [cal.aciceri.dev](https://cal.aciceri.dev)
 - [cv.aciceri.dev](https://cv.aciceri.dev)
 - [git.aciceri.dev](https://git.aciceri.dev)
 - [home.aciceri.dev](https://home.aciceri.dev)

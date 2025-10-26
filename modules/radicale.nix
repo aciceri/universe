@@ -21,11 +21,22 @@
         cfg.settings.storage.filesystem_folder
       ];
 
-      services.nginx.virtualHosts."cal.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
-        serverAliases = [ "cal.sisko.zt.aciceri.dev" ];
+      services.nginx.virtualHosts = {
+        "cal.sisko.wg.aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          locations."/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
+          serverAliases = [ "cal.sisko.zt.aciceri.dev" ];
+        };
+        # Put the web interface behind WireGuard but leave the rest public to make the calendars shareable
+        "cal.aciceri.dev" = {
+          enableACME = true;
+          forceSSL = true;
+          locations = {
+            "/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
+            "/.web/".extraConfig = "return 404;";
+          };
+        };
       };
     };
 }

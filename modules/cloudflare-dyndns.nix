@@ -17,6 +17,7 @@
           "jelly.aciceri.dev"
           "vpn.aciceri.dev"
           "auth.aciceri.dev"
+          "cal.aciceri.dev"
           "talks.aciceri.dev"
           "*.talks.aciceri.dev"
         ];
