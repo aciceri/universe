@@ -7,7 +7,7 @@
         programs.git = {
           enable = true;
           lfs.enable = true;
-          extraConfig = {
+          settings = {
             ui.color = "auto";
             pull.rebase = true;
             rebase.autostash = true;
@@ -43,12 +43,12 @@
     (
       { config, ... }:
       lib.mkIf (config.home.username == "ccr") {
-        programs.git = {
-          userName = "Andrea Ciceri";
-          userEmail = "andrea.ciceri@autistici.org";
-          extraConfig = {
-            github.user = "aciceri";
+        programs.git.settings = {
+          user = {
+            name = "Andrea Ciceri";
+            email = "andrea.ciceri@autistici.org";
           };
+          github.user = "aciceri";
         };
       }
     )
