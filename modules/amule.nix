@@ -47,4 +47,10 @@
         serverAliases = [ "amule.sisko.zt.aciceri.dev" ];
       };
     };
+
+  flake.modules.homeManager.workstation =
+    { pkgs, ... }:
+    {
+      home.packages = [ pkgs.amule-gui ];
+    };
 }
