@@ -114,7 +114,7 @@
     };
 
   flake.modules.nixos.workstation =
-    { config, ... }:
+    { config, pkgs, ... }:
     {
       secrets.wireguard_mlabs_private_key = { }; # the same for all the workstations, usually only one at time is on
       networking.wireguard.interfaces.wg1 = {
@@ -129,6 +129,20 @@
         ];
         privateKeyFile = config.age.secrets.wireguard_mlabs_private_key.path;
         mtu = 1300;
+      };
+
+      systemd.services."wireguard-restart-after-sleep" = {
+        description = "Restart WireGuard after suspend";
+        after = [
+          "suspend.target"
+          "hibernate.target"
+          "sleep.target"
+        ];
+        wantedBy = [ "post-resume.target" ];
+        serviceConfig = {
+          Type = "oneshot";
+          ExecStart = "${lib.getExe' pkgs.systemd "systemctl"} restart 'wireguard-wg@*'";
+        };
       };
     };
 }
