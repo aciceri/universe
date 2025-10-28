@@ -229,7 +229,12 @@
               rofi = lib.getExe config.programs.rofi.package;
               rofi-pass = lib.getExe config.programs.rofi.pass.package;
               firefox = lib.getExe config.programs.firefox.package;
-              alacritty = lib.getExe config.programs.alacritty.package;
+              alacritty' = lib.getExe config.programs.alacritty.package;
+              alacritty =
+                pkgs.writeShellScriptBin "start-alacritty.sh" ''
+                  ${alacritty'} msg create-window || ${alacritty'}
+                ''
+                |> lib.getExe;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotube = lib.getExe pkgs.spotube;
@@ -237,38 +242,9 @@
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
-                pkgs.writeScriptBin "run-floating-btop" # bash
-                  ''
-                    alacritty --title='bTop' -e btop
-                  ''
-                |> lib.getExe;
-              run-floating-lazygit =
-                pkgs.writeScriptBin "run-floating-lazygit" # nu
-                  ''
-                    #!${lib.getExe pkgs.nushell}
-
-                    let focused_window_pid = niri msg -j focused-window | from json | get pid
-                    let is_alacritty = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "alacritty" | any {}
-
-                    if $is_alacritty {
-                      let cwd = ps -l | where ppid == $focused_window_pid and name == "nu" | first | get cwd
-                      alacritty --title "lazyGit" --working-directory $cwd -e ${lib.getExe pkgs.lazygit}
-                    }
-                  ''
-                |> lib.getExe;
-              run-alacritty-cwd =
-                pkgs.writeScriptBin "run-alacritty-cwd" # nu
-                  ''
-                    #!${lib.getExe pkgs.nushell}
-
-                    let focused_window_pid = niri msg -j focused-window | from json | get pid
-                    let is_alacritty = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "alacritty" | any {}
-
-                    if $is_alacritty {
-                      let cwd = ps -l | where ppid == $focused_window_pid and name == "nu" | first | get cwd
-                      alacritty --working-directory $cwd
-                    }
-                  ''
+                pkgs.writeScriptBin "run-floating-btop" ''
+                  ${alacritty'} --title='bTop' -e btop
+                ''
                 |> lib.getExe;
             in
             {
@@ -277,7 +253,6 @@
 
               # Application launchers
               "Mod+T".action = spawn alacritty;
-              "Ctrl+Shift+n".action = spawn run-alacritty-cwd;
               "Mod+D".action = spawn rofi "-show" "drun";
               "Mod+W".action = spawn rofi "-show" "window";
               "Mod+Shift+S".action = spawn rofi "-show" "ssh";
@@ -285,7 +260,6 @@
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn claude-desktop;
-              "Ctrl+Shift+G".action = spawn run-floating-lazygit;
               "Mod+M".action = spawn spotube;
               "Mod+N".action = spawn trilium;
               "Mod+Shift+M".action = spawn birdtray "--toggle-tb";
