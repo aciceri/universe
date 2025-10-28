@@ -23,6 +23,7 @@ connected via an NVMe-to-SATA adapter.
 
 ##### Public
 
+- [aciceri.dev](https://aciceri.dev)
 - [agenix-shell.talks.aciceri.dev](https://agenix-shell.talks.aciceri.dev)
 - [auth.aciceri.dev](https://auth.aciceri.dev)
 - [blog.aciceri.dev](https://blog.aciceri.dev)

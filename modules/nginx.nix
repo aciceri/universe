@@ -35,6 +35,14 @@
         recommendedOptimisation = true;
         recommendedProxySettings = true;
         recommendedTlsSettings = true;
+
+        virtualHosts."aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          extraConfig = ''
+            return 301 https://blog.aciceri.dev$request_uri;
+          '';
+        };
       };
 
       environment.persistence."/persist".directories = [
