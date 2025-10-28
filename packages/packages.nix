@@ -3,6 +3,7 @@
   lib,
   getSystem,
   getCurrentDir,
+  inputs,
   ...
 }:
 let
@@ -74,6 +75,7 @@ in
     {
       nixpkgs.overlays = [
         (_: _: (getSystem config.nixpkgs.hostPlatform.system).packages)
+        inputs.nur.overlays.default
       ];
     };
 

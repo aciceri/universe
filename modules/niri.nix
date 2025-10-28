@@ -237,7 +237,7 @@
                 |> lib.getExe;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
-              spotube = lib.getExe pkgs.spotube;
+              spotify = lib.getExe pkgs.spotify;
               birdtray = lib.getExe pkgs.birdtray;
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
@@ -260,7 +260,7 @@
               "Mod+P".action = spawn rofi-pass "--clip";
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn claude-desktop;
-              "Mod+M".action = spawn spotube;
+              "Mod+M".action = spawn spotify;
               "Mod+N".action = spawn trilium;
               "Mod+Shift+M".action = spawn birdtray "--toggle-tb";
               # "Mod+Alt+L".action = spawn "swaylock";

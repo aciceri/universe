@@ -34,8 +34,8 @@
         trilium-next-desktop
         claude-desktop
         mcp-proxy # used by claude-desktop to connect to remote MCP servers
-        spotube
         winboat
+        nur.repos.nltch.spotify-adblock
       ];
 
       programs = {
