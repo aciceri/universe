@@ -164,16 +164,37 @@
               open-maximized = true;
             }
 
-            # bTop
-            {
-              matches = [
-                { title = "^bTop$"; }
-                { title = "^lazyGit$"; }
-              ];
-              opacity = 0.95;
-              open-floating = true;
-              open-focused = true;
-            }
+            # floating terminals
+            (
+              let
+                sizes =
+                  {
+                    picard = {
+                      width = 1600;
+                      height = 1000;
+                    };
+                    kirk = {
+                      width = 1600;
+                      height = 1000;
+                    };
+                  }
+                  ."${osConfig.networking.hostName}" or {
+                    width = 500;
+                    height = 500;
+                  };
+              in
+              {
+                matches = [
+                  { title = "^bTop$"; }
+                  { title = "^lazyGit$"; }
+                ];
+                opacity = 0.95;
+                open-floating = true;
+                open-focused = true;
+                default-column-width.fixed = sizes.width;
+                default-window-height.fixed = sizes.height;
+              }
+            )
 
             # Claude desktop
             {
@@ -205,31 +226,10 @@
           binds =
             with config.lib.niri.actions;
             let
-              floatingSize =
-                {
-                  picard = {
-                    btop = {
-                      rows = "60";
-                      cols = "210";
-                    };
-                  };
-                  kirk = {
-                    btop = {
-                      rows = "40";
-                      cols = "140";
-                    };
-                  };
-                }
-                ."${osConfig.networking.hostName}" or {
-                  btop = {
-                    rows = "40";
-                    cols = "140";
-                  };
-                };
               rofi = lib.getExe config.programs.rofi.package;
               rofi-pass = lib.getExe config.programs.rofi.pass.package;
               firefox = lib.getExe config.programs.firefox.package;
-              footclient = lib.getExe config.programs.foot.package;
+              alacritty = lib.getExe config.programs.alacritty.package;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotube = lib.getExe pkgs.spotube;
@@ -237,23 +237,36 @@
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
-                with floatingSize.btop;
-                pkgs.writeScriptBin "run-floating-btop" ''
-                  foot --title='bTop' -W ${cols}x${rows} btop
-                ''
+                pkgs.writeScriptBin "run-floating-btop" # bash
+                  ''
+                    alacritty --title='bTop' -e btop
+                  ''
                 |> lib.getExe;
               run-floating-lazygit =
-                with floatingSize.btop;
                 pkgs.writeScriptBin "run-floating-lazygit" # nu
                   ''
                     #!${lib.getExe pkgs.nushell}
 
                     let focused_window_pid = niri msg -j focused-window | from json | get pid
-                    let is_foot = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "foot" | any {}
+                    let is_alacritty = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "alacritty" | any {}
 
-                    if $is_foot {
+                    if $is_alacritty {
                       let cwd = ps -l | where ppid == $focused_window_pid and name == "nu" | first | get cwd
-                      foot --title "lazyGit" -W ${cols}x${rows} sh -c $"${lib.getExe pkgs.lazygit} -w ($cwd)"
+                      alacritty --title "lazyGit" --working-directory $cwd -e ${lib.getExe pkgs.lazygit}
+                    }
+                  ''
+                |> lib.getExe;
+              run-alacritty-cwd =
+                pkgs.writeScriptBin "run-alacritty-cwd" # nu
+                  ''
+                    #!${lib.getExe pkgs.nushell}
+
+                    let focused_window_pid = niri msg -j focused-window | from json | get pid
+                    let is_alacritty = ls -l $"/proc/($focused_window_pid)/exe" | get target | str ends-with "alacritty" | any {}
+
+                    if $is_alacritty {
+                      let cwd = ps -l | where ppid == $focused_window_pid and name == "nu" | first | get cwd
+                      alacritty --working-directory $cwd
                     }
                   ''
                 |> lib.getExe;
@@ -263,7 +276,8 @@
               "Mod+Shift+Slash".action = show-hotkey-overlay;
 
               # Application launchers
-              "Mod+T".action.spawn = footclient;
+              "Mod+T".action = spawn alacritty;
+              "Ctrl+Shift+n".action = spawn run-alacritty-cwd;
               "Mod+D".action = spawn rofi "-show" "drun";
               "Mod+W".action = spawn rofi "-show" "window";
               "Mod+Shift+S".action = spawn rofi "-show" "ssh";
