@@ -18,6 +18,7 @@
         "brscan4-etc-files"
         "zoom"
         "spotify"
+        "cursor-cli"
       ];
   };
 }
