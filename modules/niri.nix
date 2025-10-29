@@ -160,7 +160,10 @@
 
             # Slack
             {
-              matches = [ { app-id = "^Slack$"; } ];
+              matches = [
+                { app-id = "^Slack$"; }
+                { app-id = "^thunderbird$"; }
+              ];
               open-maximized = true;
             }
 
