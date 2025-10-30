@@ -30,7 +30,7 @@ in
       };
       packages = {
         cv =
-          pkgs.runCommandNoCC "cv"
+          pkgs.runCommand "cv"
             {
               FONTCONFIG_FILE = pkgs.writeText "fonts.conf" ''
                 <?xml version="1.0"?>

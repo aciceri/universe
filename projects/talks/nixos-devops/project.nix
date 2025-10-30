@@ -65,7 +65,7 @@ in
     in
     {
       packages.nixos-devops-talk =
-        pkgs.runCommandNoCC "nixos-devops-talk"
+        pkgs.runCommand "nixos-devops-talk"
           {
             buildInputs = [ emacsExportScript ];
             passthru.serve = { inherit serve; };

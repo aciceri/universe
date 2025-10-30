@@ -88,7 +88,7 @@
           |> lib.map (
             { path_, drv }:
             lib.nameValuePair "files/${path_}" (
-              pkgs.runCommandNoCCLocal "check-file-${path_}" { nativeBuildInputs = [ pkgs.difftastic ]; } ''
+              pkgs.runCommandLocal "check-file-${path_}" { nativeBuildInputs = [ pkgs.difftastic ]; } ''
                 difft --exit-code --display inline ${drv} ${cfg.gitToplevel + "/${path_}"}
                 touch $out
               ''
