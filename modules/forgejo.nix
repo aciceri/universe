@@ -116,7 +116,7 @@
                 instancesNames = lib.genList (n: "nix-${name}-${builtins.toString n}") numInstances;
               in
               {
-                package = pkgs.forgejo-actions-runner;
+                package = pkgs.forgejo-runner;
                 instances = lib.genAttrs instancesNames (instanceName: {
                   enable = true;
                   name = instanceName;
