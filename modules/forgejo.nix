@@ -107,7 +107,12 @@
             secrets.forgejo_runners_registration_token.owner = "gitea-runner";
             services.gitea-actions-runner =
               let
-                numInstances = 8;
+                numInstances =
+                  {
+                    picard = 16;
+                    pike = 8;
+                  }
+                  .${name};
                 instancesNames = lib.genList (n: "nix-${name}-${builtins.toString n}") numInstances;
               in
               {
