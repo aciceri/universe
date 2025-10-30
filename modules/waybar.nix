@@ -135,6 +135,15 @@
             background: none;
           }
 
+          /* Hide the first workspace (mail) */
+          #workspaces button:first-child {
+            opacity: 0;
+            min-width: 0;
+            min-height: 0;
+            padding: 0;
+            margin: 0;
+          }
+
           #workspaces button:hover {
             color: @base0B;
             box-shadow: inherit;

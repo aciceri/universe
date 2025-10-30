@@ -62,16 +62,6 @@
             }
             {
               argv = [
-                (lib.getExe (
-                  pkgs.writeShellScriptBin "start-birdtray.sh" ''
-                    sleep 5
-                    ${lib.getExe pkgs.birdtray}
-                  ''
-                ))
-              ];
-            }
-            {
-              argv = [
                 (lib.getExe pkgs.telegram-desktop)
                 "-startintray"
               ];
@@ -121,6 +111,10 @@
             }
             .${osConfig.networking.hostName};
 
+          workspaces = {
+            mail = { };
+          };
+
           layout = {
             gaps = 16;
             center-focused-column = "never";
@@ -160,11 +154,15 @@
 
             # Slack
             {
-              matches = [
-                { app-id = "^Slack$"; }
-                { app-id = "^thunderbird$"; }
-              ];
+              matches = [ { app-id = "^Slack$"; } ];
               open-maximized = true;
+            }
+
+            # Thunderbird
+            {
+              matches = [ { app-id = "^thunderbird$"; } ];
+              open-maximized = true;
+              open-on-workspace = "mail";
             }
 
             # floating terminals
@@ -241,7 +239,6 @@
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotify = lib.getExe pkgs.spotify;
-              birdtray = lib.getExe pkgs.birdtray;
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
@@ -264,8 +261,8 @@
               "Mod+B".action = spawn firefox;
               "Mod+G".action = spawn claude-desktop;
               "Mod+M".action = spawn spotify;
+              "Mod+Shift+M".action = focus-workspace "mail";
               "Mod+N".action = spawn trilium;
-              "Mod+Shift+M".action = spawn birdtray "--toggle-tb";
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
@@ -503,6 +500,20 @@
               }
             ];
           };
+      };
+
+      systemd.user.services.thunderbird = {
+        Unit = {
+          Description = "Thunderbird mail client";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = lib.getExe pkgs.thunderbird;
+          Restart = "always";
+          Type = "simple";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
       };
 
       xdg.portal = {
