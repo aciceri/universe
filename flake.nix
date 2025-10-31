@@ -86,6 +86,13 @@
         xwayland-satellite-unstable.follows = "";
       };
     };
+    zen-browser = {
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        home-manager.follows = "home-manager";
+      };
+    };
     nix-ai-tools = {
       url = "github:numtide/nix-ai-tools";
       inputs = {
