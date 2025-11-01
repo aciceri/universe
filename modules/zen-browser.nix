@@ -52,41 +52,31 @@
           };
 
           pinsForce = true;
-          pins = {
-            "GitHub" = {
-              id = "48e8a119-5a14-4826-9545-91c8e8dd3bf6";
-              workspace = profileCfg.spaces."Rendezvous".id;
-              url = "https://github.com";
-              position = 101;
-              isEssential = false;
-            };
-            "WhatsApp Web" = {
-              id = "1eabb6a3-911b-4fa9-9eaf-232a3703db19";
-              workspace = profileCfg.spaces."Rendezvous".id;
-              url = "https://web.whatsapp.com/";
-              position = 102;
-              isEssential = false;
-            };
-            "Telegram Web" = {
-              id = "5065293b-1c04-40ee-ba1d-99a231873864";
-              url = "https://web.telegram.org/k/";
-              position = 103;
-              isEssential = true;
-            };
-          };
+          pins = { };
 
           containersForce = true;
           containers = {
-            Shopping = {
-              color = "yellow";
+            Personal = {
+              color = "green";
+              icon = "dollar";
+              id = 1;
+            };
+            MLabs = {
+              color = "blue";
               icon = "dollar";
               id = 2;
+            };
+            Proda = {
+              color = "yellow";
+              icon = "dollar";
+              id = 3;
             };
           };
 
           spacesForce = true;
           spaces = {
-            "Rendezvous" = {
+            "Personal" = {
+              container = profileCfg.containers."Personal".id;
               id = "572910e1-4468-4832-a869-0b3a93e2f165";
               icon = "🎭";
               position = 1000;
@@ -94,9 +84,9 @@
                 type = "gradient";
                 colors = [
                   {
-                    red = 216;
-                    green = 204;
-                    blue = 235;
+                    # red = 216;
+                    # green = 204;
+                    # blue = 235;
                     algorithm = "floating";
                     type = "explicit-lightness";
                   }
@@ -105,17 +95,18 @@
                 texture = 0.5;
               };
             };
-            "Research" = {
+            "MLabs" = {
               id = "ec287d7f-d910-4860-b400-513f269dee77";
+              container = profileCfg.containers."MLabs".id;
               icon = "💌";
               position = 1001;
               theme = {
                 type = "gradient";
                 colors = [
                   {
-                    red = 171;
-                    green = 219;
-                    blue = 227;
+                    # red = 171;
+                    # green = 219;
+                    # blue = 227;
                     algorithm = "floating";
                     type = "explicit-lightness";
                   }
@@ -124,10 +115,10 @@
                 texture = 0.5;
               };
             };
-            "Shopping" = {
+            "Proda" = {
+              container = profileCfg.containers."Proda".id;
               id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
               icon = "💸";
-              container = profileCfg.containers."Shopping".id;
               position = 1002;
             };
           };
@@ -201,7 +192,6 @@
                   icon = nixSnowflakeIcon;
                   definedAliases = [ "hmop" ];
                 };
-                bing.metaData.hidden = "true";
               };
           };
         };
