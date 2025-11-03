@@ -8,16 +8,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"agenix-shell-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -29,16 +21,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"asciinema-player\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -50,16 +34,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"blog\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -71,16 +47,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"blog-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -92,16 +60,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"claude-desktop\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -113,16 +73,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"configurations/nixos/sisko\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -134,16 +86,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"cv\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -155,16 +99,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"cv-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -176,16 +112,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"default-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -197,16 +125,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"files/.forgejo/workflows/build-checks.yaml\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -218,16 +138,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"files/.gitignore\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -239,16 +151,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"files/README.md\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -260,16 +164,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"files/packages/_nur.nix\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -281,16 +177,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"helix-master\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -302,16 +190,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"hyphenopoly\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -323,16 +203,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"mirror-checks\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -344,16 +216,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"nixos-devops-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -365,16 +229,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"nixos-tests-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -386,16 +242,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"pre-commit\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -407,16 +255,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"reinstall-magisk-on-lineageos\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -428,16 +268,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"talks-agenix-shell-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -449,16 +281,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"talks-nixos-tests-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -470,16 +294,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"treefmt\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -491,16 +307,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"update-packages\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -512,16 +320,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"writer\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -533,16 +333,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.aarch64-linux.\"yt-dlp-master\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -690,16 +482,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"agenix-shell-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -711,16 +495,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"asciinema-player\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -732,16 +508,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"blog\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -753,16 +521,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"blog-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -774,16 +534,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"claude-desktop\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -795,16 +547,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"configurations/nixos/picard\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -816,16 +560,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"configurations/nixos/pike\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -837,16 +573,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"cv\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -858,16 +586,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"cv-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -879,16 +599,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"default-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -900,16 +612,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"files/.forgejo/workflows/build-checks.yaml\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -921,16 +625,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"files/.gitignore\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -942,16 +638,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"files/README.md\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -963,16 +651,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"files/packages/_nur.nix\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -984,16 +664,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"helix-master\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1005,16 +677,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"hyphenopoly\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1026,16 +690,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"mirror-checks\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1047,16 +703,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"nixos-devops-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1068,16 +716,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"nixos-tests-talk\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1089,16 +729,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"pre-commit\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1110,16 +742,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"reinstall-magisk-on-lineageos\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1131,16 +755,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"talks-agenix-shell-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1152,16 +768,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"talks-nixos-tests-shell\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1173,16 +781,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"treefmt\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1194,16 +794,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"update-packages\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1215,16 +807,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"writer\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     },
@@ -1236,16 +820,8 @@
           "uses": "actions/checkout@v4"
         },
         {
-          "name": "Attic login",
-          "run": "attic login sisko http://sisko.wg.aciceri.dev:8081 ${{secrets.ATTIC_SISKO_TOKEN}} --set-default"
-        },
-        {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"yt-dlp-master\"' -L"
-        },
-        {
-          "name": "Push to Attic",
-          "run": "attic push sisko result"
         }
       ]
     }

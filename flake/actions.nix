@@ -12,16 +12,8 @@ let
         uses = "actions/checkout@v4";
       }
       {
-        name = "Attic login";
-        run = "attic login sisko http://sisko.wg.aciceri.dev:8081 $\{{secrets.ATTIC_SISKO_TOKEN}} --set-default";
-      }
-      {
         name = "Build";
         run = ''nix build ${lib.escapeShellArg ".#${drvFlakePath}"} -L'';
-      }
-      {
-        name = "Push to Attic";
-        run = "attic push sisko result";
       }
     ];
   };

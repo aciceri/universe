@@ -103,19 +103,45 @@
       (name: {
         module =
           { config, pkgs, ... }:
-          {
-            secrets.forgejo_runners_registration_token.owner = "gitea-runner";
-            services.gitea-actions-runner =
-              let
-                numInstances =
-                  {
-                    picard = 16;
-                    pike = 8;
-                  }
-                  .${name};
-                instancesNames = lib.genList (n: "nix-${name}-${builtins.toString n}") numInstances;
-              in
+          let
+            numInstances =
               {
+                picard = 16;
+                pike = 8;
+              }
+              .${name};
+            instancesNames = lib.genList (n: "nix-${name}-${builtins.toString n}") numInstances;
+            sharedCacheDir = "/var/cache/nix-runners";
+            escapeName = lib.replaceStrings [ "-" ] [ "\\x2d" ];
+
+            atticPushHook = pkgs.writeShellScript "attic-push-hook" ''
+              set -eu
+              set -f # disable globbing
+              export IFS=' '
+
+              ATTIC_TOKEN=$(cat ${config.age.secrets.attic_sisko_token.path})
+              ${lib.getExe pkgs.attic-client} login sisko http://sisko.wg.aciceri.dev:8081 "$ATTIC_TOKEN" --set-default
+
+              echo "Uploading paths to Attic (no closure):" $OUT_PATHS
+              ${lib.getExe pkgs.attic-client} push sisko --no-closure $OUT_PATHS
+            '';
+          in
+          lib.mkMerge [
+            {
+              secrets.forgejo_runners_registration_token.owner = "gitea-runner";
+              secrets.attic_sisko_token = {
+                owner = "gitea-runner";
+                mode = "400";
+              };
+
+              # Allow gitea-runner to use post-build-hook and other restricted settings
+              nix.settings.trusted-users = [ "gitea-runner" ];
+
+              systemd.tmpfiles.rules = [
+                "d ${sharedCacheDir} 0755 gitea-runner gitea-runner -"
+              ];
+
+              services.gitea-actions-runner = {
                 package = pkgs.forgejo-runner;
                 instances = lib.genAttrs instancesNames (instanceName: {
                   enable = true;
@@ -136,7 +162,19 @@
                   ];
                 });
               };
-          };
+            }
+            (lib.mkMerge (
+              lib.map (instanceName: {
+                systemd.services."gitea-runner-${escapeName instanceName}" = {
+                  environment.XDG_CACHE_HOME = sharedCacheDir;
+                  serviceConfig.ReadWritePaths = [ sharedCacheDir ];
+                  environment.NIX_CONFIG = ''
+                    post-build-hook = ${atticPushHook}
+                  '';
+                };
+              }) instancesNames
+            ))
+          ];
       })
       |> lib.genAttrs [
         "picard"
