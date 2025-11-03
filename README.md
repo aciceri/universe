@@ -42,6 +42,7 @@ connected via an NVMe-to-SATA adapter.
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
 - [atuin.sisko.wg.aciceri.dev](https://atuin.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
+- [firefox-sync.sisko.wg.aciceri.dev](https://firefox-sync.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
