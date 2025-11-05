@@ -1,20 +1,105 @@
-{ inputs, ... }:
+fpArgs@{ inputs, ... }:
 {
   flake.modules.homeManager.pc =
-    { config, pkgs, ... }:
+    {
+      config,
+      osConfig,
+      pkgs,
+      lib,
+      ...
+    }:
     let
       profileCfg = config.programs.zen-browser.profiles.default;
+
+      mkPluginUrl = id: "https://addons.mozilla.org/firefox/downloads/latest/${id}/latest.xpi";
+
+      mkExtensionEntry =
+        {
+          id,
+          pinned ? false,
+        }:
+        let
+          base = {
+            install_url = mkPluginUrl id;
+            installation_mode = "force_installed";
+          };
+        in
+        if pinned then base // { default_area = "navbar"; } else base;
+
+      mkExtensionSettings = lib.mapAttrs (_: entry: if lib.isAttrs entry then entry else mkExtensionEntry { id = entry; });
+
+      getFirefoxExtensionId = pkgs.writers.writeNuBin "get-firefox-extension-id" { } ''
+        def main [url: string] {
+          let manifest = http get $url | ^${pkgs.libarchive}/bin/bsdtar -xOf - manifest.json | from json
+          let id = $manifest | get applications?.gecko?.id? | default ($manifest | get browser_specific_settings?.gecko?.id?)
+
+          echo $id
+        }
+      '';
     in
     {
       imports = [ inputs.zen-browser.homeModules.beta ];
+
+      home.packages = [ getFirefoxExtensionId ];
 
       stylix.targets.zen-browser.profileNames = [ "default" ];
 
       programs.zen-browser = {
         enable = true;
+
+        policies = {
+          AutofillAddressEnabled = true;
+          AutofillCreditCardEnabled = true;
+          DisableAppUpdate = true;
+          DisableFeedbackCommands = true;
+          DisableFirefoxStudies = true;
+          DisablePocket = false;
+          DisableTelemetry = true;
+          DontCheckDefaultBrowser = true;
+          OfferToSaveLogins = true;
+          DefaultDownloadDirectory = "${config.home.homeDirectory}/Downloads";
+          EnableTrackingProtection = {
+            Value = true;
+            Locked = true;
+            Cryptomining = true;
+            Fingerprinting = true;
+          };
+          ExtensionSettings = mkExtensionSettings {
+            "uBlock0@raymondhill.net" = mkExtensionEntry {
+              id = "ublock-origin";
+              pinned = true;
+            };
+            "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = "styl-us";
+          };
+        };
+
         profiles.default = {
           id = 0;
           isDefault = true;
+
+          userChrome = lib.mkAfter ''
+            /* Remove gap at the top of the window */
+            #navigator-toolbox {
+              padding-top: 0 !important;
+              margin-top: 0 !important;
+            }
+
+            #titlebar {
+              margin-top: 0 !important;
+              padding-top: 0 !important;
+            }
+
+            :root {
+              --zen-element-separation: 0px !important;
+            }
+
+            /* Disable all corner radius - let niri handle it via clip-to-geometry
+               FIXME: this disables evertyhing, also internal elements */
+            * {
+              border-radius: 0 !important;
+            }
+          '';
+
           settings = {
             "zen.tabs.show-newtab-vertical" = false;
             "zen.urlbar.behavior" = "float";
@@ -25,6 +110,20 @@
             "zen.view.window.scheme" = 0;
             "zen.welcome-screen.seen" = true;
             "zen.workspaces.continue-where-left-off" = true;
+
+            # Firefox Sync configuration
+            "identity.sync.tokenserver.uri" =
+              "${fpArgs.config.flake.nixosConfigurations.sisko.config.services.firefox-syncserver.singleNode.url}/1.0/sync/1.5";
+            "identity.fxaccounts.enabled" = true;
+            "services.sync.engine.addons" = false; # disable only addons syncing
+            "services.sync.engine.bookmarks" = true;
+            "services.sync.engine.history" = true;
+            "services.sync.engine.passwords" = true;
+            "services.sync.engine.prefs" = true;
+            "services.sync.engine.tabs" = true;
+            "services.sync.engine.creditcards" = true;
+            "services.sync.engine.addresses" = true;
+            "services.sync.client.name" = "${config.home.username}-${osConfig.networking.hostName}";
           };
 
           bookmarks = {
@@ -51,9 +150,6 @@
             ];
           };
 
-          pinsForce = true;
-          pins = { };
-
           containersForce = true;
           containers = {
             Personal = {
@@ -78,47 +174,16 @@
             "Personal" = {
               container = profileCfg.containers."Personal".id;
               id = "572910e1-4468-4832-a869-0b3a93e2f165";
-              icon = "🎭";
               position = 1000;
-              theme = {
-                type = "gradient";
-                colors = [
-                  {
-                    # red = 216;
-                    # green = 204;
-                    # blue = 235;
-                    algorithm = "floating";
-                    type = "explicit-lightness";
-                  }
-                ];
-                opacity = 0.8;
-                texture = 0.5;
-              };
             };
             "MLabs" = {
               id = "ec287d7f-d910-4860-b400-513f269dee77";
               container = profileCfg.containers."MLabs".id;
-              icon = "💌";
               position = 1001;
-              theme = {
-                type = "gradient";
-                colors = [
-                  {
-                    # red = 171;
-                    # green = 219;
-                    # blue = 227;
-                    algorithm = "floating";
-                    type = "explicit-lightness";
-                  }
-                ];
-                opacity = 0.2;
-                texture = 0.5;
-              };
             };
             "Proda" = {
               container = profileCfg.containers."Proda".id;
               id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
-              icon = "💸";
               position = 1002;
             };
           };
@@ -191,6 +256,98 @@
                   ];
                   icon = nixSnowflakeIcon;
                   definedAliases = [ "hmop" ];
+                };
+                "Noogle" = {
+                  urls = [
+                    {
+                      template = "https://noogle.dev/q";
+                      params = [
+                        {
+                          name = "term";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  icon = nixSnowflakeIcon;
+                  definedAliases = [ "noogle" ];
+                };
+                "GitHub" = {
+                  urls = [
+                    {
+                      template = "https://github.com/search";
+                      params = [
+                        {
+                          name = "q";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  definedAliases = [
+                    "gh"
+                    "git"
+                    "github"
+                  ];
+                };
+                "Hoogle" = {
+                  urls = [
+                    {
+                      template = "https://hoogle.haskell.org/";
+                      params = [
+                        {
+                          name = "hoogle";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  definedAliases = [ "hoogle" ];
+                };
+                "Stack Overflow" = {
+                  urls = [
+                    {
+                      template = "https://stackoverflow.com/search";
+                      params = [
+                        {
+                          name = "q";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  definedAliases = [ "so" ];
+                };
+                "Arch Wiki" = {
+                  urls = [
+                    {
+                      template = "https://wiki.archlinux.org/index.php";
+                      params = [
+                        {
+                          name = "search";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  definedAliases = [ "aw" ];
+                };
+                "youtube" = {
+                  urls = [
+                    {
+                      template = "https://www.youtube.com/results";
+                      params = [
+                        {
+                          name = "search_query";
+                          value = "{searchTerms}";
+                        }
+                      ];
+                    }
+                  ];
+                  definedAliases = [
+                    "yt"
+                    "youtube"
+                  ];
                 };
               };
           };
