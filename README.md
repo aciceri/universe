@@ -152,7 +152,7 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
-### [helix-master](packages/helix-master/_package.nix) (version master-3f4a286c8dc586d3261bfba3cb2ec3fad5c36efe)
+### [helix-master](packages/helix-master/_package.nix) (version master-65ea351cc30b23d40e9a5784a4be99768536b7f5)
 
 Post-modern modal text editor
 
@@ -168,7 +168,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.10.22-unstable-2025-11-05)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.10.22-unstable-2025-11-08)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
