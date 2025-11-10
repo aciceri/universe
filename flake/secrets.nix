@@ -52,7 +52,7 @@ in
       psArgs@{ pkgs, inputs', ... }:
       {
         make-shells.default = {
-          shellHook = "source ${lib.getExe psArgs.config.agenix-shell.installationScript}";
+          shellHook = "source ${lib.getExe psArgs.config.agenix-shell.installationScript} 2>/dev/null";
           packages = [ inputs'.agenix.packages.agenix ];
           env.RULES =
             let
