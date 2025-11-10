@@ -34,6 +34,7 @@
         mcp-proxy # used by claude-desktop to connect to remote MCP servers
         winboat
         nur.repos.nltch.spotify-adblock
+        spotube
       ];
 
       programs = {
