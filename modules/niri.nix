@@ -238,7 +238,7 @@
                 |> lib.getExe;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
-              spotify = lib.getExe pkgs.spotify;
+              spotify = lib.getExe pkgs.nur.repos.nltch.spotify-adblock;
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
