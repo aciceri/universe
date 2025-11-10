@@ -21,8 +21,6 @@
         # Chats
         telegram-desktop
         slack
-        zoom-us
-
         # Ham radio
         sdrangel
         chirp
