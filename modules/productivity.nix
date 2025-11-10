@@ -70,25 +70,8 @@
         config.users
         |> lib.mapAttrs (
           _: user: {
-            extraGroups = [
-              "lp"
-              "scanner"
-            ]
-            ++ (lib.optional user.god "libvirtd");
+            extraGroups = lib.optional user.god "libvirtd";
           }
         );
-
-      hardware.sane = {
-        enable = true;
-        brscan4 = {
-          enable = true;
-          netDevices = {
-            brother = {
-              model = "MFC-L2710DW";
-              ip = "10.1.1.39";
-            };
-          };
-        };
-      };
     };
 }
