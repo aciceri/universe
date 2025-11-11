@@ -26,6 +26,7 @@
           plugins = with pkgs.nushellPlugins; [
             gstat
             query
+            highlight
           ];
           extraConfig = # nushell
             ''
