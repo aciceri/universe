@@ -229,7 +229,6 @@
             let
               rofi = lib.getExe config.programs.rofi.package;
               rofi-pass = lib.getExe config.programs.rofi.pass.package;
-              zen = lib.getExe config.programs.zen-browser.package;
               alacritty' = lib.getExe config.programs.alacritty.package;
               alacritty =
                 pkgs.writeShellScriptBin "start-alacritty.sh" ''
@@ -258,7 +257,6 @@
               "Mod+Shift+S".action = spawn rofi "-show" "ssh";
               "Mod+E".action = toggle-column-tabbed-display;
               "Mod+P".action = spawn rofi-pass "--clip";
-              "Mod+B".action = spawn zen;
               "Mod+G".action = spawn claude-desktop;
               "Mod+M".action = spawn spotify;
               "Mod+Shift+M".action = focus-workspace "mail";

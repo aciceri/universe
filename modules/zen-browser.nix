@@ -36,13 +36,68 @@ fpArgs@{ inputs, ... }:
           echo $id
         }
       '';
+
+      zenTabSwitcher = pkgs.writers.writeNu "zen-tab-switcher.nu" { } ''
+        def parse-tabs [] {
+          ^${lib.getExe' pkgs.brotab "brotab"} list
+          | from tsv --noheaders
+          | rename id title url
+        }
+
+        def main [...args] {
+          if ($args | is-empty) {
+            let tabs = (parse-tabs)
+            ["New window"] ++ ($tabs | get title) | str join "\n"
+          } else {
+            let selection = ($args | str join " ")
+
+            if $selection == "New window" {
+              ^sh -c "nohup zen-beta --new-window >/dev/null 2>&1 &"
+            } else {
+              let tabs = (parse-tabs)
+              let matched = ($tabs | where title == $selection | first)
+
+              ^${lib.getExe' pkgs.brotab "brotab"} activate $matched.id
+
+              let zen_windows = (
+                ^niri msg -j windows | from json
+                | where app_id == "zen-beta"
+                | where { |w| $w.title | str contains $matched.title }
+              )
+
+              if not ($zen_windows | is-empty) {
+                ^niri msg action focus-window --id ($zen_windows | first | get id)
+              }
+            }
+          }
+        }
+      '';
+
+      rofiZenTabs = pkgs.writeShellScriptBin "rofi-zen-tabs" ''
+        exec ${lib.getExe config.programs.rofi.package} -show brotab -modi "brotab:${zenTabSwitcher}"
+      '';
     in
     {
       imports = [ inputs.zen-browser.homeModules.beta ];
 
-      home.packages = [ getFirefoxExtensionId ];
+      home.packages = [
+        getFirefoxExtensionId
+        rofiZenTabs
+        pkgs.brotab
+      ];
 
       stylix.targets.zen-browser.profileNames = [ "default" ];
+
+      # Using `nativeMesagingHosts = [ brotab ]` doesn't seem to work
+      home.file.".zen/native-messaging-hosts/brotab_mediator.json".text = builtins.toJSON {
+        name = "brotab_mediator";
+        description = "This mediator exposes interface over TCP to control browser's tabs";
+        path = lib.getExe' pkgs.brotab "bt_mediator";
+        type = "stdio";
+        allowed_extensions = [ "brotab_mediator@example.org" ];
+      };
+
+      programs.niri.settings.binds."Mod+b".action = lib.mkForce <| config.lib.niri.actions.spawn <| lib.getExe rofiZenTabs;
 
       programs.zen-browser = {
         enable = true;
@@ -70,6 +125,7 @@ fpArgs@{ inputs, ... }:
               pinned = true;
             };
             "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = "styl-us";
+            "brotab_mediator@example.org" = "brotab";
           };
         };
 
