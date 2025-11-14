@@ -8,6 +8,33 @@
 
   flake.modules.homeManager.workstation =
     { config, pkgs, ... }:
+    let
+      passSelector = pkgs.writers.writeNu "pass-selector.nu" { } ''
+        def main [...args] {
+          if ($args | is-empty) {
+            glob "${config.programs.password-store.settings.PASSWORD_STORE_DIR}/**/*.gpg"
+            | each { |path|
+              $path
+              | str replace "${config.programs.password-store.settings.PASSWORD_STORE_DIR}/" ""
+              | str replace ".gpg" ""
+            }
+            | str join "\n"
+          } else {
+            let selection = ($args | str join " ")
+
+            if ($selection | str contains -i "otp") or ($selection | str contains -i "totp") {
+              ^${lib.getExe' config.programs.password-store.package "pass"} otp --clip $selection out+err> /dev/null
+            } else {
+              ^${lib.getExe' config.programs.password-store.package "pass"} show --clip $selection out+err> /dev/null
+            }
+          }
+        }
+      '';
+
+      rofiPassSelector = pkgs.writeShellScriptBin "rofi-pass-selector" ''
+        exec ${lib.getExe config.programs.rofi.package} -show pass -modi "pass:${passSelector}"
+      '';
+    in
     lib.mkIf (config.home.username == "ccr") {
       programs.password-store = {
         enable = true;
@@ -25,5 +52,8 @@
           interval = 1000;
         };
       };
+
+      home.packages = [ rofiPassSelector ];
+      programs.niri.settings.binds."Mod+p".action = config.lib.niri.actions.spawn (lib.getExe rofiPassSelector);
     };
 }
