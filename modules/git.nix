@@ -27,11 +27,11 @@
         programs.lazygit = {
           enable = true;
           settings = {
-            git.paging = {
-              colorArg = "always";
-              useConfig = false;
-              pager = "${lib.getExe pkgs.delta} --dark --paging=never";
-            };
+            git.pagers = [
+              {
+                pager = "${lib.getExe pkgs.delta} --dark --paging=never";
+              }
+            ];
           };
         };
 
