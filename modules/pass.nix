@@ -23,9 +23,9 @@
             let selection = ($args | str join " ")
 
             if ($selection | str contains -i "otp") or ($selection | str contains -i "totp") {
-              ^${lib.getExe' config.programs.password-store.package "pass"} otp --clip $selection out+err> /dev/null
+              ^sh -c $"nohup ${lib.getExe' config.programs.password-store.package "pass"} otp --clip '($selection)' >/dev/null 2>&1 &"
             } else {
-              ^${lib.getExe' config.programs.password-store.package "pass"} show --clip $selection out+err> /dev/null
+              ^sh -c $"nohup ${lib.getExe' config.programs.password-store.package "pass"} show --clip '($selection)' >/dev/null 2>&1 &"
             }
           }
         }
