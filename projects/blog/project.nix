@@ -46,7 +46,7 @@ in
         ]
         |> pkgs.linkFarmFromDrvs "blog-thirdparty";
 
-      generator = (pkgs.haskellPackages.callCabal2nix "blog-generator" ./generator { });
+      generator = pkgs.haskellPackages.callCabal2nix "blog-generator" ./generator { };
 
       watch = pkgs.writeShellScriptBin "blog-watch" ''
         trap 'rm -rf out' EXIT
