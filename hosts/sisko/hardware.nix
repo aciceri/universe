@@ -17,5 +17,15 @@
       wantedBy = [ "getty.target" ];
       serviceConfig.restart = "always";
     };
+
+    zramSwap = {
+      enable = true;
+      memoryPercent = 100;
+      algorithm = "zstd";
+    };
+
+    boot.kernel.sysctl = {
+      "vm.swappiness" = 100;
+    };
   };
 }
