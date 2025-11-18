@@ -32,7 +32,7 @@
         trilium-next-desktop
         claude-desktop
         mcp-proxy # used by claude-desktop to connect to remote MCP servers
-        winboat
+        # winboat # FIXME re-enable after https://github.com/NixOS/nixpkgs/issues/462513
         nur.repos.nltch.spotify-adblock
         spotube
       ];
