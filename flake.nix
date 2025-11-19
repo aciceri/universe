@@ -48,11 +48,9 @@
       url = "github:nix-community/lanzaboote";
       inputs = {
         nixpkgs.follows = "nixpkgs";
-        flake-parts.follows = "flake-parts";
-        pre-commit-hooks-nix.follows = "";
+        pre-commit.follows = "";
         crane.follows = "crane_";
         rust-overlay.follows = "rust-overlay_";
-        flake-compat.follows = "flake-compat_";
       };
     };
     impermanence.url = "github:nix-community/impermanence";
