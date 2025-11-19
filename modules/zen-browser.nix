@@ -120,12 +120,14 @@ fpArgs@{ inputs, ... }:
             Fingerprinting = true;
           };
           ExtensionSettings = mkExtensionSettings {
+            # As id use $ID as in https://addons.mozilla.org/en-US/firefox/addon/$ID
             "uBlock0@raymondhill.net" = mkExtensionEntry {
               id = "ublock-origin";
               pinned = true;
             };
             "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = "styl-us";
             "brotab_mediator@example.org" = "brotab";
+            "webextension@metamask.io" = "ether-metamask";
           };
         };
 
