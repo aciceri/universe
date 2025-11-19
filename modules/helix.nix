@@ -96,6 +96,10 @@
                 "--semantic-tokens"
               ];
             };
+            vtsls = {
+              command = lib.getExe pkgs.vtsls;
+              args = [ "--stdio" ];
+            };
           };
 
           language = [
