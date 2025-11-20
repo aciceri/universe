@@ -1,3 +1,4 @@
+{ lib, ... }:
 {
   configurations.nixos.sisko.module =
     { pkgs, ... }:
@@ -64,6 +65,21 @@
       };
 
       users.users.webdav.extraGroups = [ "transmission" ];
+
+      systemd.services.samba-setup-password = {
+        description = "Setup Samba password for transmission user";
+        wantedBy = [ "multi-user.target" ];
+        after = [ "samba-smbd.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        # Can't find a way to make samba accessible from Windows without setting a password
+        # Don't care too much about this password since it's only accessible locally on through the VPN
+        script = ''
+          (echo "transmission"; echo "transmission") | ${lib.getExe' pkgs.samba "smbpasswd"} -a -s transmission
+        '';
+      };
 
       networking.firewall = {
         allowedTCPPorts = [
