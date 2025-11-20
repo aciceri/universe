@@ -78,4 +78,17 @@
         ];
       };
     };
+
+  flake.modules.nixos.pc = {
+    fileSystems."/mnt/sisko" = {
+      device = "sisko.wg.aciceri.dev:/export/hd";
+      fsType = "nfs";
+      options = [
+        "x-systemd.automount"
+        "noauto"
+        "x-systemd.idle-timeout=600"
+        "ro"
+      ];
+    };
+  };
 }
