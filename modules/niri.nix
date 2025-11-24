@@ -175,8 +175,8 @@
                       height = 1000;
                     };
                     pike = {
-                      width = 1600;
-                      height = 1000;
+                      width = 1200;
+                      height = 800;
                     };
                   }
                   ."${osConfig.networking.hostName}" or {
