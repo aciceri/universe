@@ -137,6 +137,12 @@
               # Allow gitea-runner to use post-build-hook and other restricted settings
               nix.settings.trusted-users = [ "gitea-runner" ];
 
+              users.users.gitea-runner = {
+                isSystemUser = true;
+                group = "gitea-runner";
+              };
+              users.groups.gitea-runner = { };
+
               systemd.tmpfiles.rules = [
                 "d ${sharedCacheDir} 0755 gitea-runner gitea-runner -"
               ];
@@ -167,7 +173,10 @@
               lib.map (instanceName: {
                 systemd.services."gitea-runner-${escapeName instanceName}" = {
                   environment.XDG_CACHE_HOME = sharedCacheDir;
-                  serviceConfig.ReadWritePaths = [ sharedCacheDir ];
+                  serviceConfig = {
+                    ReadWritePaths = [ sharedCacheDir ];
+                    DynamicUser = lib.mkForce false;
+                  };
                   environment.NIX_CONFIG = ''
                     post-build-hook = ${atticPushHook}
                   '';
