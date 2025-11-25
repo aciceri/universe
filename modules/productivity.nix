@@ -22,7 +22,7 @@
         telegram-desktop
         slack
         # Ham radio
-        sdrangel
+        # sdrangel # FIXME re-enable once fixed in nixpkgs
         chirp
 
         # Other
