@@ -10,6 +10,9 @@ projects/cv/**/*.aux
 projects/cv/**/*.log
 projects/cv/**/*.out
 projects/cv/**/*.pdf
+projects/shelob/_cache
+projects/shelob/dist-newstyle
+projects/shelob/out
 projects/talks/agenix-shell/**/dist
 projects/talks/agenix-shell/**/node_modules
 projects/talks/nixos-devops/**/*.html

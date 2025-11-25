@@ -100,6 +100,10 @@
               command = lib.getExe pkgs.vtsls;
               args = [ "--stdio" ];
             };
+            haskell-language-server = {
+              command = "haskell-language-server";
+              args = [ "--lsp" ];
+            };
           };
 
           language = [
@@ -114,6 +118,11 @@
             {
               name = "typescript";
               language-servers = [ "vtsls" ];
+            }
+            {
+              name = "haskell";
+              language-servers = [ "haskell-language-server" ];
+              formatter.command = "ormolu";
             }
           ];
         };

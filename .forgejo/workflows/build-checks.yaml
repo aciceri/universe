@@ -260,6 +260,32 @@
         }
       ]
     },
+    "aarch64-linux/shelob": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"shelob\"' -L"
+        }
+      ]
+    },
+    "aarch64-linux/shelob-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"shelob-shell\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/talks-agenix-shell-shell": {
       "runs-on": "native",
       "steps": [
@@ -361,6 +387,8 @@
         "aarch64-linux/nixos-tests-talk",
         "aarch64-linux/pre-commit",
         "aarch64-linux/reinstall-magisk-on-lineageos",
+        "aarch64-linux/shelob",
+        "aarch64-linux/shelob-shell",
         "aarch64-linux/talks-agenix-shell-shell",
         "aarch64-linux/talks-nixos-tests-shell",
         "aarch64-linux/treefmt",
@@ -388,6 +416,8 @@
         "x86_64-linux/nixos-tests-talk",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
+        "x86_64-linux/shelob",
+        "x86_64-linux/shelob-shell",
         "x86_64-linux/talks-agenix-shell-shell",
         "x86_64-linux/talks-nixos-tests-shell",
         "x86_64-linux/treefmt",
@@ -424,6 +454,8 @@
         "aarch64-linux/nixos-tests-talk",
         "aarch64-linux/pre-commit",
         "aarch64-linux/reinstall-magisk-on-lineageos",
+        "aarch64-linux/shelob",
+        "aarch64-linux/shelob-shell",
         "aarch64-linux/talks-agenix-shell-shell",
         "aarch64-linux/talks-nixos-tests-shell",
         "aarch64-linux/treefmt",
@@ -451,6 +483,8 @@
         "x86_64-linux/nixos-tests-talk",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
+        "x86_64-linux/shelob",
+        "x86_64-linux/shelob-shell",
         "x86_64-linux/talks-agenix-shell-shell",
         "x86_64-linux/talks-nixos-tests-shell",
         "x86_64-linux/treefmt",
@@ -744,6 +778,32 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"reinstall-magisk-on-lineageos\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/shelob": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"shelob\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/shelob-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"shelob-shell\"' -L"
         }
       ]
     },
