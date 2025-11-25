@@ -30,7 +30,7 @@
         tremotesf
         vial
         trilium-next-desktop
-        claude-desktop
+        claude-desktop-with-fhs
         mcp-proxy # used by claude-desktop to connect to remote MCP servers
         # winboat # FIXME re-enable after https://github.com/NixOS/nixpkgs/issues/462513
         nur.repos.nltch.spotify-adblock

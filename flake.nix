@@ -91,6 +91,13 @@
         home-manager.follows = "home-manager";
       };
     };
+    claude-desktop = {
+      url = "github:k3d3/claude-desktop-linux-flake/791cd93cfe216ad06ab740f0fdc142119b1d6ec2";  # FIXME update when not broken
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-utils.follows = "flake-utils_";
+      };
+    };
     nix-ai-tools = {
       url = "github:numtide/nix-ai-tools";
       inputs = {

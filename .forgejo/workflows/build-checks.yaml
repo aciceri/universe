@@ -65,6 +65,19 @@
         }
       ]
     },
+    "aarch64-linux/claude-desktop-with-fhs": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"claude-desktop-with-fhs\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/configurations/nixos/sisko": {
       "runs-on": "native",
       "steps": [
@@ -346,6 +359,7 @@
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
         "aarch64-linux/claude-desktop",
+        "aarch64-linux/claude-desktop-with-fhs",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
@@ -372,6 +386,7 @@
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
         "x86_64-linux/claude-desktop",
+        "x86_64-linux/claude-desktop-with-fhs",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
@@ -409,6 +424,7 @@
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
         "aarch64-linux/claude-desktop",
+        "aarch64-linux/claude-desktop-with-fhs",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
@@ -435,6 +451,7 @@
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
         "x86_64-linux/claude-desktop",
+        "x86_64-linux/claude-desktop-with-fhs",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
         "x86_64-linux/cv",
@@ -536,6 +553,19 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"claude-desktop\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/claude-desktop-with-fhs": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"claude-desktop-with-fhs\"' -L"
         }
       ]
     },

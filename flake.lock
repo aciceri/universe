@@ -145,6 +145,30 @@
         "type": "github"
       }
     },
+    "claude-desktop": {
+      "inputs": {
+        "flake-utils": [
+          "flake-utils_"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1761825061,
+        "narHash": "sha256-AeRQZKr8+1XQer+WmbwtQaQBy05UDgeNNE7YZjNLuS0=",
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "rev": "791cd93cfe216ad06ab740f0fdc142119b1d6ec2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "k3d3",
+        "repo": "claude-desktop-linux-flake",
+        "rev": "791cd93cfe216ad06ab740f0fdc142119b1d6ec2",
+        "type": "github"
+      }
+    },
     "crane_": {
       "locked": {
         "lastModified": 1763511871,
@@ -677,6 +701,7 @@
         "agenix": "agenix",
         "agenix-shell": "agenix-shell",
         "blueprint_": "blueprint_",
+        "claude-desktop": "claude-desktop",
         "crane_": "crane_",
         "disko": "disko",
         "flake-compat_": "flake-compat_",

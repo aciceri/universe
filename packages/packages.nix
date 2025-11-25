@@ -45,7 +45,7 @@ in
     in
     {
       packages = {
-        inherit (inputs'.nix-ai-tools.packages) claude-desktop;
+        inherit (inputs'.claude-desktop.packages) claude-desktop claude-desktop-with-fhs;
         inherit update-packages;
       }
       // (
