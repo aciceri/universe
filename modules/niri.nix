@@ -238,7 +238,7 @@
               brightnessctl = lib.getExe pkgs.brightnessctl;
               spotify = lib.getExe pkgs.nur.repos.nltch.spotify-adblock;
               trilium = lib.getExe pkgs.trilium-desktop;
-              claude-desktop = lib.getExe pkgs.claude-desktop-with-fhs;
+              claude-desktop = lib.getExe pkgs.claude-desktop;
               run-floating-btop =
                 pkgs.writeScriptBin "run-floating-btop" ''
                   ${alacritty'} --title='bTop' -e btop
