@@ -4,7 +4,7 @@
     let
       rev = "966199fe1dccc9c6c7016bdb1d9582f27797bc02";
       amule-flake = builtins.getFlake "github:NixOS/nixpkgs/${rev}";
-      inherit (amule-flake.legacyPackages.${pkgs.system}) amule-daemon amule-web;
+      inherit (amule-flake.legacyPackages.${pkgs.stdenv.hostPlatform.system}) amule-daemon amule-web;
       cfg = config.services.amule;
     in
     {
