@@ -128,6 +128,7 @@ fpArgs@{ inputs, ... }:
             "{7a7a4a92-a2a0-41d1-9fd7-1e92480d612d}" = "styl-us";
             "brotab_mediator@example.org" = "brotab";
             "webextension@metamask.io" = "ether-metamask";
+            "amptra@keepa.com" = "keepa";
           };
         };
 
