@@ -114,7 +114,7 @@
     };
 
   flake.modules.nixos.workstation =
-    { config, pkgs, ... }:
+    { config, ... }:
     {
       secrets.wireguard_mlabs_private_key = { }; # the same for all the workstations, usually only one at time is on
       networking.wireguard.interfaces.wg1 = {
@@ -131,18 +131,27 @@
         mtu = 1300;
       };
 
-      systemd.services."wireguard-restart-after-sleep" = {
-        description = "Restart WireGuard after suspend";
-        after = [
-          "suspend.target"
-          "hibernate.target"
-          "sleep.target"
-        ];
-        wantedBy = [ "post-resume.target" ];
-        serviceConfig = {
-          Type = "oneshot";
-          ExecStart = "${lib.getExe' pkgs.systemd "systemctl"} restart 'wireguard-wg@*'";
-        };
-      };
+      networking.networkmanager.unmanaged = lib.attrNames config.networking.wireguard.interfaces;
+
+      # TODO removed while testing if really needed
+      #   systemd.services."wireguard-restart-after-sleep" = {
+      #     description = "Restart WireGuard after suspend";
+      #     after = [
+      #       "suspend.target"
+      #       "hibernate.target"
+      #       "sleep.target"
+      #       "network-online.target"
+      #     ];
+      #     wants = [ "network-online.target" ];
+      #     wantedBy = [ "post-resume.target" ];
+      #     serviceConfig.Type = "oneshot";
+      #     script = ''
+      #       until ${lib.getExe pkgs.host} vpn.aciceri.dev > /dev/null 2>&1; do
+      #       echo "Waiting for DNS..."
+      #       sleep 1
+      #     done
+      #       ${lib.getExe' pkgs.systemd "systemctl"} restart wireguard-wg*.service
+      #     '';
+      #   };
     };
 }
