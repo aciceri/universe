@@ -13,6 +13,12 @@
       };
     };
 
+    # TODO this may help with graphical artifacts after resume, remove if doesn't help
+    boot.kernelParams = [
+      "amdgpu.sg_display=0"
+      "amdgpu.dcdebugmask=0x10"
+    ];
+
     zramSwap = {
       enable = true;
       algorithm = "zstd";
