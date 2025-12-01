@@ -13,6 +13,32 @@
         }
       ]
     },
+    "aarch64-linux/aoc-2025": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"aoc-2025\"' -L"
+        }
+      ]
+    },
+    "aarch64-linux/aoc-2025-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"aoc-2025-shell\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/asciinema-player": {
       "runs-on": "native",
       "steps": [
@@ -355,6 +381,8 @@
       "if": "${{ success() && (github.ref == 'refs/heads/update-flake-lock' || github.ref == 'refs/heads/nix-update-script') }}",
       "needs": [
         "aarch64-linux/agenix-shell-talk",
+        "aarch64-linux/aoc-2025",
+        "aarch64-linux/aoc-2025-shell",
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
@@ -382,6 +410,8 @@
         "aarch64-linux/writer",
         "aarch64-linux/yt-dlp-master",
         "x86_64-linux/agenix-shell-talk",
+        "x86_64-linux/aoc-2025",
+        "x86_64-linux/aoc-2025-shell",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
@@ -420,6 +450,8 @@
       "if": "always()",
       "needs": [
         "aarch64-linux/agenix-shell-talk",
+        "aarch64-linux/aoc-2025",
+        "aarch64-linux/aoc-2025-shell",
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
@@ -447,6 +479,8 @@
         "aarch64-linux/writer",
         "aarch64-linux/yt-dlp-master",
         "x86_64-linux/agenix-shell-talk",
+        "x86_64-linux/aoc-2025",
+        "x86_64-linux/aoc-2025-shell",
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
@@ -501,6 +535,32 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"agenix-shell-talk\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/aoc-2025": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"aoc-2025\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/aoc-2025-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"aoc-2025-shell\"' -L"
         }
       ]
     },

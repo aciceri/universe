@@ -1,0 +1,30 @@
+cabal-version:      3.4
+name:               aoc2025
+version:            0.1.0.0
+license:            GPL-3.0-or-later
+author:             Andrea Ciceri
+maintainer:         andrea.ciceri@autistici.org
+category:           System
+build-type:         Simple
+
+common shared
+    ghc-options:      -Wall
+    default-language: GHC2021
+    build-depends:
+        base,
+        megaparsec
+
+library
+    import:           shared
+    hs-source-dirs:   src
+    exposed-modules:
+        Day01
+
+test-suite aoc-test
+    import:           shared
+    type:             exitcode-stdio-1.0
+    main-is:          Spec.hs
+    hs-source-dirs:   test
+    build-depends:
+        aoc2025,
+        hspec

@@ -2,6 +2,9 @@
 .pre-commit-config.yaml
 picard.qcow2
 pike.qcow2
+projects/aoc/2025/_cache
+projects/aoc/2025/dist-newstyle
+projects/aoc/2025/out
 projects/blog/_cache
 projects/blog/generator/dist-newstyle
 projects/blog/generator/thirdparty
