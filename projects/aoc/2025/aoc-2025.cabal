@@ -19,6 +19,8 @@ library
     hs-source-dirs:   src
     exposed-modules:
         Day01
+        Day02
+        Day03
 
 test-suite aoc-test
     import:           shared
