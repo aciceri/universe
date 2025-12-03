@@ -24,17 +24,31 @@
         chmod -R 775 /export/hd/torrent
       '';
 
-      services.webdav = {
+      services.webdav-server-rs = {
         enable = true;
-
         settings = {
-          address = "0.0.0.0";
-          port = 9999;
-          scope = "/mnt/hd/torrent";
-          modify = false;
-          auth = false;
-          debug = true;
-          users = [ ];
+          server.listen = [
+            "0.0.0.0:9999"
+            "[::]:9999"
+          ];
+          location = [
+            {
+              route = [ "/seedvault/*path" ];
+              directory = "/mnt/hd/seedvault";
+              handler = "filesystem";
+              methods = [ "webdav-rw" ];
+              autoindex = true;
+              auth = "false";
+            }
+            {
+              route = [ "/torrent/*path" ];
+              directory = "/mnt/hd/torrent";
+              handler = "filesystem";
+              methods = [ "webdav-ro" ];
+              autoindex = true;
+              auth = "false";
+            }
+          ];
         };
       };
 
@@ -81,6 +95,7 @@
         '';
       };
 
+      # My LAN is trusted
       networking.firewall = {
         allowedTCPPorts = [
           2049
