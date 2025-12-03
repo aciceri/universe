@@ -44,6 +44,10 @@ in
             "/mnt/hd/immich"
             "/mnt/hd/paperless"
             "/mnt/hd/roam"
+            "/mnt/hd/trilium"
+            "/mnt/hd/siyuan"
+            "/mnt/hd/seedvault"
+            "/mnt/hd/forgejo-dumps"
           ];
           exclude = [ " /persist/var/lib/containers" ];
           passwordFile = config.age.secrets.sisko_restic_password.path;
