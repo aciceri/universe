@@ -48,7 +48,7 @@
         enable = true;
         repositories.password-store = {
           path = config.programs.password-store.settings.PASSWORD_STORE_DIR;
-          uri = "git@git.sr.ht:~zrsk/pass";
+          uri = "forgejo@git.aciceri.dev/aciceri/pass.git";
           interval = 1000;
         };
       };
