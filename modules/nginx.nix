@@ -1,8 +1,14 @@
+{ lib, ... }:
 {
   configurations.nixos.sisko.module =
     { config, ... }:
     {
-      secrets.cloudflare_api_tokens = { };
+      systemd.services."acme-order-renew-aciceri.dev" = {
+        serviceConfig.LoadCredential = [ "CLOUDFLARE_DNS_API_TOKEN:${config.age.secrets.cloudflare_dyndns_api_token.path}" ];
+        script = lib.mkBefore ''
+          export CLOUDFLARE_DNS_API_TOKEN=$(cat $CREDENTIALS_DIRECTORY/CLOUDFLARE_DNS_API_TOKEN)
+        '';
+      };
 
       security.acme = {
         acceptTerms = true;
@@ -18,7 +24,6 @@
             dnsProvider = "cloudflare";
             dnsPropagationCheck = true;
             group = config.services.nginx.group;
-            environmentFile = config.age.secrets.cloudflare_api_tokens.path;
           };
         };
       };
