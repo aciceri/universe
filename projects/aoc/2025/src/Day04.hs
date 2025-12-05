@@ -1,6 +1,5 @@
 module Day04 (part1, part2, parseGrid, processGrid) where
 
-import Data.Function (fix)
 import Data.Vector qualified as V
 
 data Cell = Roll | Empty deriving (Show, Eq)

@@ -1,10 +1,10 @@
 module Day02 (sumWrongIds, isRepetitive, part1, part2) where
 
-import Data.List (foldl')
 import Data.Void (Void)
-import Text.Megaparsec (ParseErrorBundle, Parsec, many, parse, sepBy, (<|>))
-import Text.Megaparsec.Char (char, eol)
+import Text.Megaparsec (ParseErrorBundle, Parsec, parse, sepBy)
+import Text.Megaparsec.Char (char)
 import Text.Megaparsec.Char.Lexer qualified as L
+import Prelude hiding (max, min)
 
 type Parser = Parsec Void String
 
@@ -26,7 +26,7 @@ parseRanges = parse parser ""
     parser = range `sepBy` char ','
 
 numDigits :: Int -> Int
-numDigits n = floor $ logBase 10 (fromIntegral n) + 1
+numDigits n = floor $ logBase (10 :: Double) (fromIntegral n) + 1
 
 isRepetitive :: Int -> Bool
 isRepetitive n
@@ -56,6 +56,7 @@ part1 input = sumWrongIds <$> parseRanges input
 -- sumWrongIdsPart2 :: [Range] -> Int
 -- sumWrongIdsPart2 ranges = sum $ sumWrongIdsPart2' <$> ranges
 
+part2 :: String -> Either (ParseErrorBundle String Void) Int
 part2 = part1
 
 -- part2 :: String -> Either (ParseErrorBundle String Void) Int

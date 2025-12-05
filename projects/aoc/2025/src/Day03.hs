@@ -1,12 +1,11 @@
 module Day03 (part1, part2) where
 
 import Data.Char (digitToInt)
-import Data.List (delete, elemIndex, foldl')
+import Data.List (elemIndex)
 import Data.Maybe (fromJust)
 import Data.Void (Void)
-import Text.Megaparsec (ParseErrorBundle, Parsec, eof, many, parse, sepEndBy, some, (<|>))
-import Text.Megaparsec.Char (char, digitChar, eol)
-import Text.Megaparsec.Char.Lexer qualified as L
+import Text.Megaparsec (ParseErrorBundle, Parsec, eof, parse, sepEndBy, some)
+import Text.Megaparsec.Char (digitChar, eol)
 
 type Parser = Parsec Void String
 
@@ -36,4 +35,5 @@ totalJoultage = sum . fmap bankMaxJoultage
 part1 :: String -> Either (ParseErrorBundle String Void) Int
 part1 input = totalJoultage <$> parseBanks input
 
+part2 :: String -> Either (ParseErrorBundle String Void) Int
 part2 = part1 -- TODO
