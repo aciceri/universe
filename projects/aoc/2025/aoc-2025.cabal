@@ -12,7 +12,8 @@ common shared
     default-language: GHC2021
     build-depends:
         base,
-        megaparsec
+        megaparsec,
+        vector
 
 library
     import:           shared
@@ -21,6 +22,7 @@ library
         Day01
         Day02
         Day03
+        Day04
 
 test-suite aoc-test
     import:           shared
