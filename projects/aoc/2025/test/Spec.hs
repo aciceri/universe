@@ -26,7 +26,7 @@ daySpec n p1 e1 p2 e2 = describe ("Day" ++ show n) $ do
 main :: IO ()
 main = hspec $ do
   daySpec 1 Day01.part1 1147 Day01.part2 6789
-  daySpec 2 Day02.part1 54641809925 Day02.part1 54641809925 -- TODO part 2
+  daySpec 2 Day02.part1 54641809925 Day02.part2 73694270688
   daySpec 3 Day03.part1 16887 Day03.part1 16887 -- TODO part 2
   daySpec 4 Day04.part1 1435 Day04.part2 8623
   daySpec 5 Day05.part1 661 Day05.part2 359526404143208
