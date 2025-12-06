@@ -8,7 +8,7 @@ category:           System
 build-type:         Simple
 
 common shared
-    ghc-options:      -Wall -Werror
+    ghc-options:      -Wall
     default-language: GHC2021
     build-depends:
         base,
