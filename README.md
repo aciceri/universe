@@ -169,7 +169,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.11.12-unstable-2025-12-04)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.11.12-unstable-2025-12-05)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
