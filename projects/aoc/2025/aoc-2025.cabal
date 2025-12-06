@@ -24,6 +24,7 @@ library
         Day03
         Day04
         Day05
+        Day06
 
 test-suite aoc-test
     import:           shared

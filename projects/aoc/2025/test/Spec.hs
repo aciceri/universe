@@ -3,6 +3,7 @@ import Day02 qualified
 import Day03 qualified
 import Day04 qualified
 import Day05 qualified
+import Day06 qualified
 import Test.Hspec
 import Text.Printf (printf)
 
@@ -30,3 +31,4 @@ main = hspec $ do
   daySpec 3 Day03.part1 16887 Day03.part1 16887 -- TODO part 2
   daySpec 4 Day04.part1 1435 Day04.part2 8623
   daySpec 5 Day05.part1 661 Day05.part2 359526404143208
+  daySpec 6 Day06.part1 3261038365331 Day06.part1 3261038365331
