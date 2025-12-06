@@ -475,16 +475,10 @@
           in
           {
             enable = true;
-            events = [
-              {
-                event = "before-sleep";
-                command = swaylockCommand;
-              }
-              {
-                event = "lock";
-                command = swaylockCommand;
-              }
-            ];
+            events = {
+              before-sleep = swaylockCommand;
+              lock = swaylockCommand;
+            };
             timeouts = [
               {
                 timeout = 600; # 10 minutes
