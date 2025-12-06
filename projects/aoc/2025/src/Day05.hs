@@ -1,4 +1,4 @@
-module Day05 (part1, part2, parseDb) where
+module Day05 (part1, part2) where
 
 import Data.Foldable (foldl')
 import Data.Void (Void)
