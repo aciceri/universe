@@ -37,6 +37,9 @@
       # otherwise it creates a directory in /var/lib/private which can't be easily persisted
       systemd.services.adguardhome.serviceConfig.DynamicUser = lib.mkForce false;
 
+      # Disable systemd-resolved to avoid DNS loop with AdGuard Home
+      services.resolved.enable = lib.mkForce false;
+
       networking.firewall.allowedUDPPorts = [
         53
         67
