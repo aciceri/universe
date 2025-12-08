@@ -59,6 +59,12 @@
           proxyPass = "http://localhost:${builtins.toString config.services.transmission.settings.rpc-port}";
         };
         serverAliases = [ "torrent.sisko.zt.aciceri.dev" ];
+        extraConfig = ''
+          allow 10.100.0.0/24;
+          allow 10.100.1.0/24;
+          allow 127.0.0.1;
+          deny all;
+        '';
       };
     };
 }

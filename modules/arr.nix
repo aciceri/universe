@@ -34,39 +34,52 @@
       "/var/lib/lidarr"
     ];
 
-    services.nginx.virtualHosts = {
-      "radarr.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/" = {
-          proxyPass = "http://localhost:7878"; # FIXME hardcoded port
+    services.nginx.virtualHosts =
+      let
+        extraConfig = ''
+          allow 10.100.0.0/24;
+          allow 10.100.1.0/24;
+          allow 127.0.0.1;
+          deny all;
+        '';
+      in
+      {
+        "radarr.sisko.wg.aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          locations."/" = {
+            proxyPass = "http://localhost:7878"; # FIXME hardcoded port
+          };
+          serverAliases = [ "radarr.sisko.zt.aciceri.dev" ];
+          inherit extraConfig;
         };
-        serverAliases = [ "radarr.sisko.zt.aciceri.dev" ];
-      };
-      "prowlarr.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/" = {
-          proxyPass = "http://localhost:9696"; # FIXME hardcoded port
+        "prowlarr.sisko.wg.aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          locations."/" = {
+            proxyPass = "http://localhost:9696"; # FIXME hardcoded port
+          };
+          serverAliases = [ "prowlarr.sisko.zt.aciceri.dev" ];
+          inherit extraConfig;
         };
-        serverAliases = [ "prowlarr.sisko.zt.aciceri.dev" ];
-      };
-      "sonarr.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/" = {
-          proxyPass = "http://localhost:8989"; # FIXME hardcoded port
+        "sonarr.sisko.wg.aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          locations."/" = {
+            proxyPass = "http://localhost:8989"; # FIXME hardcoded port
+          };
+          serverAliases = [ "sonarr.sisko.zt.aciceri.dev" ];
+          inherit extraConfig;
         };
-        serverAliases = [ "sonarr.sisko.zt.aciceri.dev" ];
-      };
-      "lidarr.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/" = {
-          proxyPass = "http://localhost:8686"; # FIXME hardcoded port
+        "lidarr.sisko.wg.aciceri.dev" = {
+          forceSSL = true;
+          useACMEHost = "aciceri.dev";
+          locations."/" = {
+            proxyPass = "http://localhost:8686"; # FIXME hardcoded port
+          };
+          serverAliases = [ "lidarr.sisko.zt.aciceri.dev" ];
+          inherit extraConfig;
         };
-        serverAliases = [ "lidarr.sisko.zt.aciceri.dev" ];
       };
-    };
   };
 }

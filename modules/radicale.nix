@@ -27,6 +27,12 @@
           useACMEHost = "aciceri.dev";
           locations."/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
           serverAliases = [ "cal.sisko.zt.aciceri.dev" ];
+          extraConfig = ''
+            allow 10.100.0.0/24;
+            allow 10.100.1.0/24;
+            allow 127.0.0.1;
+            deny all;
+          '';
         };
         # Put the web interface behind WireGuard but leave the rest public to make the calendars shareable
         "cal.aciceri.dev" = {

@@ -44,6 +44,11 @@
           proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
           proxy_set_header X-Forwarded-Host $server_name;
           proxy_set_header X-Forwarded-Proto $scheme;
+
+          allow 10.100.0.0/24;
+          allow 10.100.1.0/24;
+          allow 127.0.0.1;
+          deny all;
         '';
         serverAliases = [ "paper.sisko.zt.aciceri.dev" ];
       };

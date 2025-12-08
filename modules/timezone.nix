@@ -17,5 +17,9 @@
   configurations.nixos.sisko.module = {
     time.timeZone = lib.mkForce "Europe/Rome";
     services.geoclue2.enable = lib.mkForce false;
+    services.chrony.servers = lib.mkForce [
+      "162.159.200.123"
+      "162.159.200.1"
+    ];
   };
 }
