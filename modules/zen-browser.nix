@@ -1,4 +1,4 @@
-fpArgs@{ inputs, ... }:
+{ inputs, ... }:
 {
   flake.modules.homeManager.pc =
     {
@@ -119,6 +119,10 @@ fpArgs@{ inputs, ... }:
             Cryptomining = true;
             Fingerprinting = true;
           };
+          policies = {
+            PasswordManagerEnabled = false;
+            OfferToSaveLogins = false;
+          };
           ExtensionSettings = mkExtensionSettings {
             # As id use $ID as in https://addons.mozilla.org/en-US/firefox/addon/$ID
             "uBlock0@raymondhill.net" = mkExtensionEntry {
@@ -129,6 +133,10 @@ fpArgs@{ inputs, ... }:
             "brotab_mediator@example.org" = "brotab";
             "webextension@metamask.io" = "ether-metamask";
             "amptra@keepa.com" = "keepa";
+            "{446900e4-71c2-419f-a6a7-df9c091e268b}" = mkExtensionEntry {
+              id = "bitwarden-password-manager";
+              pinned = true;
+            };
           };
         };
 
@@ -170,17 +178,14 @@ fpArgs@{ inputs, ... }:
             "zen.welcome-screen.seen" = true;
             "zen.workspaces.continue-where-left-off" = true;
 
-            # Firefox Sync configuration
-            "identity.sync.tokenserver.uri" =
-              "${fpArgs.config.flake.nixosConfigurations.sisko.config.services.firefox-syncserver.singleNode.url}/1.0/sync/1.5";
             "identity.fxaccounts.enabled" = true;
-            "services.sync.engine.addons" = false; # disable only addons syncing
+            "services.sync.engine.addons" = false;
             "services.sync.engine.bookmarks" = true;
             "services.sync.engine.history" = true;
-            "services.sync.engine.passwords" = true;
+            "services.sync.engine.passwords" = false;
             "services.sync.engine.prefs" = true;
             "services.sync.engine.tabs" = true;
-            "services.sync.engine.creditcards" = true;
+            "services.sync.engine.creditcards" = false;
             "services.sync.engine.addresses" = true;
             "services.sync.client.name" = "${config.home.username}-${osConfig.networking.hostName}";
           };

@@ -40,10 +40,8 @@ connected via an NVMe-to-SATA adapter.
 
 - [adguard.sisko.wg.aciceri.dev](https://adguard.sisko.wg.aciceri.dev)
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
-- [atuin.sisko.wg.aciceri.dev](https://atuin.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
 - [cups.sisko.wg.aciceri.dev](https://cups.sisko.wg.aciceri.dev)
-- [firefox-sync.sisko.wg.aciceri.dev](https://firefox-sync.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
@@ -52,6 +50,7 @@ connected via an NVMe-to-SATA adapter.
 - [status.sisko.wg.aciceri.dev](https://status.sisko.wg.aciceri.dev)
 - [torrent.sisko.wg.aciceri.dev](https://torrent.sisko.wg.aciceri.dev)
 - [trilium.sisko.wg.aciceri.dev](https://trilium.sisko.wg.aciceri.dev)
+- [vault.sisko.wg.aciceri.dev](https://vault.sisko.wg.aciceri.dev)
 
 ### Pike
 
