@@ -152,7 +152,7 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
-### [helix-master](packages/helix-master/_package.nix) (version master-a60c4928bcbf5618a45e33125a6ce4c42800a426)
+### [helix-master](packages/helix-master/_package.nix) (version master-900204ebf040ca184ad144abd12bf8effdb66882)
 
 Post-modern modal text editor
 
