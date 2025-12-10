@@ -104,7 +104,7 @@
 
         policies = {
           AutofillAddressEnabled = true;
-          AutofillCreditCardEnabled = true;
+          AutofillCreditCardEnabled = false;
           DisableAppUpdate = true;
           DisableFeedbackCommands = true;
           DisableFirefoxStudies = true;
@@ -112,16 +112,13 @@
           DisableTelemetry = true;
           DontCheckDefaultBrowser = true;
           OfferToSaveLogins = true;
+          PasswordManagerEnabled = false;
           DefaultDownloadDirectory = "${config.home.homeDirectory}/Downloads";
           EnableTrackingProtection = {
             Value = true;
             Locked = true;
             Cryptomining = true;
             Fingerprinting = true;
-          };
-          policies = {
-            PasswordManagerEnabled = false;
-            OfferToSaveLogins = false;
           };
           ExtensionSettings = mkExtensionSettings {
             # As id use $ID as in https://addons.mozilla.org/en-US/firefox/addon/$ID
