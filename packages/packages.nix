@@ -45,7 +45,7 @@ in
     in
     {
       packages = {
-        inherit (inputs'.claude-desktop.packages) claude-desktop claude-desktop-with-fhs;
+        inherit (inputs'.claude-desktop.packages) claude-desktop;
         inherit update-packages;
       }
       // (
