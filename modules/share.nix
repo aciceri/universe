@@ -5,7 +5,17 @@
     {
       systemd.tmpfiles.rules = [
         "d /export 770 nobody nogroup"
+        "d /mnt/hd/seedvault 0750 seedvault-sync seedvault-sync -"
       ];
+
+      users.users.seedvault-sync = {
+        isSystemUser = true;
+        group = "seedvault-sync";
+        home = "/mnt/hd/seedvault";
+        createHome = false;
+      };
+
+      users.groups.seedvault-sync = { };
 
       fileSystems."/export/hd" = {
         device = "/mnt/hd";
@@ -32,14 +42,6 @@
             "[::]:9999"
           ];
           location = [
-            {
-              route = [ "/seedvault/*path" ];
-              directory = "/mnt/hd/seedvault";
-              handler = "filesystem";
-              methods = [ "webdav-rw" ];
-              autoindex = true;
-              auth = "false";
-            }
             {
               route = [ "/torrent/*path" ];
               directory = "/mnt/hd/torrent";
@@ -75,6 +77,13 @@
             browseable = "yes";
             writeable = "yes";
           };
+          seedvault = {
+            path = "/mnt/hd/seedvault";
+            comment = "seedvault";
+            "force user" = "seedvault-sync";
+            browseable = "yes";
+            writeable = "yes";
+          };
         };
       };
 
@@ -89,9 +98,10 @@
           RemainAfterExit = true;
         };
         # Can't find a way to make samba accessible from Windows without setting a password
-        # Don't care too much about this password since it's only accessible locally on through the VPN
+        # Don't care too much about this password since it's only accessible locally or through the VPN
         script = ''
           (echo "transmission"; echo "transmission") | ${lib.getExe' pkgs.samba "smbpasswd"} -a -s transmission
+          (echo "seedvault-sync"; echo "seedvault-sync") | ${lib.getExe' pkgs.samba "smbpasswd"} -a -s seedvault-sync
         '';
       };
 
