@@ -23,9 +23,18 @@
       enable = true;
     };
 
-    users.users.radarr.extraGroups = [ "transmission" ];
-    users.users.sonarr.extraGroups = [ "transmission" ];
-    users.users.lidarr.extraGroups = [ "transmission" ];
+    users.users.radarr.extraGroups = [
+      "transmission"
+      "amule"
+    ];
+    users.users.sonarr.extraGroups = [
+      "transmission"
+      "amule"
+    ];
+    users.users.lidarr.extraGroups = [
+      "transmission"
+      "amule"
+    ];
 
     environment.persistence."/persist".directories = [
       "/var/lib/radarr"
