@@ -5,12 +5,61 @@
     {
       secrets.home_assistant_api_token.owner = config.systemd.services.prometheus.serviceConfig.User;
 
+      services.opentelemetry-collector = {
+        enable = true;
+        settings = {
+          receivers = {
+            otlp = {
+              protocols = {
+                grpc = {
+                  endpoint = "0.0.0.0:4317";
+                };
+                http = {
+                  endpoint = "0.0.0.0:4318";
+                };
+              };
+            };
+          };
+
+          processors = {
+            batch = { };
+          };
+
+          exporters = {
+            prometheus = {
+              endpoint = "0.0.0.0:9464";
+              resource_to_telemetry_conversion = {
+                enabled = true;
+              };
+            };
+          };
+
+          service = {
+            pipelines = {
+              metrics = {
+                receivers = [ "otlp" ];
+                processors = [ "batch" ];
+                exporters = [ "prometheus" ];
+              };
+            };
+          };
+        };
+      };
+
       services.prometheus = {
         enable = true;
         checkConfig = false; # Otherwise it fails because it cannot access bearer_token_file at build time
         webExternalUrl = "https://status.wg.aciceri.dev";
         globalConfig.scrape_interval = "10s";
         scrapeConfigs = [
+          {
+            job_name = "otel";
+            static_configs = [
+              {
+                targets = [ "localhost:9464" ];
+              }
+            ];
+          }
           {
             job_name = "hass";
             metrics_path = "/api/prometheus";
@@ -110,6 +159,7 @@
 
       environment.persistence."/persist".directories = [
         "/var/lib/${config.services.prometheus.stateDir}"
+        "/var/lib/otel-collector"
       ];
     };
 
