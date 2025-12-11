@@ -79,12 +79,32 @@ let
 in
 {
   flake.modules.homeManager.workstation =
-    { pkgs, config, ... }:
+    {
+      osConfig,
+      pkgs,
+      config,
+      ...
+    }:
     {
       programs = {
         claude-code = {
           enable = true;
           memory.text = instructions;
+          settings = {
+            env = {
+              CLAUDE_CODE_ENABLE_TELEMETRY = "1";
+              OTEL_METRICS_EXPORTER = "otlp";
+              OTEL_LOGS_EXPORTER = "otlp";
+              OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "http://sisko.wg.aciceri.dev:4317";
+              OTEL_EXPORTER_OTLP_LOGS_ENDPOINT = "http://sisko.wg.aciceri.dev:3100/otlp/v1/logs";
+              OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = "grpc";
+              OTEL_EXPORTER_OTLP_LOGS_PROTOCOL = "http/protobuf";
+              OTEL_RESOURCE_ATTRIBUTES = "host.name=${osConfig.networking.hostName},user.name=${config.home.username}";
+              OTEL_LOG_USER_PROMPTS = "1";
+              OTEL_METRIC_EXPORT_INTERVAL = "60000";
+              OTEL_LOGS_EXPORT_INTERVAL = "5000";
+            };
+          };
           mcpServers = {
             openmemory = {
               type = "stdio";
