@@ -12,6 +12,7 @@
           server = {
             http_listen_port = 3100;
             log_level = "warn";
+            grpc_listen_port = 9095;
           };
           common = {
             path_prefix = config.services.loki.dataDir;
