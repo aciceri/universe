@@ -148,11 +148,11 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.13.0)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.13.3)
 
 A web player for terminal session recordings
 
-### [helix-master](packages/helix-master/_package.nix) (version master-900204ebf040ca184ad144abd12bf8effdb66882)
+### [helix-master](packages/helix-master/_package.nix) (version master-e709298cfb6db7a222c433b75e1a4f950d4a4a15)
 
 Post-modern modal text editor
 
@@ -168,7 +168,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.12.08-unstable-2025-12-09)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2025.12.08-unstable-2025-12-13)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
