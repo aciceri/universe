@@ -5,18 +5,19 @@
     {
       boot.binfmt.preferStaticEmulators = true;
 
-      virtualisation.podman = {
+      virtualisation.docker = {
         enable = true;
-        dockerCompat = true;
-        defaultNetwork.settings.dns_enabled = true;
+        rootless = {
+          enable = true;
+          setSocketVariable = true;
+        };
+        autoPrune.enable = true;
       };
 
       environment.systemPackages = with pkgs; [
         podman-compose
       ];
 
-      # Winboat expects the user to be in the docker group
-      users.groups.docker = { };
       users.users =
         config.users
         |> lib.mapAttrs (
