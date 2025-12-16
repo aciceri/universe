@@ -2,14 +2,6 @@
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
-    let
-      rev = "1962f9ec4f13bd1aeb4ecd5db08a2af87179d1f0";
-      garmin-grafana-flake = builtins.getFlake "github:NixOS/nixpkgs/${rev}";
-      influxdb-flake = builtins.getFlake "github:NixOS/nixpkgs/f1caaa39d956c220c853af6ea9cf9f1acdb2522a";
-      inherit (pkgs.stdenv.hostPlatform) system;
-      inherit (garmin-grafana-flake.legacyPackages.${system}) garmin-grafana;
-      inherit (influxdb-flake.legacyPackages.${system}) influxdb;
-    in
     {
       users.users.garmin-grafana = {
         isSystemUser = true;
@@ -37,19 +29,14 @@
           # MANUAL_END_DATE = "2025-12-31";
         };
         serviceConfig = {
-          ExecStart = lib.getExe garmin-grafana;
+          ExecStart = lib.getExe pkgs.garmin-grafana;
           Group = "garmin-grafana";
           User = "garmin-grafana";
           WorkingDirectory = "/var/lib/garmin-grafana";
         };
       };
 
-      # garmin-grafana uses influxdb v1, probably it's the only software I'll ever use using v1
-      # therefore I'll keep its declaration inside this module for simplicity
-      services.influxdb = {
-        enable = true;
-        package = influxdb;
-      };
+      services.influxdb.enable = true;
 
       environment.persistence."/persist".directories = [
         "/var/lib/garmin-grafana"
