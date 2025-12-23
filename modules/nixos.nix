@@ -21,6 +21,18 @@
         config.configurations.nixos
         |> lib.mapAttrs (name: { module, ... }: inputs.nixpkgs.lib.nixosSystem { modules = [ module ]; });
 
+      homeConfigurations =
+        config.flake.nixosConfigurations
+        |> lib.concatMapAttrs (
+          hostname: nixos:
+          lib.mapAttrs' (username: hm: {
+            name = "${username}@${hostname}";
+            value = {
+              config = hm;
+            };
+          }) nixos.config.home-manager.users
+        );
+
       checks =
         config.flake.nixosConfigurations
         |> lib.mapAttrsToList (
