@@ -28,11 +28,6 @@
         extraOptions = ''
           experimental-features = nix-command flakes pipe-operators
         '';
-        gc = {
-          automatic = true;
-          dates = "weekly";
-          options = "--delete-older-than 14d";
-        };
         registry = rec {
           nixpkgs.to = {
             type = "path";
