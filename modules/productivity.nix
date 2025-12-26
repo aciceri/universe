@@ -66,6 +66,11 @@
 
       programs.virt-manager.enable = true;
 
+      hardware = {
+        rtl-sdr.enable = true;
+        hackrf.enable = true;
+      };
+
       users.users =
         config.users
         |> lib.mapAttrs (
