@@ -77,6 +77,7 @@ let
       };
     };
 in
+{ lib, ... }:
 {
   flake.modules.homeManager.workstation =
     {
@@ -137,6 +138,7 @@ in
 
         opencode = {
           enable = true;
+          settings.theme = lib.mkForce "catppuccin";
           rules = instructions;
         };
       };
