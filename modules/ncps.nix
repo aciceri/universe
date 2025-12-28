@@ -1,25 +1,10 @@
 {
   configurations.nixos.sisko.module =
-    { config, pkgs, ... }:
+    { config, ... }:
     let
       dir = "/mnt/hd/ncps";
-      nixpkgs-ncps = builtins.getFlake "github:NixOS/nixpkgs/f5eabeba449f2c8ef60c2b273a759dd192df06ad";
     in
     {
-      # FIXME remove once https://github.com/NixOS/nixpkgs/pull/445875 is merged
-      disabledModules = [ "services/networking/ncps.nix" ];
-      imports = [ "${nixpkgs-ncps}/nixos/modules/services/networking/ncps.nix" ];
-      services.ncps.package = pkgs.ncps.overrideAttrs {
-        vendorHash = "sha256-7bu9nXkS4Xfd2wEXIX+ANbVec1Lrh2w/zikOPeuAHzo=";
-        src = pkgs.fetchFromGitHub {
-          owner = "kalbasit";
-          repo = "ncps";
-          rev = "9de11fe9197404b66f0d51c2ee1f30fd9b6bbe59";
-          hash = "sha256-krSbPECsdH91CtE5/MNNXRbPpTt1HZ5lqOGs3xG5WjM=";
-        };
-        doCheck = false;
-      };
-
       secrets.nix_netrc = {
         mode = "770";
         group = "ncps";
