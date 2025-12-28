@@ -157,7 +157,7 @@
       {
         imports =
           lib.filesystem.listFilesRecursive ./.
-          |> lib.map builtins.toString
+          |> lib.map toString
           |> lib.filter (lib.hasSuffix ".nix")
           |> lib.filter (f: !lib.hasSuffix "flake.nix" f)
           |> lib.filter (f: !lib.hasInfix "/_" f);

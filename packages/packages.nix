@@ -51,8 +51,8 @@ in
       // (
         personalPackagePaths
         |> lib.mapAttrs (
-          _: path:
-          (pkgs.callPackage path { }).overrideAttrs (old: {
+          _: p:
+          (pkgs.callPackage p { }).overrideAttrs (old: {
             passthru = (old.passthru or { }) // {
               nur = true; # mark packages from this packages set
             };

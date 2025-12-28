@@ -146,7 +146,7 @@
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString config.services.home-assistant.config.http.server_port}";
+          proxyPass = "http://localhost:${toString config.services.home-assistant.config.http.server_port}";
           proxyWebsockets = true;
         };
         extraConfig = ''

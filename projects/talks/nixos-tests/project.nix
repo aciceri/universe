@@ -9,7 +9,7 @@ in
       "dist"
       ".vite"
     ]
-    |> builtins.map (path: "${currentDir}/**/${path}");
+    |> map (p: "${currentDir}/**/${p}");
 
   perSystem =
     {
@@ -32,7 +32,7 @@ in
 
         src = lib.cleanSourceWith {
           src = ./.;
-          filter = path: _: !(lib.hasSuffix ".nix" path);
+          filter = p: _: !(lib.hasSuffix ".nix" p);
         };
 
         nativeBuildInputs = with pkgs; [

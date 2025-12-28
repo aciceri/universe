@@ -10,7 +10,7 @@ in
       "generator/dist-newstyle"
       "generator/thirdparty"
     ]
-    |> builtins.map (path: "${currentDir}/${path}");
+    |> map (p: "${currentDir}/${p}");
 
   perSystem =
     {
@@ -82,7 +82,7 @@ in
           name = "blog";
           src = lib.cleanSourceWith {
             src = ./.;
-            filter = path: _: !(path |> lib.hasSuffix ".nix");
+            filter = p: _: !(p |> lib.hasSuffix ".nix");
           };
           buildPhase = ''
             mkdir -p generator/thirdparty/

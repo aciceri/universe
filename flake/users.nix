@@ -14,10 +14,7 @@ let
             let
               keys = inputs."ghkeys-${name}" or null;
             in
-            if builtins.isNull keys then
-              [ ]
-            else
-              lib.splitString "\n" (builtins.readFile keys) |> lib.unique |> lib.filter (k: k != "");
+            if isNull keys then [ ] else lib.splitString "\n" (builtins.readFile keys) |> lib.unique |> lib.filter (k: k != "");
         };
         god = lib.mkOption {
           type = lib.types.bool;

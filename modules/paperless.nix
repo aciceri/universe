@@ -34,7 +34,7 @@
         forceSSL = true;
         useACMEHost = "aciceri.dev";
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString config.services.paperless.port}";
+          proxyPass = "http://localhost:${toString config.services.paperless.port}";
         };
         extraConfig = ''
           client_max_body_size 50000M;

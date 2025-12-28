@@ -88,7 +88,7 @@
           services.nginx.virtualHosts."git.aciceri.dev" = {
             enableACME = true;
             forceSSL = true;
-            locations."/".proxyPass = "http://127.0.0.1:${builtins.toString cfg.settings.server.HTTP_PORT}";
+            locations."/".proxyPass = "http://127.0.0.1:${toString cfg.settings.server.HTTP_PORT}";
             extraConfig = ''
               client_max_body_size 100M;
               client_body_timeout 300s;
@@ -110,7 +110,7 @@
                 pike = 8;
               }
               .${name};
-            instancesNames = lib.genList (n: "nix-${name}-${builtins.toString n}") numInstances;
+            instancesNames = lib.genList (n: "nix-${name}-${toString n}") numInstances;
             sharedCacheDir = "/var/cache/nix-runners";
             escapeName = lib.replaceStrings [ "-" ] [ "\\x2d" ];
 

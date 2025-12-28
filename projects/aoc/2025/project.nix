@@ -3,7 +3,7 @@ let
   currentDir = getCurrentDir __curPos;
   src = lib.cleanSourceWith {
     src = ./.;
-    filter = path: _: !(path |> lib.hasSuffix ".nix");
+    filter = p: _: !(p |> lib.hasSuffix ".nix");
   };
 in
 {
@@ -13,7 +13,7 @@ in
       "out"
       "dist-newstyle"
     ]
-    |> lib.map (path: "${currentDir}/${path}");
+    |> lib.map (p: "${currentDir}/${p}");
 
   perSystem =
     {

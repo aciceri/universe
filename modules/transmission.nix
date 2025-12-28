@@ -56,7 +56,7 @@
         forceSSL = true;
         useACMEHost = "aciceri.dev";
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString config.services.transmission.settings.rpc-port}";
+          proxyPass = "http://localhost:${toString config.services.transmission.settings.rpc-port}";
         };
         serverAliases = [ "torrent.sisko.zt.aciceri.dev" ];
         extraConfig = ''

@@ -10,7 +10,7 @@
         enable = true;
         settings = {
           server = {
-            hosts = [ "localhost:${builtins.toString port}" ];
+            hosts = [ "localhost:${toString port}" ];
           };
           auth.type = "none";
           storage.filesystem_folder = "/var/lib/radicale/collections";
@@ -25,7 +25,7 @@
         "cal.sisko.wg.aciceri.dev" = {
           forceSSL = true;
           useACMEHost = "aciceri.dev";
-          locations."/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
+          locations."/".proxyPass = "http://127.0.0.1:${toString port}";
           serverAliases = [ "cal.sisko.zt.aciceri.dev" ];
           extraConfig = ''
             allow 10.100.0.0/24;
@@ -39,7 +39,7 @@
           enableACME = true;
           forceSSL = true;
           locations = {
-            "/".proxyPass = "http://127.0.0.1:${builtins.toString port}";
+            "/".proxyPass = "http://127.0.0.1:${toString port}";
             "/.web/".extraConfig = "return 404;";
           };
         };

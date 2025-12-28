@@ -29,7 +29,7 @@
         forceSSL = true;
         enableACME = true;
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString config.services.immich.port}";
+          proxyPass = "http://localhost:${toString config.services.immich.port}";
           proxyWebsockets = true;
         };
         extraConfig = ''

@@ -43,7 +43,7 @@
         forceSSL = true;
         useACMEHost = "aciceri.dev";
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString cfg.config.ROCKET_PORT}";
+          proxyPass = "http://localhost:${toString cfg.config.ROCKET_PORT}";
           proxyWebsockets = true;
         };
         serverAliases = [ "vault.sisko.zt.aciceri.dev" ];

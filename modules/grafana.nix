@@ -46,7 +46,7 @@
       services.nginx.virtualHosts."status.sisko.wg.aciceri.dev" = {
         useACMEHost = "aciceri.dev";
         forceSSL = true;
-        locations."/".proxyPass = "http://127.0.0.1:${builtins.toString cfg.settings.server.http_port}";
+        locations."/".proxyPass = "http://127.0.0.1:${toString cfg.settings.server.http_port}";
         serverAliases = [ "status.sisko.zt.aciceri.dev" ];
         extraConfig = ''
           allow 10.100.0.0/24;

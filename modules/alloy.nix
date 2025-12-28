@@ -44,7 +44,7 @@
         loki.write "default" {
           endpoint {
             url = "http://sisko.wg.aciceri.dev:${
-              builtins.toString config.services.loki.configuration.server.http_listen_port or 3100
+              toString config.services.loki.configuration.server.http_listen_port or 3100
             }/loki/api/v1/push"
           }
           external_labels = {

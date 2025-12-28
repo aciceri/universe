@@ -10,7 +10,7 @@ in
       "*.out"
       "*.pdf"
     ]
-    |> builtins.map (path: "${currentDir}/**/${path}");
+    |> map (p: "${currentDir}/**/${p}");
 
   perSystem =
     {

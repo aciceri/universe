@@ -42,7 +42,7 @@
         forceSSL = true;
         useACMEHost = "aciceri.dev";
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString cfg.settings.WebServer.Port}";
+          proxyPass = "http://localhost:${toString cfg.settings.WebServer.Port}";
         };
         serverAliases = [ "amule.sisko.zt.aciceri.dev" ];
         extraConfig = ''

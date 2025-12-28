@@ -67,7 +67,7 @@
             static_configs = [
               {
                 targets = [
-                  "sisko.wg.aciceri.dev:${builtins.toString config.services.home-assistant.config.http.server_port}"
+                  "sisko.wg.aciceri.dev:${toString config.services.home-assistant.config.http.server_port}"
                 ];
               }
             ];

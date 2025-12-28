@@ -66,7 +66,7 @@
         forceSSL = true;
         useACMEHost = "aciceri.dev";
         locations."/" = {
-          proxyPass = "http://localhost:${builtins.toString config.services.adguardhome.port}";
+          proxyPass = "http://localhost:${toString config.services.adguardhome.port}";
         };
         serverAliases = [ "adguard.sisko.zt.aciceri.dev" ];
         extraConfig = ''
