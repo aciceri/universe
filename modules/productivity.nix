@@ -50,6 +50,8 @@
           plugins = with pkgs.obs-studio-plugins; [ wlrobs ];
         };
 
+        mpv.enable = true;
+
         element-desktop.enable = true;
       };
 
