@@ -195,6 +195,45 @@
         }
       ]
     },
+    "aarch64-linux/foodlog-backend": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"foodlog-backend\"' -L"
+        }
+      ]
+    },
+    "aarch64-linux/foodlog-frontend": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"foodlog-frontend\"' -L"
+        }
+      ]
+    },
+    "aarch64-linux/foodlog-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"foodlog-shell\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/helix-master": {
       "runs-on": "native",
       "steps": [
@@ -382,6 +421,9 @@
         "aarch64-linux/files/.gitignore",
         "aarch64-linux/files/README.md",
         "aarch64-linux/files/packages/_nur.nix",
+        "aarch64-linux/foodlog-backend",
+        "aarch64-linux/foodlog-frontend",
+        "aarch64-linux/foodlog-shell",
         "aarch64-linux/helix-master",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
@@ -411,6 +453,9 @@
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
         "x86_64-linux/files/packages/_nur.nix",
+        "x86_64-linux/foodlog-backend",
+        "x86_64-linux/foodlog-frontend",
+        "x86_64-linux/foodlog-shell",
         "x86_64-linux/helix-master",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
@@ -449,6 +494,9 @@
         "aarch64-linux/files/.gitignore",
         "aarch64-linux/files/README.md",
         "aarch64-linux/files/packages/_nur.nix",
+        "aarch64-linux/foodlog-backend",
+        "aarch64-linux/foodlog-frontend",
+        "aarch64-linux/foodlog-shell",
         "aarch64-linux/helix-master",
         "aarch64-linux/hyphenopoly",
         "aarch64-linux/mirror-checks",
@@ -478,6 +526,9 @@
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
         "x86_64-linux/files/packages/_nur.nix",
+        "x86_64-linux/foodlog-backend",
+        "x86_64-linux/foodlog-frontend",
+        "x86_64-linux/foodlog-shell",
         "x86_64-linux/helix-master",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
@@ -713,6 +764,45 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"files/packages/_nur.nix\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/foodlog-backend": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"foodlog-backend\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/foodlog-frontend": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"foodlog-frontend\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/foodlog-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"foodlog-shell\"' -L"
         }
       ]
     },

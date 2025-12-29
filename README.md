@@ -42,6 +42,7 @@ connected via an NVMe-to-SATA adapter.
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
 - [cups.sisko.wg.aciceri.dev](https://cups.sisko.wg.aciceri.dev)
+- [food.sisko.wg.aciceri.dev](https://food.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
@@ -110,6 +111,10 @@ This will start a development server for the presentation slides.
 pnpm build                        # Build for production
 nix build .#agenix-shell-talk     # Build presentation as a completely self-contained derivation
 ```
+
+### Foodlog
+
+Vibe coded AI-powered progressive web app for tracking my food intake.
 
 ### Curriculum Vitae
 

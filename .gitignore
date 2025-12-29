@@ -13,6 +13,10 @@ projects/cv/**/*.aux
 projects/cv/**/*.log
 projects/cv/**/*.out
 projects/cv/**/*.pdf
+projects/foodlog/backend/dist-newstyle
+projects/foodlog/backend/foodlog.db
+projects/foodlog/frontend/dist
+projects/foodlog/frontend/node_modules
 projects/talks/agenix-shell/**/dist
 projects/talks/agenix-shell/**/node_modules
 projects/talks/nixos-devops/**/*.html
