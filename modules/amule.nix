@@ -2,7 +2,7 @@
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
     let
-      rev = "966199fe1dccc9c6c7016bdb1d9582f27797bc02";
+      rev = "2fcb301742fec6e2445829b366511275b6b52287";
       amule-flake = builtins.getFlake "github:NixOS/nixpkgs/${rev}";
       inherit (amule-flake.legacyPackages.${pkgs.stdenv.hostPlatform.system}) amule-daemon amule-web;
       cfg = config.services.amule;
