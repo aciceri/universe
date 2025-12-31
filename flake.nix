@@ -106,6 +106,7 @@
         blueprint.follows = "blueprint_";
       };
     };
+    nixpkgs-amule.url = "github:aciceri/nixpkgs/fix-amule-module";
     nuschtos = {
       # TODO use
       url = "github:NuschtOS/search";

@@ -1,16 +1,15 @@
+{ inputs, ... }:
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
     let
-      rev = "2fcb301742fec6e2445829b366511275b6b52287";
-      amule-flake = builtins.getFlake "github:NixOS/nixpkgs/${rev}";
-      inherit (amule-flake.legacyPackages.${pkgs.stdenv.hostPlatform.system}) amule-daemon amule-web;
+      inherit (inputs.nixpkgs-amule.legacyPackages.${pkgs.stdenv.hostPlatform.system}) amule-daemon amule-web;
       cfg = config.services.amule;
     in
     {
       disabledModules = [ "services/networking/amuled.nix" ];
 
-      imports = [ "${amule-flake}/nixos/modules/services/networking/amuled.nix" ];
+      imports = [ "${inputs.nixpkgs-amule}/nixos/modules/services/networking/amuled.nix" ];
 
       documentation.nixos.checkRedirects = false; # TODO remove when the amule PR will be merged upstream
 
