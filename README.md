@@ -161,7 +161,7 @@ A web player for terminal session recordings
 
 Post-modern modal text editor
 
-### [hyphenopoly](packages/hyphenopoly/_package.nix) (version 6.0.0)
+### [hyphenopoly](packages/hyphenopoly/_package.nix) (version 6.1.0)
 
 Hyphenation for node and Polyfill for client-side hyphenation
 
