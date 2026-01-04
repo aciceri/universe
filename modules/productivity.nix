@@ -20,6 +20,7 @@
 
         # Chats
         telegram-desktop
+        signal-desktop
         slack
         # Ham radio
         sdrangel
