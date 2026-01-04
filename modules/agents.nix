@@ -139,6 +139,7 @@ in
         opencode = {
           enable = true;
           settings.theme = lib.mkForce "catppuccin";
+          settings.formatter = false;
           rules = instructions;
         };
       };
