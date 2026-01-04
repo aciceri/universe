@@ -67,34 +67,64 @@
             };
           };
 
-          secrets."wireguard_private_key_${hostName}" = { };
           networking.firewall.trustedInterfaces = [ cfg.interfaceName ];
-          networking.wireguard.interfaces.${cfg.interfaceName} = {
-            mtu = 1200;
-            privateKeyFile = config.age.secrets."wireguard_private_key_${hostName}".path;
-            listenPort = 51820;
-          };
         }
         (lib.mkIf cfg.isClient {
-          networking.wireguard.interfaces.wg0 = {
-            ips = [ "${cfg.hosts.${hostName}.ip}/32" ];
-            peers = [
-              {
-                publicKey = cfg.hosts.sisko.publicKey;
-                allowedIPs = [ "10.100.0.0/24" ];
-                # allowedIPs = [ "0.0.0.0/24" ]; # Uncomment for full tunnel
-                endpoint = "vpn.aciceri.dev:51820";
-                persistentKeepalive = 25;
-              }
-            ];
+          secrets."wireguard_private_key_${hostName}" = { };
+
+          networking.networkmanager.ensureProfiles = {
+            environmentFiles = [ config.age.secrets."wireguard_private_key_${hostName}".path ];
+
+            profiles = rec {
+              wg-universe = {
+                connection = {
+                  id = "WireGuard Universe";
+                  type = "wireguard";
+                  interface-name = "wg-universe";
+                  autoconnect = true;
+                };
+
+                ipv4 = {
+                  method = "manual";
+                  address1 = "${cfg.hosts.${hostName}.ip}/24";
+                };
+
+                ipv6.method = "disabled";
+
+                wireguard = {
+                  private-key = "$WG_UNIVERSE_PRIVATE_KEY";
+                  mtu = 1200;
+                };
+
+                "wireguard-peer.${cfg.hosts.sisko.publicKey}" = {
+                  endpoint = "vpn.aciceri.dev:51820";
+                  allowed-ips = "10.100.0.0/24;";
+                  persistent-keepalive = 25;
+                };
+              };
+
+              wg-full = lib.recursiveUpdate wg-universe {
+                connection = {
+                  id = "WireGuard Universe Full";
+                  interface-name = "wg-full";
+                  autoconnect = false;
+                };
+                "wireguard-peer.${cfg.hosts.sisko.publicKey}".allowed-ips = "0.0.0.0/0;";
+              };
+            };
           };
         })
         (lib.mkIf (!cfg.isClient) {
+          secrets."wireguard_private_key_${hostName}" = { };
+
           networking.nat.enable = true;
 
           networking.firewall.allowedUDPPorts = [ config.networking.wireguard.interfaces.wg0.listenPort ];
 
           networking.wireguard.interfaces.wg0 = {
+            mtu = 1200;
+            privateKeyFile = config.age.secrets."wireguard_private_key_${hostName}".path;
+            listenPort = 51820;
             ips = [ "${cfg.hosts.${hostName}.ip}/24" ];
             peers = lib.mapAttrsToList (_: host: {
               publicKey = host.publicKey;
@@ -116,42 +146,37 @@
   flake.modules.nixos.workstation =
     { config, ... }:
     {
-      secrets.wireguard_mlabs_private_key = { }; # the same for all the workstations, usually only one at time is on
-      networking.wireguard.interfaces.wg1 = {
-        ips = [ "10.10.1.1/32" ];
-        peers = [
-          {
-            publicKey = "A4u2Rt5WEMHOAc6YpDABkqAy2dzzFLH9Gn8xWcKaPQQ=";
-            allowedIPs = [ "10.10.0.0/16" ];
+      secrets.wireguard_mlabs_private_key = { };
+
+      networking.networkmanager.ensureProfiles = {
+        environmentFiles = [ config.age.secrets.wireguard_mlabs_private_key.path ];
+
+        profiles."wg-mlabs" = {
+          connection = {
+            id = "WireGuard MLabs";
+            type = "wireguard";
+            interface-name = "wg-mlabs";
+            autoconnect = true;
+          };
+
+          ipv4 = {
+            method = "manual";
+            address1 = "10.10.1.1/32";
+          };
+
+          ipv6.method = "disabled";
+
+          wireguard = {
+            private-key = "$WG_MLABS_PRIVATE_KEY";
+            mtu = 1300;
+          };
+
+          "wireguard-peer.A4u2Rt5WEMHOAc6YpDABkqAy2dzzFLH9Gn8xWcKaPQQ=" = {
             endpoint = "vpn.staging.mlabs.city:51820";
-            persistentKeepalive = 25;
-          }
-        ];
-        privateKeyFile = config.age.secrets.wireguard_mlabs_private_key.path;
-        mtu = 1300;
+            allowed-ips = "10.10.0.0/16";
+            persistent-keepalive = 25;
+          };
+        };
       };
-
-      networking.networkmanager.unmanaged = lib.attrNames config.networking.wireguard.interfaces;
-
-      # TODO removed while testing if really needed
-      #   systemd.services."wireguard-restart-after-sleep" = {
-      #     description = "Restart WireGuard after suspend";
-      #     after = [
-      #       "suspend.target"
-      #       "hibernate.target"
-      #       "sleep.target"
-      #       "network-online.target"
-      #     ];
-      #     wants = [ "network-online.target" ];
-      #     wantedBy = [ "post-resume.target" ];
-      #     serviceConfig.Type = "oneshot";
-      #     script = ''
-      #       until ${lib.getExe pkgs.host} vpn.aciceri.dev > /dev/null 2>&1; do
-      #       echo "Waiting for DNS..."
-      #       sleep 1
-      #     done
-      #       ${lib.getExe' pkgs.systemd "systemctl"} restart wireguard-wg*.service
-      #     '';
-      #   };
     };
 }
