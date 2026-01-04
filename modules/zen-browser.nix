@@ -114,7 +114,7 @@
         allowed_extensions = [ "brotab_mediator@example.org" ];
       };
 
-      programs.niri.settings.binds."Mod+b".action = lib.mkForce <| config.lib.niri.actions.spawn <| lib.getExe rofiZenTabs;
+      programs.niri.settings.binds."Mod+b".action = config.lib.niri.actions.spawn <| lib.getExe rofiZenTabs;
 
       programs.zen-browser = {
         enable = true;
