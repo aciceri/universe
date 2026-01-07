@@ -1,8 +1,6 @@
 { config, lib, ... }:
 {
   flake.modules.nixos.workstation = {
-    programs.adb.enable = true;
-
     users.users =
       config.users
       |> lib.mapAttrs (
