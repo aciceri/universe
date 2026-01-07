@@ -151,4 +151,58 @@ in
         cursor-cli
       ];
     };
+
+  configurations.nixos.sisko.module =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    {
+      users.groups.claude-heartbeat = { };
+      users.users.claude-heartbeat = {
+        group = "claude-heartbeat";
+        home = "/var/lib/claude-heartbeat";
+        isSystemUser = true;
+        createHome = true;
+      };
+
+      systemd.services.claude-heartbeat = {
+        description = "Automatically starts sessions at strategic hours";
+        serviceConfig = {
+          Type = "oneshot";
+          User = "claude-heartbeat";
+          WorkingDirectory = config.users.users.claude-heartbeat.home;
+          RestrictAddressFamilies = "AF_INET AF_INET6";
+          ProtectSystem = "full";
+          PrivateTmp = true;
+          NoNewPrivileges = true;
+          StandardOutput = "journal";
+          StandardError = "journal";
+        };
+        script = ''
+          ${lib.getExe pkgs.opencode} run "Lol"
+        '';
+      };
+
+      systemd.timers.claude-heartbeat = {
+        description = "Timer for claude-heartbeat service";
+        wantedBy = [ "timers.target" ];
+        timerConfig = {
+          OnCalendar = [
+            "07:00"
+            "12:05"
+            "17:10"
+            "21:15"
+          ];
+          Persistent = true;
+          Unit = "claude-heartbeat.service";
+        };
+      };
+
+      environment.persistence."/persist".directories = [
+        "/var/lib/claude-heartbeat"
+      ];
+    };
 }
