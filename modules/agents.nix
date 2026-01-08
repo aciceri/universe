@@ -138,8 +138,25 @@ in
 
         opencode = {
           enable = true;
-          settings.theme = lib.mkForce "catppuccin";
-          settings.formatter = false;
+          settings = {
+            theme = lib.mkForce "catppuccin";
+            formatter = false;
+            mcp = {
+              playwright = {
+                command = [ (lib.getExe pkgs.playwright-mcp) ];
+                type = "local";
+                enabled = false;
+              };
+              github = {
+                command = [
+                  (lib.getExe pkgs.github-mcp-server)
+                  "stdio"
+                ];
+                type = "local";
+                enabled = false;
+              };
+            };
+          };
           rules = instructions;
         };
       };
@@ -169,7 +186,7 @@ in
       };
 
       systemd.services.claude-heartbeat = {
-        description = "Automatically starts sessions at strategic hours";
+        description = "Automatically start sessions at strategic hours";
         serviceConfig = {
           Type = "oneshot";
           User = "claude-heartbeat";
