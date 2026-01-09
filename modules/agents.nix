@@ -141,6 +141,7 @@ in
           settings = {
             theme = lib.mkForce "catppuccin";
             formatter = false;
+            plugin = [ "opencode-anthropic-auth@0.0.7" ];
             mcp = {
               playwright = {
                 command = [ (lib.getExe pkgs.playwright-mcp) ];
