@@ -1,21 +1,32 @@
 {
-  flake.modules.nixos.pc = {
-    programs.dms-shell = {
-      enable = true;
-
-      systemd = {
+  withSystem,
+  ...
+}:
+{
+  flake.modules.nixos.pc =
+    { pkgs, ... }:
+    let
+      inherit (withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.dms.packages)) quickshell;
+    in
+    {
+      programs.dms-shell = {
         enable = true;
-        restartIfChanged = true;
-      };
 
-      enableSystemMonitoring = true;
-      enableClipboard = true;
-      enableVPN = true;
-      enableDynamicTheming = true;
-      enableAudioWavelength = true;
-      enableCalendarEvents = false;
+        quickshell.package = quickshell;
+
+        systemd = {
+          enable = true;
+          restartIfChanged = true;
+        };
+
+        enableSystemMonitoring = true;
+        enableClipboard = true;
+        enableVPN = true;
+        enableDynamicTheming = true;
+        enableAudioWavelength = true;
+        enableCalendarEvents = false;
+      };
     };
-  };
 
   flake.modules.homeManager.pc =
     {
