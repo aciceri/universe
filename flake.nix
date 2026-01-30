@@ -119,6 +119,7 @@
         flake-utils.follows = "flake-utils_";
       };
     };
+    nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
   };
 
   # Grab SSH keys from GitHub

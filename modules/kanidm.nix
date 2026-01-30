@@ -29,7 +29,6 @@
           bindaddress = "[::]:4348";
           domain = "auth.aciceri.dev";
           origin = "https://${cfg.serverSettings.domain}";
-          trust_x_forward_for = true;
           tls_key = "/var/lib/acme/${cfg.serverSettings.domain}/key.pem";
           tls_chain = "/var/lib/acme/${cfg.serverSettings.domain}/cert.pem";
           online_backup = {

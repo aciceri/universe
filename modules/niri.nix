@@ -55,7 +55,7 @@
               argv = [
                 (lib.getExe pkgs.swaybg)
                 "--image"
-                config.stylix.image.outPath
+                config.stylix.image
                 "--mode"
                 "fill"
               ];

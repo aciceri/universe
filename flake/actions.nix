@@ -13,7 +13,7 @@ let
       }
       {
         name = "Build";
-        run = ''nix build ${lib.escapeShellArg ".#${drvFlakePath}"} -L'';
+        run = "nix build ${lib.escapeShellArg ".#${drvFlakePath}"} -L";
       }
     ];
   };

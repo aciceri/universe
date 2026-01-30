@@ -11,6 +11,7 @@
         "google-chrome"
         "nvidia-x11"
         "nvidia-settings"
+        "android-studio"
         "android-studio-stable"
         "android-studio-tools"
         "brscan4"

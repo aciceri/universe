@@ -1,4 +1,4 @@
-{ lib, ... }:
+{ withSystem, lib, ... }:
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
@@ -36,7 +36,10 @@
         };
       };
 
-      services.influxdb.enable = true;
+      services.influxdb = {
+        enable = true;
+        package = withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.nixpkgs-influxdb.legacyPackages.influxdb);
+      };
 
       environment.persistence."/persist".directories = [
         "/var/lib/garmin-grafana"
