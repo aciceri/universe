@@ -36,7 +36,7 @@
         };
       };
 
-      services.influxdb.enable = true;
+      # services.influxdb.enable = true;
 
       environment.persistence."/persist".directories = [
         "/var/lib/garmin-grafana"

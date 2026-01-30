@@ -51,15 +51,15 @@
           screenshot-path = "~/Pictures/Screenshots/Screenshot from %Y-%m-%d %H-%M-%S.png";
 
           spawn-at-startup = [
-            {
-              argv = [
-                (lib.getExe pkgs.swaybg)
-                "--image"
-                config.stylix.image.outPath
-                "--mode"
-                "fill"
-              ];
-            }
+            # {
+            #   argv = [
+            #     (lib.getExe pkgs.swaybg)
+            #     "--image"
+            #     config.stylix.image.outPath
+            #     "--mode"
+            #     "fill"
+            #   ];
+            # }
             {
               argv = [
                 (lib.getExe pkgs.telegram-desktop)

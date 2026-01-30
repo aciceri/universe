@@ -6,7 +6,6 @@
         enable = true;
         nativeMessagingHosts = with pkgs; [
           tridactyl-native
-          vdhcoapp
           firefoxpwa
         ];
         policies = {

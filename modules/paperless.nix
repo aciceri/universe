@@ -6,7 +6,7 @@
     in
     {
       services.paperless = {
-        enable = true;
+        enable = false;
         domain = "paper.sisko.wg.aciceri.dev";
         address = "0.0.0.0";
         passwordFile = builtins.toFile "paperless-initial-password" "paperless";
