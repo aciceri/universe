@@ -141,7 +141,10 @@ in
           settings = {
             theme = lib.mkForce "catppuccin";
             formatter = false;
-            plugin = [ "opencode-anthropic-auth@0.0.7" ];
+            plugin = [
+              "opencode-anthropic-auth@latest"
+              "opencode-openai-codex-auth@4.4.0"
+            ];
             mcp = {
               playwright = {
                 command = [ (lib.getExe pkgs.playwright-mcp) ];
@@ -155,6 +158,223 @@ in
                 ];
                 type = "local";
                 enabled = false;
+              };
+            };
+            provider.openai = {
+              options = {
+                reasoningEffort = "medium";
+                reasoningSummary = "auto";
+                textVerbosity = "medium";
+                include = [ "reasoning.encrypted_content" ];
+                store = false;
+              };
+              models = {
+                "gpt-5.2" = {
+                  name = "GPT 5.2 (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    none = {
+                      reasoningEffort = "none";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    low = {
+                      reasoningEffort = "low";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                    xhigh = {
+                      reasoningEffort = "xhigh";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                  };
+                };
+                "gpt-5.2-codex" = {
+                  name = "GPT 5.2 Codex (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    low = {
+                      reasoningEffort = "low";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                    xhigh = {
+                      reasoningEffort = "xhigh";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                  };
+                };
+                "gpt-5.1-codex-max" = {
+                  name = "GPT 5.1 Codex Max (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    low = {
+                      reasoningEffort = "low";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                    xhigh = {
+                      reasoningEffort = "xhigh";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                  };
+                };
+                "gpt-5.1-codex" = {
+                  name = "GPT 5.1 Codex (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    low = {
+                      reasoningEffort = "low";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                  };
+                };
+                "gpt-5.1-codex-mini" = {
+                  name = "GPT 5.1 Codex Mini (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "medium";
+                    };
+                  };
+                };
+                "gpt-5.1" = {
+                  name = "GPT 5.1 (OAuth)";
+                  limit = {
+                    context = 272000;
+                    output = 128000;
+                  };
+                  modalities = {
+                    input = [
+                      "text"
+                      "image"
+                    ];
+                    output = [ "text" ];
+                  };
+                  variants = {
+                    none = {
+                      reasoningEffort = "none";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    low = {
+                      reasoningEffort = "low";
+                      reasoningSummary = "auto";
+                      textVerbosity = "low";
+                    };
+                    medium = {
+                      reasoningEffort = "medium";
+                      reasoningSummary = "auto";
+                      textVerbosity = "medium";
+                    };
+                    high = {
+                      reasoningEffort = "high";
+                      reasoningSummary = "detailed";
+                      textVerbosity = "high";
+                    };
+                  };
+                };
               };
             };
           };
