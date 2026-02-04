@@ -230,6 +230,11 @@
               icon = "dollar";
               id = 3;
             };
+            Addictive = {
+              color = "orange";
+              icon = "dollar";
+              id = 4;
+            };
           };
 
           spacesForce = true;
@@ -248,6 +253,11 @@
               container = profileCfg.containers."Proda".id;
               id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
               position = 1002;
+            };
+            "Addictive" = {
+              container = profileCfg.containers."Addictive".id;
+              id = "d48985b0-0a94-4cea-b640-8cfa995487ab";
+              position = 1003;
             };
           };
 
