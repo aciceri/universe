@@ -1,4 +1,4 @@
-{ getCurrentDir, ... }:
+{ withSystem, getCurrentDir, ... }:
 let
   currentDir = getCurrentDir __curPos;
 in
@@ -45,6 +45,25 @@ in
           includes = [ "${currentDir}/**/*.py" ];
         };
       };
+    };
+
+  flake.modules.nixos.workstation = {
+    secrets.caltrack_url.owner = "ccr";
+  };
+
+  flake.modules.homeManager.workstation =
+    { osConfig, pkgs, ... }:
+    {
+      home.packages = withSystem (pkgs.stdenv.system) (
+        { config, ... }:
+        [
+          config.packages.caltrack
+        ]
+      );
+
+      programs.nushell.extraConfig = ''
+        $env.CALTRACK_URL = (open ${osConfig.age.secrets.caltrack_url.path} | str trim)
+      '';
     };
 
   readme.parts.projects = ''
