@@ -127,6 +127,11 @@ To build the served derivation, run:
   nix build .#cv
 ```
 
+### CalTrack
+
+Simple Python tool to extract billable hours from my calendar.
+In a future it may be extended to directly create invoices.
+
 ### Blog
 
 My blog is reachable at https://blog.aciceri.dev, the website is continuously deployed.

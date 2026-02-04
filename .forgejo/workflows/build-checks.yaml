@@ -78,6 +78,32 @@
         }
       ]
     },
+    "aarch64-linux/caltrack": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"caltrack\"' -L"
+        }
+      ]
+    },
+    "aarch64-linux/caltrack-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"caltrack-shell\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/claude-desktop": {
       "runs-on": "native",
       "steps": [
@@ -412,6 +438,8 @@
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
+        "aarch64-linux/caltrack",
+        "aarch64-linux/caltrack-shell",
         "aarch64-linux/claude-desktop",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
@@ -443,6 +471,8 @@
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
+        "x86_64-linux/caltrack",
+        "x86_64-linux/caltrack-shell",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
@@ -485,6 +515,8 @@
         "aarch64-linux/asciinema-player",
         "aarch64-linux/blog",
         "aarch64-linux/blog-shell",
+        "aarch64-linux/caltrack",
+        "aarch64-linux/caltrack-shell",
         "aarch64-linux/claude-desktop",
         "aarch64-linux/configurations/nixos/sisko",
         "aarch64-linux/cv",
@@ -516,6 +548,8 @@
         "x86_64-linux/asciinema-player",
         "x86_64-linux/blog",
         "x86_64-linux/blog-shell",
+        "x86_64-linux/caltrack",
+        "x86_64-linux/caltrack-shell",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
@@ -634,6 +668,32 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"blog-shell\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/caltrack": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"caltrack\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/caltrack-shell": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"caltrack-shell\"' -L"
         }
       ]
     },
