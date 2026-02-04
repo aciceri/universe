@@ -15,6 +15,7 @@ yt-dlp.overrideAttrs (
       rev = "891613b098b2b315d983c2ae16901f5de344ca56";
       hash = "sha256-3sXXyWuQI6KTOQIkkOfJhCTBBh3Zkv59ENhkrz9Sgxc=";
     };
+    postPatch = "";
     passthru = previousAttrs.passthru // {
       updateScript = writeShellScript "update-script.sh" "${lib.getExe nix-update} --flake yt-dlp-master --version=branch";
     };
