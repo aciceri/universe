@@ -14,6 +14,7 @@
   (initial-scratch-message nil)
   (use-dialog-box nil)
   (scroll-margin 3)
+  (scroll-conservatively 101)
   (display-line-numbers-type 'relative)
   (display-line-numbers-width-start t)
   (show-paren-when-point-inside-paren t)
@@ -70,6 +71,10 @@
   (recentf-mode t)
   (save-place-mode t))
 
+(use-package envrc
+  :init
+  (envrc-global-mode))
+
 (use-package catppuccin-theme
   :config
   (load-theme 'catppuccin :no-confirm))
@@ -78,7 +83,10 @@
   :init
   (vertico-mode)
   :bind (:map vertico-map
+              ("<escape>" . abort-recursive-edit)
               ("M-." . vertico-insert)))
+
+(use-package eat)
 
 (use-package consult
   :custom

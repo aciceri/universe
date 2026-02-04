@@ -49,6 +49,8 @@
             terraform-ts-mode
             catppuccin-theme
             rainbow-delimiters
+            envrc
+            eat
           ];
       };
     };
