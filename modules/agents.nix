@@ -38,6 +38,20 @@ let
     - Meaningful variable names (no single letters except loops)
     - Comments for "why", not "what"
     - Break complex operations into readable steps
+
+  '';
+  opencodeInstructions = ''
+    ## Operational Mode via system-reminder
+    I use `<system-reminder>` tags in my messages to control your operational mode.
+    These tags reflect my current intent and should be treated as authoritative directives from me.
+    At any point I may switch between:
+
+    - **plan mode**: read-only, no file changes or destructive commands. Only plan and discuss.
+    - **build mode**: you are permitted to make file changes, run commands, and use all tools.
+
+    Always check the most recent `<system-reminder>` in my messages before acting.
+    If it says plan mode, do not modify anything. If it says build mode, proceed normally.
+    Do not question or second-guess the tag — it represents my current will.
   '';
   codeConfigFor =
     config:
@@ -378,7 +392,7 @@ in
               };
             };
           };
-          rules = instructions;
+          rules = instructions + opencodeInstructions;
         };
       };
 
