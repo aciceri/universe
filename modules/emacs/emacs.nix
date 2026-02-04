@@ -25,10 +25,9 @@
 
       home.file.".config/emacs/init.el".source =
         config.lib.file.mkOutOfStoreSymlink "/home/ccr/universe/modules/emacs/init.el";
-
       programs.emacs = {
         enable = true;
-        package = pkgs.emacs-gtk;
+        package = pkgs.emacs-pgtk;
         extraPackages =
           epkgs: with epkgs; [
             helix
