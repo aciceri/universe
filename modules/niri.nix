@@ -165,6 +165,39 @@
               open-on-workspace = "mail";
             }
 
+            # Thunderbird - dialogs
+            {
+              matches = [
+                {
+                  app-id = "^thunderbird$";
+                  title = "^Edit Item$";
+                }
+                {
+                  app-id = "^thunderbird$";
+                  title = "^Edit Event:";
+                }
+              ];
+              open-floating = true;
+              open-focused = true;
+              open-maximized = false;
+            }
+
+            {
+              matches = [
+                {
+                  app-id = "^thunderbird$";
+                  title = "^$";
+                }
+                {
+                  app-id = "^thunderbird$";
+                  title = "^null$";
+                }
+              ];
+              open-floating = true;
+              open-focused = true;
+              open-maximized = false;
+            }
+
             # floating terminals
             (
               let
