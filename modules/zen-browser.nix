@@ -84,6 +84,7 @@
         getFirefoxExtensionId
         rofiZenTabs
         pkgs.brotab
+        pkgs.firefoxpwa
       ];
 
       xdg.mimeApps.defaultApplications = {
@@ -119,6 +120,8 @@
       programs.zen-browser = {
         enable = true;
 
+        nativeMessagingHosts = [ pkgs.firefoxpwa ];
+
         policies = {
           AutofillAddressEnabled = true;
           AutofillCreditCardEnabled = false;
@@ -147,6 +150,7 @@
             "brotab_mediator@example.org" = "brotab";
             "webextension@metamask.io" = "ether-metamask";
             "amptra@keepa.com" = "keepa";
+            "firefoxpwa@filips.si" = "pwas-for-firefox";
             "{446900e4-71c2-419f-a6a7-df9c091e268b}" = mkExtensionEntry {
               id = "bitwarden-password-manager";
               pinned = true;
