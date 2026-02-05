@@ -15,17 +15,6 @@ let
       2. For project-specific tools: add to flake.nix devShell
       3. For one-off usage: use `yes | , <command>` (comma tool via nix-index)
 
-    ## Shell: Nushell (NOT POSIX)
-    - This is NOT bash/zsh - different syntax and philosophy
-    - Key differences:
-      * Variables: `let var = "value"` not `var="value"`
-      * Pipes pass structured data, not just text
-      * Command substitution: `(command)` not `$(command)`
-      * Conditionals: `if condition { } else { }` not `if [ ]; then; fi`
-      * Loops: `for item in $list { }` not `for item in list; do; done`
-    - Environment variables: use `with-env {VAR: "value"} { command }`
-    - External commands need `^` prefix: `^git status`
-
     ## Development Workflow
     - Check for flake.nix before suggesting installations
     - Prefer `nix develop` shells over global installations
@@ -33,25 +22,17 @@ let
     - Use `direnv` integration when available (auto-load devShell)
     - Feel free to use `gh` for GitHub operations
 
+    ## Git Usage
+    - Do NOT create commits unless explicitly requested
+    - Do NOT use git add, git commit, or other git commands unless absolutely necessary for the task
+    - In general, the user prefers to handle git operations manually
+    - Only interact with git when it's essential to complete a specific task
+
     ## Code Style
     - Prefer clarity over cleverness
     - Meaningful variable names (no single letters except loops)
     - Comments for "why", not "what"
     - Break complex operations into readable steps
-
-  '';
-  opencodeInstructions = ''
-    ## Operational Mode via system-reminder
-    I use `<system-reminder>` tags in my messages to control your operational mode.
-    These tags reflect my current intent and should be treated as authoritative directives from me.
-    At any point I may switch between:
-
-    - **plan mode**: read-only, no file changes or destructive commands. Only plan and discuss.
-    - **build mode**: you are permitted to make file changes, run commands, and use all tools.
-
-    Always check the most recent `<system-reminder>` in my messages before acting.
-    If it says plan mode, do not modify anything. If it says build mode, proceed normally.
-    Do not question or second-guess the tag — it represents my current will.
   '';
   codeConfigFor =
     config:
@@ -392,7 +373,7 @@ in
               };
             };
           };
-          rules = instructions + opencodeInstructions;
+          rules = instructions;
         };
       };
 
