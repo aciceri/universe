@@ -22,15 +22,15 @@
       ];
 
       services.kanidm = {
-        enableServer = true;
+        server.enable = true;
         package = pkgs.kanidmWithSecretProvisioning_1_8;
 
-        serverSettings = {
+        server.settings = {
           bindaddress = "[::]:4348";
           domain = "auth.aciceri.dev";
-          origin = "https://${cfg.serverSettings.domain}";
-          tls_key = "/var/lib/acme/${cfg.serverSettings.domain}/key.pem";
-          tls_chain = "/var/lib/acme/${cfg.serverSettings.domain}/cert.pem";
+          origin = "https://${cfg.server.settings.domain}";
+          tls_key = "/var/lib/acme/${cfg.server.settings.domain}/key.pem";
+          tls_chain = "/var/lib/acme/${cfg.server.settings.domain}/cert.pem";
           online_backup = {
             path = "/var/lib/kanidm/backups";
             schedule = "00 23 * * *";
@@ -121,10 +121,10 @@
         };
       };
 
-      services.nginx.virtualHosts."${cfg.serverSettings.domain}" = {
+      services.nginx.virtualHosts."${cfg.server.settings.domain}" = {
         forceSSL = true;
         enableACME = true;
-        locations."/".proxyPass = "https://${cfg.serverSettings.bindaddress}";
+        locations."/".proxyPass = "https://${cfg.server.settings.bindaddress}";
       };
     };
 }
