@@ -6,12 +6,13 @@
   flake.modules.nixos.pc =
     { pkgs, ... }:
     let
-      inherit (withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.dms.packages)) quickshell;
+      inherit (withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.dms.packages)) quickshell dms-shell;
     in
     {
       programs.dms-shell = {
         enable = true;
 
+        package = dms-shell;
         quickshell.package = quickshell;
 
         systemd = {
