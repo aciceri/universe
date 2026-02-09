@@ -166,7 +166,7 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
-### [helix-master](packages/helix-master/_package.nix) (version master-74075bb5a389051ea46437af8cab512661b3d998)
+### [helix-master](packages/helix-master/_package.nix) (version master-066dded21b7c520bfa114780907265eda801004b)
 
 Post-modern modal text editor
 
@@ -182,7 +182,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.02.04-unstable-2026-02-04)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.02.04-unstable-2026-02-07)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
