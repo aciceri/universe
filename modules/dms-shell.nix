@@ -24,6 +24,10 @@
         enableDynamicTheming = true;
         enableAudioWavelength = true;
         enableCalendarEvents = false;
+
+        plugins.ccusageWidget = {
+          src = pkgs.dms-ccusage-plugin;
+        };
       };
     };
 

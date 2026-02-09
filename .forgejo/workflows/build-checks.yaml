@@ -169,6 +169,19 @@
         }
       ]
     },
+    "aarch64-linux/dms-ccusage-plugin": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"dms-ccusage-plugin\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/files/.forgejo/workflows/build-checks.yaml": {
       "runs-on": "native",
       "steps": [
@@ -445,6 +458,7 @@
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
+        "aarch64-linux/dms-ccusage-plugin",
         "aarch64-linux/files/.forgejo/workflows/build-checks.yaml",
         "aarch64-linux/files/.gitignore",
         "aarch64-linux/files/README.md",
@@ -479,6 +493,7 @@
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
+        "x86_64-linux/dms-ccusage-plugin",
         "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
@@ -522,6 +537,7 @@
         "aarch64-linux/cv",
         "aarch64-linux/cv-shell",
         "aarch64-linux/default-shell",
+        "aarch64-linux/dms-ccusage-plugin",
         "aarch64-linux/files/.forgejo/workflows/build-checks.yaml",
         "aarch64-linux/files/.gitignore",
         "aarch64-linux/files/README.md",
@@ -556,6 +572,7 @@
         "x86_64-linux/cv",
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
+        "x86_64-linux/dms-ccusage-plugin",
         "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
@@ -772,6 +789,19 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"default-shell\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/dms-ccusage-plugin": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"dms-ccusage-plugin\"' -L"
         }
       ]
     },

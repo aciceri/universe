@@ -162,6 +162,10 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
+### [dms-ccusage-plugin](packages/dms-ccusage-plugin/_package.nix) (version 1.0.0)
+
+DMS plugin showing Claude Code billing block usage
+
 ### [helix-master](packages/helix-master/_package.nix) (version master-74075bb5a389051ea46437af8cab512661b3d998)
 
 Post-modern modal text editor
