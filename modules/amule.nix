@@ -1,22 +1,12 @@
-{ inputs, ... }:
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
     let
-      inherit (inputs.nixpkgs-amule.legacyPackages.${pkgs.stdenv.hostPlatform.system}) amule-daemon amule-web;
       cfg = config.services.amule;
     in
     {
-      disabledModules = [ "services/networking/amuled.nix" ];
-
-      imports = [ "${inputs.nixpkgs-amule}/nixos/modules/services/networking/amuled.nix" ];
-
-      documentation.nixos.checkRedirects = false; # TODO remove when the amule PR will be merged upstream
-
       services.amule = {
         enable = true;
-        package = amule-daemon;
-        amuleWebPackage = amule-web;
         openPeerPorts = true;
         openWebServerPort = true;
         # TODO the service is accessible only from the VPN, using agenix would be better

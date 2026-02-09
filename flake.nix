@@ -102,7 +102,6 @@
         flake-utils.follows = "flake-utils_";
       };
     };
-    nixpkgs-amule.url = "github:aciceri/nixpkgs/fix-amule-module";
     nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
   };
 

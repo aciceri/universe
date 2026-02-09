@@ -595,22 +595,6 @@
         "type": "github"
       }
     },
-    "nixpkgs-amule": {
-      "locked": {
-        "lastModified": 1765733240,
-        "narHash": "sha256-2ymPMdspw9/dt9vzSPRghTa4F3kdxU7QiWssfMtbvDQ=",
-        "owner": "aciceri",
-        "repo": "nixpkgs",
-        "rev": "2fcb301742fec6e2445829b366511275b6b52287",
-        "type": "github"
-      },
-      "original": {
-        "owner": "aciceri",
-        "ref": "fix-amule-module",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs-influxdb": {
       "locked": {
         "lastModified": 1770020711,
@@ -758,7 +742,6 @@
         "nix-systems_": "nix-systems_",
         "nixos-facter-modules": "nixos-facter-modules",
         "nixpkgs": "nixpkgs_3",
-        "nixpkgs-amule": "nixpkgs-amule",
         "nixpkgs-influxdb": "nixpkgs-influxdb",
         "nixpkgs-stable_": "nixpkgs-stable_",
         "nur": "nur",
