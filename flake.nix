@@ -102,23 +102,7 @@
         flake-utils.follows = "flake-utils_";
       };
     };
-    nix-ai-tools = {
-      url = "github:numtide/nix-ai-tools";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        treefmt-nix.follows = "treefmt-nix";
-        blueprint.follows = "blueprint_";
-      };
-    };
     nixpkgs-amule.url = "github:aciceri/nixpkgs/fix-amule-module";
-    nuschtos = {
-      # TODO use
-      url = "github:NuschtOS/search";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        flake-utils.follows = "flake-utils_";
-      };
-    };
     nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
   };
 
