@@ -338,6 +338,19 @@
         }
       ]
     },
+    "aarch64-linux/opencode-claude-max-proxy": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.aarch64-linux.\"opencode-claude-max-proxy\"' -L"
+        }
+      ]
+    },
     "aarch64-linux/pre-commit": {
       "runs-on": "native",
       "steps": [
@@ -471,6 +484,7 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/nixos-devops-talk",
         "aarch64-linux/nixos-tests-talk",
+        "aarch64-linux/opencode-claude-max-proxy",
         "aarch64-linux/pre-commit",
         "aarch64-linux/reinstall-magisk-on-lineageos",
         "aarch64-linux/talks-agenix-shell-shell",
@@ -506,6 +520,7 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/nixos-tests-talk",
+        "x86_64-linux/opencode-claude-max-proxy",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
@@ -550,6 +565,7 @@
         "aarch64-linux/mirror-checks",
         "aarch64-linux/nixos-devops-talk",
         "aarch64-linux/nixos-tests-talk",
+        "aarch64-linux/opencode-claude-max-proxy",
         "aarch64-linux/pre-commit",
         "aarch64-linux/reinstall-magisk-on-lineageos",
         "aarch64-linux/talks-agenix-shell-shell",
@@ -585,6 +601,7 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/nixos-tests-talk",
+        "x86_64-linux/opencode-claude-max-proxy",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
@@ -958,6 +975,19 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"nixos-tests-talk\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/opencode-claude-max-proxy": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"opencode-claude-max-proxy\"' -L"
         }
       ]
     },

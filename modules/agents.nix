@@ -401,6 +401,86 @@ in
         createHome = true;
       };
 
+      systemd.services.claude-proxy = {
+        description = "Proxy bridging Anthropic API to Claude Max via Claude Agent SDK";
+        after = [ "network-online.target" ];
+        wants = [ "network-online.target" ];
+        wantedBy = [ "multi-user.target" ];
+        path = [
+          pkgs.claude-code
+          pkgs.which
+        ];
+        serviceConfig = {
+          Type = "simple";
+          User = "claude-heartbeat";
+          WorkingDirectory = config.users.users.claude-heartbeat.home;
+          ExecStart = lib.getExe pkgs.opencode-claude-max-proxy;
+          Restart = "always";
+          RestartSec = 5;
+        };
+      };
+
+      secrets.claude_proxy_token = { };
+
+      systemd.services.claude-proxy-token-setup = {
+        description = "Generate nginx auth config for Claude proxy";
+        wantedBy = [ "nginx.service" ];
+        before = [ "nginx.service" ];
+        after = [ "agenix.service" ];
+        serviceConfig = {
+          Type = "oneshot";
+          RemainAfterExit = true;
+        };
+        script = ''
+          mkdir -p /run/nginx
+          token=$(cat ${config.age.secrets.claude_proxy_token.path})
+          printf 'set $claude_proxy_token "%s";\n' "$token" > /run/nginx/claude-proxy-token.conf
+          chmod 440 /run/nginx/claude-proxy-token.conf
+          chown nginx:nginx /run/nginx/claude-proxy-token.conf
+        '';
+      };
+
+      services.nginx.virtualHosts."claude.aciceri.dev" = {
+        enableACME = true;
+        forceSSL = true;
+        locations."/" = {
+          proxyPass = "http://localhost:3456";
+          proxyWebsockets = true;
+          extraConfig = ''
+            include /run/nginx/claude-proxy-token.conf;
+
+            if ($http_x_api_key != $claude_proxy_token) {
+              return 401 '{"error":"unauthorized"}';
+            }
+
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 300s;
+          '';
+        };
+      };
+
+      services.nginx.virtualHosts."claude.sisko.wg.aciceri.dev" = {
+        forceSSL = true;
+        useACMEHost = "aciceri.dev";
+        locations."/" = {
+          proxyPass = "http://localhost:3456";
+          proxyWebsockets = true;
+          extraConfig = ''
+            proxy_buffering off;
+            proxy_cache off;
+            proxy_read_timeout 300s;
+          '';
+        };
+        serverAliases = [ "claude.sisko.zt.aciceri.dev" ];
+        extraConfig = ''
+          allow 10.100.0.0/24;
+          allow 10.100.1.0/24;
+          allow 127.0.0.1;
+          deny all;
+        '';
+      };
+
       systemd.services.claude-heartbeat = {
         description = "Automatically start sessions at strategic hours";
         serviceConfig = {

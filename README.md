@@ -28,6 +28,7 @@ connected via an NVMe-to-SATA adapter.
 - [auth.aciceri.dev](https://auth.aciceri.dev)
 - [blog.aciceri.dev](https://blog.aciceri.dev)
 - [cal.aciceri.dev](https://cal.aciceri.dev)
+- [claude.aciceri.dev](https://claude.aciceri.dev)
 - [cv.aciceri.dev](https://cv.aciceri.dev)
 - [git.aciceri.dev](https://git.aciceri.dev)
 - [home.aciceri.dev](https://home.aciceri.dev)
@@ -41,6 +42,7 @@ connected via an NVMe-to-SATA adapter.
 - [adguard.sisko.wg.aciceri.dev](https://adguard.sisko.wg.aciceri.dev)
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
+- [claude.sisko.wg.aciceri.dev](https://claude.sisko.wg.aciceri.dev)
 - [cups.sisko.wg.aciceri.dev](https://cups.sisko.wg.aciceri.dev)
 - [food.sisko.wg.aciceri.dev](https://food.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
@@ -177,6 +179,13 @@ Hyphenation for node and Polyfill for client-side hyphenation
 ### [mirror-checks](packages/mirror-checks/_package.nix) (version 1.0.0)
 
 Utility to synchronize CI checks from Forgejo to GitHub
+
+### [opencode-claude-max-proxy](packages/opencode-claude-max-proxy/_package.nix) (version 1.0.2-unstable-2026-01-30)
+
+Use your Claude Max subscription with OpenCode or any Anthropic
+API-compatible tool. Translates API requests into Claude Agent SDK
+calls. Requires claude-code CLI installed and authenticated
+(claude login).
 
 ### [reinstall-magisk-on-lineageos](packages/reinstall-magisk-on-lineageos/_package.nix) (version 1ca911e)
 
