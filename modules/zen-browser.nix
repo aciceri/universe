@@ -9,7 +9,7 @@
       ...
     }:
     let
-      profileCfg = config.programs.zen-browser.profiles.default;
+      # profileCfg = config.programs.zen-browser.profiles.default;
 
       mkPluginUrl = id: "https://addons.mozilla.org/firefox/downloads/latest/${id}/latest.xpi";
 
@@ -78,6 +78,12 @@
       '';
     in
     {
+      # NOTE: The zen-browser HM module manages profiles under ~/.config/zen/.
+      # On a fresh setup (or after deleting ~/.config/zen/), you MUST apply the
+      # HM config BEFORE launching Zen for the first time. If Zen starts first,
+      # it overwrites profiles.ini with its own random-named profile, ignoring
+      # the HM-managed "default" profile (and its userChrome.css, user.js, etc.).
+      # Fix: kill Zen, rm -rf ~/.config/zen, re-activate HM, then start Zen.
       imports = [ inputs.zen-browser.homeModules.beta ];
 
       home.packages = [
@@ -107,7 +113,7 @@
       stylix.targets.zen-browser.profileNames = [ "default" ];
 
       # Using `nativeMesagingHosts = [ brotab ]` doesn't seem to work
-      home.file.".zen/native-messaging-hosts/brotab_mediator.json".text = builtins.toJSON {
+      home.file."${config.xdg.configHome}/zen/native-messaging-hosts/brotab_mediator.json".text = builtins.toJSON {
         name = "brotab_mediator";
         description = "This mediator exposes interface over TCP to control browser's tabs";
         path = lib.getExe' pkgs.brotab "bt_mediator";
@@ -163,7 +169,11 @@
           isDefault = true;
 
           userChrome = lib.mkAfter ''
-            /* Remove gap at the top of the window */
+            /* Remove gap/border between web content and window edge */
+            :root {
+              --zen-element-separation: 0px !important;
+            }
+
             #navigator-toolbox {
               padding-top: 0 !important;
               margin-top: 0 !important;
@@ -174,13 +184,25 @@
               padding-top: 0 !important;
             }
 
+            /* Remove border-radius on structural window/content elements,
+               so niri handles window rounding via clip-to-geometry */
             :root {
-              --zen-element-separation: 0px !important;
+              --zen-browser-border-radius: 0px !important;
+              --zen-border-radius: 0px !important;
             }
 
-            /* Disable all corner radius - let niri handle it via clip-to-geometry
-               FIXME: this disables evertyhing, also internal elements */
-            * {
+            #tabbrowser-tabpanels,
+            #browser,
+            #appcontent,
+            #zen-browser-content-wrapper,
+            #main-window,
+            #tabbrowser-tabbox,
+            #navigator-toolbox,
+            hbox#titlebar,
+            #zen-appcontent-navbar-container,
+            #content-deck,
+            .browserStack,
+            .browserContainer {
               border-radius: 0 !important;
             }
           '';
@@ -196,7 +218,7 @@
             "zen.welcome-screen.seen" = true;
             "zen.workspaces.continue-where-left-off" = true;
 
-            "identity.fxaccounts.enabled" = true;
+            "identity.fxaccounts.enabled" = false;
             "services.sync.engine.addons" = false;
             "services.sync.engine.bookmarks" = true;
             "services.sync.engine.history" = true;
@@ -215,50 +237,50 @@
 
           containersForce = true;
           containers = {
-            Personal = {
-              color = "green";
-              icon = "dollar";
-              id = 1;
-            };
-            MLabs = {
-              color = "blue";
-              icon = "dollar";
-              id = 2;
-            };
-            Proda = {
-              color = "yellow";
-              icon = "dollar";
-              id = 3;
-            };
-            Addictive = {
-              color = "orange";
-              icon = "dollar";
-              id = 4;
-            };
+            # Personal = {
+            #   color = "green";
+            #   icon = "dollar";
+            #   id = 1;
+            # };
+            # MLabs = {
+            #   color = "blue";
+            #   icon = "dollar";
+            #   id = 2;
+            # };
+            # Proda = {
+            #   color = "yellow";
+            #   icon = "dollar";
+            #   id = 3;
+            # };
+            # Addictive = {
+            #   color = "orange";
+            #   icon = "dollar";
+            #   id = 4;
+            # };
           };
 
-          spacesForce = true;
+          # spacesForce = true;
           spaces = {
-            "Personal" = {
-              container = profileCfg.containers."Personal".id;
-              id = "572910e1-4468-4832-a869-0b3a93e2f165";
-              position = 1000;
-            };
-            "MLabs" = {
-              id = "ec287d7f-d910-4860-b400-513f269dee77";
-              container = profileCfg.containers."MLabs".id;
-              position = 1001;
-            };
-            "Proda" = {
-              container = profileCfg.containers."Proda".id;
-              id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
-              position = 1002;
-            };
-            "Addictive" = {
-              container = profileCfg.containers."Addictive".id;
-              id = "d48985b0-0a94-4cea-b640-8cfa995487ab";
-              position = 1003;
-            };
+            # "Personal" = {
+            #   container = profileCfg.containers."Personal".id;
+            #   id = "572910e1-4468-4832-a869-0b3a93e2f165";
+            #   position = 1000;
+            # };
+            # "MLabs" = {
+            #   id = "ec287d7f-d910-4860-b400-513f269dee77";
+            #   container = profileCfg.containers."MLabs".id;
+            #   position = 1001;
+            # };
+            # "Proda" = {
+            #   container = profileCfg.containers."Proda".id;
+            #   id = "2441acc9-79b1-4afb-b582-ee88ce554ec0";
+            #   position = 1002;
+            # };
+            # "Addictive" = {
+            #   container = profileCfg.containers."Addictive".id;
+            #   id = "d48985b0-0a94-4cea-b640-8cfa995487ab";
+            #   position = 1003;
+            # };
           };
 
           search = {
