@@ -1,4 +1,4 @@
-{ withSystem, lib, ... }:
+{ lib, ... }:
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
@@ -19,7 +19,7 @@
           INFLUXDB_HOST = "localhost";
           INFLUXDB_PORT = "8086"; # it's hardcoded in the influxdb NixOS module
           INFLUXDB_USERNAME = "garmin-grafana";
-          INFLUXDB_PASSWORD = "password"; # FIXME terrible but the databse is not exposed at least
+          INFLUXDB_PASSWORD = "password"; # FIXME terrible but the database is not exposed at least
           INFLUXDB_DATABASE = "garmin-stats";
           GARMINCONNECT_IS_CN = "False";
           USER_TIMEZONE = "Europe/Rome";
@@ -36,10 +36,7 @@
         };
       };
 
-      services.influxdb = {
-        enable = true;
-        package = withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.nixpkgs-influxdb.legacyPackages.influxdb);
-      };
+      services.influxdb.enable = true;
 
       environment.persistence."/persist".directories = [
         "/var/lib/garmin-grafana"
