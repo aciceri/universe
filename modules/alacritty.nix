@@ -22,6 +22,12 @@
                 ''
                 |> lib.getExe;
             }
+            # To make Shift+Enter work in claude-code
+            {
+              key = "Return";
+              mods = "Shift";
+              chars = "\n";
+            }
           ];
         };
       };
