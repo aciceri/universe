@@ -160,7 +160,7 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.14.0)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.14.15)
 
 A web player for terminal session recordings
 
@@ -168,7 +168,7 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
-### [helix-master](packages/helix-master/_package.nix) (version master-066dded21b7c520bfa114780907265eda801004b)
+### [helix-master](packages/helix-master/_package.nix) (version master-96bd5c37bc5d2a24b9e1c79805a3d6359f163c00)
 
 Post-modern modal text editor
 
@@ -191,7 +191,7 @@ calls. Requires claude-code CLI installed and authenticated
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.02.04-unstable-2026-02-09)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.02.04-unstable-2026-02-17)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
