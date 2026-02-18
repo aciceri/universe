@@ -33,7 +33,7 @@
         [
           powerline-fonts
           dejavu_fonts
-          etBook
+          et-book
           vegur
         ]
         ++ (builtins.filter lib.attrsets.isDerivation (builtins.attrValues nerd-fonts));
