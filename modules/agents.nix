@@ -102,17 +102,21 @@ in
             };
           };
           mcpServers = {
-            openmemory = {
-              type = "stdio";
-              command = "docker";
+            linear = {
+              command =
+                let
+                  npxWithNode = pkgs.writeShellScript "npx-with-node" ''
+                    export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
+                    exec ${lib.getExe' pkgs.nodejs "npx"} "$@"
+                  '';
+                in
+                "${npxWithNode}";
               args = [
-                "run"
-                "-i"
-                "-v"
-                "claude-memory:/app/dist"
-                "--rm"
-                "mcp/memory"
+                "-y"
+                "mcp-remote"
+                "https://mcp.linear.app/mcp"
               ];
+              disabled = true;
             };
           };
         };
