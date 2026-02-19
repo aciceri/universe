@@ -28,6 +28,7 @@ connected via an NVMe-to-SATA adapter.
 - [auth.aciceri.dev](https://auth.aciceri.dev)
 - [blog.aciceri.dev](https://blog.aciceri.dev)
 - [cal.aciceri.dev](https://cal.aciceri.dev)
+- [cloud.aciceri.dev](https://cloud.aciceri.dev)
 - [cv.aciceri.dev](https://cv.aciceri.dev)
 - [git.aciceri.dev](https://git.aciceri.dev)
 - [home.aciceri.dev](https://home.aciceri.dev)

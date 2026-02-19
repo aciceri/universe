@@ -19,6 +19,7 @@
           "auth.aciceri.dev"
           "cal.aciceri.dev"
           "claude.aciceri.dev"
+          "cloud.aciceri.dev"
           "talks.aciceri.dev"
           "*.talks.aciceri.dev"
         ];

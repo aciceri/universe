@@ -7,6 +7,7 @@
       defaultGroups = [
         "forgejo.user"
         "immich.user"
+        "opencloud.user"
       ];
     in
     {
@@ -67,6 +68,8 @@
             "forgejo.admin" = { };
             "immich.user" = { };
             "immich.admin" = { };
+            "opencloud.user" = { };
+            "opencloud.admin" = { };
           };
 
           # TODO would it make sense for each oauth2 app to live in the same file defining the service?
@@ -91,6 +94,26 @@
                   "forgejo.admin" = [ "admin" ];
                   "forgejo.user" = [ "user" ];
                   "god" = [ "admin" ];
+                };
+              };
+            };
+            opencloud = {
+              public = true;
+              displayName = "OpenCloud";
+              originUrl = "https://cloud.aciceri.dev/oidc-callback.html";
+              originLanding = "https://cloud.aciceri.dev";
+              preferShortUsername = true;
+              scopeMaps = lib.genAttrs [ "opencloud.user" "opencloud.admin" "god" ] (_: [
+                "openid"
+                "profile"
+                "email"
+              ]);
+              claimMaps.roles = {
+                joinType = "array";
+                valuesByGroup = {
+                  "opencloud.admin" = [ "opencloudAdmin" ];
+                  "opencloud.user" = [ "opencloudUser" ];
+                  "god" = [ "opencloudAdmin" ];
                 };
               };
             };

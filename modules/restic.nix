@@ -48,6 +48,7 @@ in
             "/mnt/hd/siyuan"
             "/mnt/hd/seedvault"
             "/mnt/hd/forgejo-dumps"
+            "/mnt/hd/opencloud"
           ];
           exclude = [ " /persist/var/lib/containers" ];
           passwordFile = config.age.secrets.sisko_restic_password.path;
