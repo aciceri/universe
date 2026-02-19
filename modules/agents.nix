@@ -101,24 +101,38 @@ in
               OTEL_LOGS_EXPORT_INTERVAL = "5000";
             };
           };
-          mcpServers = {
-            linear = {
-              command =
-                let
-                  npxWithNode = pkgs.writeShellScript "npx-with-node" ''
-                    export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
-                    exec ${lib.getExe' pkgs.nodejs "npx"} "$@"
-                  '';
-                in
-                "${npxWithNode}";
-              args = [
-                "-y"
-                "mcp-remote"
-                "https://mcp.linear.app/mcp"
-              ];
-              disabled = true;
+          mcpServers =
+            let
+              npxWithNode = pkgs.writeShellScript "npx-with-node" ''
+                export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
+                exec ${lib.getExe' pkgs.nodejs "npx"} "$@"
+              '';
+            in
+            {
+              linear = {
+                command = "${npxWithNode}";
+                args = [
+                  "-y"
+                  "mcp-remote"
+                  "https://mcp.linear.app/mcp"
+                ];
+                disabled = true;
+              };
+              home-assistant = {
+                command =
+                  let
+                    wrapper = pkgs.writeShellScript "ha-mcp" ''
+                      export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
+                      TOKEN=$(cat ~/.config/home-assistant/mcp-token)
+                      exec ${lib.getExe' pkgs.nodejs "npx"} -y mcp-remote \
+                        https://home.aciceri.dev/api/mcp \
+                        --header "Authorization: Bearer $TOKEN"
+                    '';
+                  in
+                  "${wrapper}";
+                disabled = true;
+              };
             };
-          };
         };
 
         codex = {
