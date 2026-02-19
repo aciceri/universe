@@ -32,7 +32,8 @@
               };
               service.ENABLE_NOTIFY_MAIL = true;
               session.COOKIE_SECURE = true;
-              service.DISABLE_REGISTRATION = true;
+              service.DISABLE_REGISTRATION = false;
+              service.ALLOW_ONLY_EXTERNAL_REGISTRATION = true;
               server = {
                 HTTP_PORT = 3002;
                 ROOT_URL = "https://git.aciceri.dev";
