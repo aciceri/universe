@@ -161,7 +161,7 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.15.0)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.15.1)
 
 A web player for terminal session recordings
 
@@ -169,7 +169,7 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
-### [helix-master](packages/helix-master/_package.nix) (version master-c01d024f293240ae9ed4b3fb826f8292105fe3b2)
+### [helix-master](packages/helix-master/_package.nix) (version master-2910a7cc92c9132df1a69493628339f85e52eb07)
 
 Post-modern modal text editor
 
