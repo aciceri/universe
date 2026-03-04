@@ -56,6 +56,41 @@
         "type": "github"
       }
     },
+    "arbi": {
+      "inputs": {
+        "agenix-shell": [
+          "agenix-shell"
+        ],
+        "flake-parts": "flake-parts",
+        "flake-root": [
+          "flake-root_"
+        ],
+        "forge-std": "forge-std",
+        "git-hooks": [
+          "git-hooks"
+        ],
+        "nix-github-actions": [],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "treefmt-nix": [
+          "treefmt-nix"
+        ]
+      },
+      "locked": {
+        "lastModified": 1772137676,
+        "narHash": "sha256-ouqhYM0xM5clHApgj5p+N8FNOMahF5NizVKjc+QnU+4=",
+        "ref": "refs/heads/master",
+        "rev": "dbca4ad0a2b938ab6ad50edaa5b507ef6343192b",
+        "revCount": 52,
+        "type": "git",
+        "url": "ssh://git@github.com/aciceri/arbi.git"
+      },
+      "original": {
+        "type": "git",
+        "url": "ssh://git@github.com/aciceri/arbi.git"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -296,6 +331,24 @@
     },
     "flake-parts_2": {
       "inputs": {
+        "nixpkgs-lib": "nixpkgs-lib_2"
+      },
+      "locked": {
+        "lastModified": 1769996383,
+        "narHash": "sha256-AnYjnFWgS49RlqX7LrC4uA+sCCDBj0Ry/WOJ5XWAsa0=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "57928607ea566b5db3ad13af0e57e921e6b12381",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "flake-parts_3": {
+      "inputs": {
         "nixpkgs-lib": [
           "stylix",
           "nixpkgs"
@@ -347,6 +400,23 @@
       "original": {
         "owner": "numtide",
         "repo": "flake-utils",
+        "type": "github"
+      }
+    },
+    "forge-std": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1738330218,
+        "narHash": "sha256-4y1Hf0Te2oJxwKBOgVBEHZeKYt7hs+wTgdIO+rItj0E=",
+        "owner": "foundry-rs",
+        "repo": "forge-std",
+        "rev": "3b20d60d14b343ee4f908cb8079495c07f5e8981",
+        "type": "github"
+      },
+      "original": {
+        "owner": "foundry-rs",
+        "ref": "v1.9.6",
+        "repo": "forge-std",
         "type": "github"
       }
     },
@@ -626,6 +696,21 @@
         "type": "github"
       }
     },
+    "nixpkgs-lib_2": {
+      "locked": {
+        "lastModified": 1769909678,
+        "narHash": "sha256-cBEymOf4/o3FD5AZnzC3J9hLbiZ+QDT/KDuyHXVJOpM=",
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "rev": "72716169fe93074c333e8d0173151350670b824c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nix-community",
+        "repo": "nixpkgs.lib",
+        "type": "github"
+      }
+    },
     "nixpkgs-stable_": {
       "locked": {
         "lastModified": 1767313136,
@@ -723,13 +808,14 @@
       "inputs": {
         "agenix": "agenix",
         "agenix-shell": "agenix-shell",
+        "arbi": "arbi",
         "blueprint_": "blueprint_",
         "claude-desktop": "claude-desktop",
         "crane_": "crane_",
         "disko": "disko",
         "dms": "dms",
         "flake-compat_": "flake-compat_",
-        "flake-parts": "flake-parts",
+        "flake-parts": "flake-parts_2",
         "flake-root_": "flake-root_",
         "flake-utils_": "flake-utils_",
         "ghkeys-ccr": "ghkeys-ccr",
@@ -778,7 +864,7 @@
         "base16-helix": "base16-helix",
         "base16-vim": "base16-vim",
         "firefox-gnome-theme": "firefox-gnome-theme",
-        "flake-parts": "flake-parts_2",
+        "flake-parts": "flake-parts_3",
         "gnome-shell": "gnome-shell",
         "nixpkgs": [
           "nixpkgs"

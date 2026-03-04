@@ -103,6 +103,17 @@
       };
     };
     nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
+    arbi = {
+      url = "git+ssh://git@github.com/aciceri/arbi.git";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        treefmt-nix.follows = "treefmt-nix";
+        git-hooks.follows = "git-hooks";
+        agenix-shell.follows = "agenix-shell";
+        flake-root.follows = "flake-root_";
+        nix-github-actions.follows = "";
+      };
+    };
   };
 
   # Grab SSH keys from GitHub
