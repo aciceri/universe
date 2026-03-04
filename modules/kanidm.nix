@@ -117,6 +117,29 @@
                 };
               };
             };
+            # FIXME The Android app uses a different client ID and custom scheme redirect URI
+            opencloudandroid = {
+              public = true;
+              displayName = "OpenCloud Android";
+              originUrl = "oc://android.opencloud.eu";
+              originLanding = "https://cloud.aciceri.dev";
+              preferShortUsername = true;
+              # The app requests offline_access for refresh tokens
+              scopeMaps = lib.genAttrs [ "opencloud.user" "opencloud.admin" "god" ] (_: [
+                "openid"
+                "profile"
+                "email"
+                "offline_access"
+              ]);
+              claimMaps.roles = {
+                joinType = "array";
+                valuesByGroup = {
+                  "opencloud.admin" = [ "opencloudAdmin" ];
+                  "opencloud.user" = [ "opencloudUser" ];
+                  "god" = [ "opencloudAdmin" ];
+                };
+              };
+            };
             immich = {
               displayName = "Immich";
               originUrl = [
