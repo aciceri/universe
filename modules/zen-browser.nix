@@ -123,8 +123,21 @@
 
       programs.niri.settings.binds."Mod+b".action = config.lib.niri.actions.spawn <| lib.getExe rofiZenTabs;
 
+      # Ensure FirefoxPWA runtime uses Wayland natively and XDG portals.
+      # Can't use home.file because firefoxpwa writes back to this file at runtime.
+      home.activation.firefoxpwaConfig = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+        config_file="$HOME/.local/share/firefoxpwa/config.json"
+        mkdir -p "$(dirname "$config_file")"
+        if [ ! -f "$config_file" ]; then
+          echo '{"profiles":{},"sites":{},"arguments":[],"variables":{},"config":{"always_patch":false,"runtime_enable_wayland":true,"runtime_use_xinput2":false,"runtime_use_portals":true,"use_linked_runtime":false}}' > "$config_file"
+        else
+          ${lib.getExe pkgs.jq} '.config.runtime_enable_wayland = true | .config.runtime_use_portals = true' "$config_file" > "$config_file.tmp" && mv "$config_file.tmp" "$config_file"
+        fi
+      '';
+
       programs.zen-browser = {
         enable = true;
+        suppressXdgMigrationWarning = true;
 
         nativeMessagingHosts = [ pkgs.firefoxpwa ];
 
