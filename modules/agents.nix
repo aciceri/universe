@@ -400,6 +400,7 @@ in
       home.packages = with pkgs; [
         code
         cursor-cli
+        opencode-desktop
       ];
     };
 
