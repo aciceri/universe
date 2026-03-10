@@ -15,7 +15,6 @@ projects/cv/**/*.out
 projects/cv/**/*.pdf
 projects/foodlog/backend-old/dist-newstyle
 projects/foodlog/backend-old/foodlog.db
-projects/foodlog/backend/bun.lock
 projects/foodlog/backend/dist
 projects/foodlog/backend/foodlog.db
 projects/foodlog/backend/node_modules

@@ -754,7 +754,7 @@
       },
       "original": {
         "owner": "NixOS",
-        "ref": "9be065038f6f",
+        "ref": "nixos-unstable",
         "repo": "nixpkgs",
         "type": "github"
       }
