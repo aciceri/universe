@@ -1,6 +1,6 @@
 {
   configurations.nixos.sisko.module =
-    { config, ... }:
+    { config, pkgs, ... }:
     let
       cfg = config.services.grafana;
       user = config.systemd.services.grafana.serviceConfig.User;
@@ -12,12 +12,27 @@
           group = "autistici";
         };
         grafana_admin_password.owner = user;
+        grafana_secret_key.owner = user;
       };
 
       users.groups.autistici.members = [ user ]; # Group who has access to the autistici_password secret
+      users.groups.foodlog.members = [ user ]; # Allow Grafana to read foodlog SQLite database
 
       services.grafana = {
         enable = true;
+        declarativePlugins = with pkgs.grafanaPlugins; [
+          frser-sqlite-datasource
+        ];
+        provision.datasources.settings.datasources = [
+          {
+            name = "Foodlog";
+            type = "frser-sqlite-datasource";
+            jsonData = {
+              path = "/var/lib/foodlog/foodlog.db";
+            };
+            readOnly = true;
+          }
+        ];
         settings = {
           server = {
             domain = "status.sisko.aciceri.dev";
@@ -28,6 +43,7 @@
           security = {
             admin_user = "andrea";
             admin_password = "$__file{${config.age.secrets.grafana_admin_password.path}}";
+            secret_key = "$__file{${config.age.secrets.grafana_secret_key.path}}";
           };
           smtp = {
             enabled = true;

@@ -117,7 +117,7 @@ nix build .#agenix-shell-talk     # Build presentation as a completely self-cont
 
 ### Foodlog
 
-Vibe coded AI-powered progressive web app for tracking my food intake.
+AI-powered progressive web app for tracking food intake, powered by Claude Agent SDK with MCP tools.
 
 ### Curriculum Vitae
 

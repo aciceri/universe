@@ -1,0 +1,555 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_FOODLOG",
+      "label": "Foodlog",
+      "description": "SQLite database di Foodlog",
+      "type": "datasource",
+      "pluginId": "frser-sqlite-datasource",
+      "pluginName": "SQLite"
+    }
+  ],
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "frser-sqlite-datasource", "name": "SQLite", "version": "3.0.0" },
+    { "type": "panel", "id": "stat", "name": "Stat", "version": "" },
+    { "type": "panel", "id": "timeseries", "name": "Time series", "version": "" },
+    { "type": "panel", "id": "piechart", "name": "Pie chart", "version": "" }
+  ],
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "Riepilogo Oggi",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "orange", "value": 1200 },
+              { "color": "green", "value": 1800 },
+              { "color": "orange", "value": 2500 },
+              { "color": "red", "value": 3000 }
+            ]
+          },
+          "unit": "kcal"
+        }
+      },
+      "gridPos": { "h": 5, "w": 5, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Calorie Oggi",
+      "type": "stat",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.calories), 0) AS calories FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 50 },
+              { "color": "green", "value": 100 }
+            ]
+          },
+          "unit": "g"
+        }
+      },
+      "gridPos": { "h": 5, "w": 5, "x": 5, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Proteine Oggi",
+      "type": "stat",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.protein), 0) AS proteine FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "blue", "value": null },
+              { "color": "green", "value": 150 },
+              { "color": "orange", "value": 300 }
+            ]
+          },
+          "unit": "g"
+        }
+      },
+      "gridPos": { "h": 5, "w": 5, "x": 10, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Carboidrati Oggi",
+      "type": "stat",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.carbs), 0) AS carboidrati FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "yellow", "value": null },
+              { "color": "green", "value": 40 },
+              { "color": "orange", "value": 80 }
+            ]
+          },
+          "unit": "g"
+        }
+      },
+      "gridPos": { "h": 5, "w": 5, "x": 15, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Grassi Oggi",
+      "type": "stat",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.fats), 0) AS grassi FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "semi-dark-green", "value": null },
+              { "color": "green", "value": 20 }
+            ]
+          },
+          "unit": "g"
+        }
+      },
+      "gridPos": { "h": 5, "w": 4, "x": 20, "y": 1 },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "title": "Fibre Oggi",
+      "type": "stat",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.fiber), 0) AS fibre FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 6 },
+      "id": 101,
+      "title": "Andamento Calorie",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "kcal",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "lineWidth": 1,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "dashed" }
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "#EAB839", "value": 2200 }
+            ]
+          },
+          "unit": "kcal"
+        }
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 7 },
+      "id": 10,
+      "options": {
+        "legend": { "calcs": ["mean", "max", "min"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "title": "Calorie Giornaliere per Pasto",
+      "type": "timeseries",
+      "targets": [
+        {
+          "rawQueryText": "SELECT CAST(strftime('%s', m.date || 'T12:00:00Z') AS INTEGER) AS time, m.meal_type AS metric, SUM(f.calories) AS value FROM meal m JOIN food f ON f.meal_id = m.id WHERE f.calories IS NOT NULL AND m.date >= date('now', '-30 days') GROUP BY m.date, m.meal_type ORDER BY m.date",
+          "queryType": "time_series",
+          "timeColumns": ["time"],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "kcal",
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 6,
+            "showPoints": "always",
+            "spanNulls": true
+          },
+          "unit": "kcal"
+        }
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 16 },
+      "id": 11,
+      "options": {
+        "legend": { "calcs": ["mean"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "title": "Calorie Totali Giornaliere (Trend)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "rawQueryText": "SELECT CAST(strftime('%s', m.date || 'T12:00:00Z') AS INTEGER) AS time, SUM(f.calories) AS calories FROM meal m JOIN food f ON f.meal_id = m.id WHERE f.calories IS NOT NULL AND m.date >= date('now', '-90 days') GROUP BY m.date ORDER BY m.date",
+          "queryType": "time_series",
+          "timeColumns": ["time"],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 24 },
+      "id": 102,
+      "title": "Macronutrienti",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "grammi",
+            "drawStyle": "line",
+            "fillOpacity": 20,
+            "gradientMode": "scheme",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": { "group": "A", "mode": "none" }
+          },
+          "unit": "g"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "proteine" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "carboidrati" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "grassi" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 16, "x": 0, "y": 25 },
+      "id": 20,
+      "options": {
+        "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Macronutrienti Giornalieri",
+      "type": "timeseries",
+      "targets": [
+        {
+          "rawQueryText": "SELECT CAST(strftime('%s', m.date || 'T12:00:00Z') AS INTEGER) AS time, ROUND(SUM(f.protein), 1) AS proteine, ROUND(SUM(f.carbs), 1) AS carboidrati, ROUND(SUM(f.fats), 1) AS grassi FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date >= date('now', '-30 days') GROUP BY m.date ORDER BY m.date",
+          "queryType": "time_series",
+          "timeColumns": ["time"],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "g"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Proteine" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Carboidrati" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Grassi" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 8, "x": 16, "y": 25 },
+      "id": 21,
+      "options": {
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "table", "placement": "bottom", "values": ["value"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "title": "Ripartizione Macro (Oggi)",
+      "type": "piechart",
+      "targets": [
+        {
+          "rawQueryText": "SELECT COALESCE(SUM(f.protein), 0) AS Proteine, COALESCE(SUM(f.carbs), 0) AS Carboidrati, COALESCE(SUM(f.fats), 0) AS Grassi FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date = date('now')",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "grammi",
+            "drawStyle": "line",
+            "fillOpacity": 15,
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "showPoints": "auto",
+            "spanNulls": true
+          },
+          "unit": "g"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "fibre" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "zuccheri" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "purple", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 34 },
+      "id": 22,
+      "options": {
+        "legend": { "calcs": ["mean", "lastNotNull"], "displayMode": "table", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Fibre e Zuccheri Giornalieri",
+      "type": "timeseries",
+      "targets": [
+        {
+          "rawQueryText": "SELECT CAST(strftime('%s', m.date || 'T12:00:00Z') AS INTEGER) AS time, ROUND(SUM(f.fiber), 1) AS fibre, ROUND(SUM(f.sugars), 1) AS zuccheri FROM meal m JOIN food f ON f.meal_id = m.id WHERE m.date >= date('now', '-30 days') GROUP BY m.date ORDER BY m.date",
+          "queryType": "time_series",
+          "timeColumns": ["time"],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 42 },
+      "id": 103,
+      "title": "Distribuzione Pasti",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "kcal"
+        }
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 43 },
+      "id": 30,
+      "options": {
+        "displayLabels": ["name", "percent"],
+        "legend": { "displayMode": "table", "placement": "bottom", "values": ["value", "percent"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "tooltip": { "mode": "single" }
+      },
+      "title": "Calorie per Tipo di Pasto (Totale)",
+      "type": "piechart",
+      "targets": [
+        {
+          "rawQueryText": "SELECT m.meal_type AS metric, SUM(f.calories) AS value FROM meal m JOIN food f ON f.meal_id = m.id WHERE f.calories IS NOT NULL GROUP BY m.meal_type ORDER BY value DESC",
+          "queryType": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisLabel": "kcal",
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "stacking": { "group": "A", "mode": "normal" }
+          },
+          "unit": "kcal"
+        }
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 43 },
+      "id": 31,
+      "options": {
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "title": "Calorie per Pasto (Ultimi 7 Giorni)",
+      "type": "timeseries",
+      "targets": [
+        {
+          "rawQueryText": "SELECT CAST(strftime('%s', m.date || 'T12:00:00Z') AS INTEGER) AS time, m.meal_type AS metric, SUM(f.calories) AS value FROM meal m JOIN food f ON f.meal_id = m.id WHERE f.calories IS NOT NULL AND m.date >= date('now', '-7 days') GROUP BY m.date, m.meal_type ORDER BY m.date",
+          "queryType": "time_series",
+          "timeColumns": ["time"],
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 51 },
+      "id": 105,
+      "title": "Statistiche Generali",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 52 },
+      "id": 50,
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "title": "Giorni Tracciati",
+      "type": "stat",
+      "targets": [{ "rawQueryText": "SELECT COUNT(DISTINCT m.date) AS giorni FROM meal m", "queryType": "table", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 52 },
+      "id": 51,
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "title": "Pasti Totali",
+      "type": "stat",
+      "targets": [{ "rawQueryText": "SELECT COUNT(*) AS pasti FROM meal", "queryType": "table", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] }, "unit": "kcal" } },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 52 },
+      "id": 54,
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "title": "Media Calorie/Giorno",
+      "type": "stat",
+      "targets": [{ "rawQueryText": "SELECT ROUND(AVG(daily_cal), 0) AS media FROM (SELECT SUM(f.calories) AS daily_cal FROM meal m JOIN food f ON f.meal_id = m.id WHERE f.calories IS NOT NULL GROUP BY m.date)", "queryType": "table", "refId": "A" }]
+    },
+    {
+      "datasource": { "type": "frser-sqlite-datasource", "uid": "${DS_FOODLOG}" },
+      "fieldConfig": { "defaults": { "color": { "mode": "thresholds" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] } } },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 52 },
+      "id": 55,
+      "options": { "colorMode": "value", "graphMode": "none", "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "textMode": "auto" },
+      "title": "Media Pasti/Giorno",
+      "type": "stat",
+      "targets": [{ "rawQueryText": "SELECT ROUND(CAST(COUNT(*) AS REAL) / COUNT(DISTINCT m.date), 1) AS media FROM meal m", "queryType": "table", "refId": "A" }]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["foodlog", "nutrizione"],
+  "templating": { "list": [] },
+  "time": { "from": "now-30d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Foodlog",
+  "uid": "foodlog-main",
+  "version": 1
+}

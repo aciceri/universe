@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import type { ChatMessage, MealSummary } from "../services/api";
-import { sendMessage } from "../services/api";
+import {
+  sendChatMessage,
+  confirmMeal,
+  getSessionMessages,
+} from "../services/api";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
 
@@ -13,6 +17,16 @@ interface ChatContainerProps {
   onMealConfirmed?: () => void;
 }
 
+const SESSION_KEY = "foodlog_session_id";
+
+function getStoredSessionId(): string | undefined {
+  return localStorage.getItem(SESSION_KEY) || undefined;
+}
+
+function storeSessionId(sessionId: string): void {
+  localStorage.setItem(SESSION_KEY, sessionId);
+}
+
 export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -21,108 +35,197 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
   const [confirmedMeal, setConfirmedMeal] = useState<MealSummary | null>(null);
   const [rejectedMeals, setRejectedMeals] = useState<RejectedMeal[]>([]);
 
-  const handleSendMessage = async (content: string) => {
-    const now = new Date();
+  // Track the current request ID for confirming meals
+  const currentRequestId = useRef<string | null>(null);
+  const sessionId = useRef<string | undefined>(getStoredSessionId());
 
-    // If there's a pending confirmation that wasn't accepted, mark it as rejected
-    // with timestamp BEFORE the user's new message
-    if (pendingConfirmation) {
-      setRejectedMeals((prev) => [
-        ...prev,
-        {
-          meal: pendingConfirmation,
-          rejectedAt: now,
-        },
-      ]);
-    }
+  // Restore chat history from the SDK session on mount
+  useEffect(() => {
+    const storedId = sessionId.current;
+    if (!storedId) return;
 
-    const userMessage: ChatMessage = {
-      role: "user",
-      content,
-      timestamp: now,
+    let cancelled = false;
+    setIsLoading(true);
+
+    getSessionMessages(storedId)
+      .then((restored) => {
+        if (cancelled) return;
+        if (restored.length > 0) {
+          setMessages(restored);
+        } else {
+          // Session no longer exists (e.g. DB was reset) — clear stale ID
+          localStorage.removeItem(SESSION_KEY);
+          sessionId.current = undefined;
+        }
+      })
+      .catch((err) => {
+        console.warn("Failed to restore session messages:", err);
+        if (!cancelled) {
+          // Clear stale session ID so we don't try to resume a dead session
+          localStorage.removeItem(SESSION_KEY);
+          sessionId.current = undefined;
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setIsLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
     };
+  }, []);
 
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-    setPendingConfirmation(null);
-    setConfirmedMeal(null);
+  const handleSendMessage = useCallback(
+    async (content: string, image?: { base64: string; mediaType: string }) => {
+      const now = new Date();
 
-    try {
-      // Send last 6 messages as context to maintain conversation flow
-      const recentMessages = messages.slice(-6);
-      const response = await sendMessage(
-        content,
-        false,
-        undefined,
-        recentMessages,
-      );
-
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: response.message,
-        timestamp: new Date(),
-        summary: response.summary,
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      // If LLM response requires confirmation, save it for later
-      if (response.needs_confirmation && response.summary) {
-        setPendingConfirmation(response.summary);
+      // If there's a pending confirmation that wasn't accepted, reject it
+      if (pendingConfirmation) {
+        // Also reject via API so the agent knows
+        if (currentRequestId.current) {
+          confirmMeal(currentRequestId.current, false).catch(console.error);
+        }
+        setRejectedMeals((prev) => [
+          ...prev,
+          { meal: pendingConfirmation, rejectedAt: now },
+        ]);
       }
-    } catch (error) {
-      console.error("Error sending message:", error);
 
-      const errorMessage: ChatMessage = {
-        role: "assistant",
-        content: "Scusa, c'è stato un errore. Riprova!",
-        timestamp: new Date(),
+      const userMessage: ChatMessage = {
+        role: "user",
+        content,
+        timestamp: now,
+        image: image
+          ? `data:${image.mediaType};base64,${image.base64}`
+          : undefined,
       };
 
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+      setMessages((prev) => [...prev, userMessage]);
+      setIsLoading(true);
+      setPendingConfirmation(null);
+      setConfirmedMeal(null);
+      currentRequestId.current = null;
 
-  const handleConfirm = async () => {
-    if (!pendingConfirmation) return;
+      // Accumulate text chunks into a single assistant message
+      let assistantText = "";
+
+      try {
+        await sendChatMessage({
+          message: content,
+          sessionId: sessionId.current,
+          image,
+          onEvent: (event) => {
+            switch (event.type) {
+              case "request_id":
+                currentRequestId.current = event.requestId;
+                break;
+
+              case "text":
+                assistantText += event.content;
+                // Update the assistant message in-place for streaming effect
+                setMessages((prev) => {
+                  const lastMsg = prev[prev.length - 1];
+                  if (lastMsg?.role === "assistant") {
+                    return [
+                      ...prev.slice(0, -1),
+                      { ...lastMsg, content: assistantText },
+                    ];
+                  }
+                  return [
+                    ...prev,
+                    {
+                      role: "assistant" as const,
+                      content: assistantText,
+                      timestamp: new Date(),
+                    },
+                  ];
+                });
+                break;
+
+              case "confirm":
+                setPendingConfirmation(event.mealData);
+                // Stop loading so the confirm button is clickable
+                // and the "Sto pensando..." spinner disappears.
+                // The SSE stream is still open (waiting for confirmation),
+                // but from the user's perspective we're waiting for their input.
+                setIsLoading(false);
+                break;
+
+              case "done":
+                if (event.sessionId) {
+                  sessionId.current = event.sessionId;
+                  storeSessionId(event.sessionId);
+                }
+                break;
+
+              case "error":
+                setMessages((prev) => [
+                  ...prev,
+                  {
+                    role: "assistant" as const,
+                    content: `Errore: ${event.message}`,
+                    timestamp: new Date(),
+                  },
+                ]);
+                break;
+            }
+          },
+        });
+      } catch (error) {
+        console.error("Error sending message:", error);
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant" as const,
+            content: "Scusa, c'e' stato un errore di connessione. Riprova!",
+            timestamp: new Date(),
+          },
+        ]);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [pendingConfirmation],
+  );
+
+  const handleConfirm = useCallback(async () => {
+    if (!pendingConfirmation || !currentRequestId.current) return;
 
     setIsLoading(true);
 
     try {
-      const response = await sendMessage("", true, pendingConfirmation);
-
-      const confirmMessage: ChatMessage = {
-        role: "assistant",
-        content: response.message,
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, confirmMessage]);
+      await confirmMeal(currentRequestId.current, true);
 
       // Move from pending to confirmed
       setConfirmedMeal(pendingConfirmation);
       setPendingConfirmation(null);
 
-      // Notify parent component that a meal was confirmed
-      if (onMealConfirmed) {
-        onMealConfirmed();
-      }
+      // Notify parent that a meal was saved (refreshes stats)
+      onMealConfirmed?.();
     } catch (error) {
       console.error("Error confirming:", error);
-
-      const errorMessage: ChatMessage = {
-        role: "assistant",
-        content: "Errore nel salvare il pasto. Riprova!",
-        timestamp: new Date(),
-      };
-
-      setMessages((prev) => [...prev, errorMessage]);
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "assistant" as const,
+          content: "Errore nel salvare il pasto. Riprova!",
+          timestamp: new Date(),
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [pendingConfirmation, onMealConfirmed]);
+
+  const handleNewSession = useCallback(() => {
+    localStorage.removeItem(SESSION_KEY);
+    sessionId.current = undefined;
+    setMessages([]);
+    setPendingConfirmation(null);
+    setConfirmedMeal(null);
+    setRejectedMeals([]);
+    currentRequestId.current = null;
+  }, []);
 
   return (
     <div className="flex flex-col h-full bg-ctp-base">
@@ -135,7 +238,11 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
         onConfirm={handleConfirm}
       />
 
-      <ChatInput onSend={handleSendMessage} disabled={isLoading} />
+      <ChatInput
+        onSend={handleSendMessage}
+        onNewSession={handleNewSession}
+        disabled={isLoading}
+      />
     </div>
   );
 }

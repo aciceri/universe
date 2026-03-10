@@ -13,8 +13,12 @@ projects/cv/**/*.aux
 projects/cv/**/*.log
 projects/cv/**/*.out
 projects/cv/**/*.pdf
-projects/foodlog/backend/dist-newstyle
+projects/foodlog/backend-old/dist-newstyle
+projects/foodlog/backend-old/foodlog.db
+projects/foodlog/backend/bun.lock
+projects/foodlog/backend/dist
 projects/foodlog/backend/foodlog.db
+projects/foodlog/backend/node_modules
 projects/foodlog/frontend/dist
 projects/foodlog/frontend/node_modules
 projects/talks/agenix-shell/**/dist

@@ -1,3 +1,4 @@
+import Markdown from "react-markdown";
 import type { ChatMessage } from "../services/api";
 import { User, Bot } from "lucide-react";
 
@@ -29,9 +30,32 @@ export function Message({ message }: MessageProps) {
             : "bg-ctp-surface0 text-ctp-text"
         }`}
       >
-        <p className="text-sm whitespace-pre-wrap break-words">
-          {message.content}
-        </p>
+        {/* Show image if present (user messages with photos) */}
+        {message.image && (
+          <img
+            src={message.image}
+            alt="Foto cibo"
+            className="max-h-48 rounded-lg mb-2 object-cover"
+          />
+        )}
+
+        {message.content &&
+          (isUser ? (
+            <p className="text-sm whitespace-pre-wrap break-words">
+              {message.content}
+            </p>
+          ) : (
+            <div
+              className="text-sm prose prose-sm prose-invert max-w-none break-words
+                [&>p]:my-1 [&>ul]:my-1 [&>ol]:my-1 [&>li]:my-0.5
+                [&>p:first-child]:mt-0 [&>p:last-child]:mb-0
+                [&_strong]:text-ctp-text [&_em]:text-ctp-subtext1
+                [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4
+                [&_code]:bg-ctp-mantle [&_code]:px-1 [&_code]:rounded [&_code]:text-xs"
+            >
+              <Markdown>{message.content}</Markdown>
+            </div>
+          ))}
       </div>
     </div>
   );

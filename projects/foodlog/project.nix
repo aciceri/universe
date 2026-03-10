@@ -10,7 +10,10 @@ in
 {
   gitignore =
     [
-      "backend/dist-newstyle"
+      "backend-old/dist-newstyle"
+      "backend-old/foodlog.db"
+      "backend/node_modules"
+      "backend/dist"
       "backend/foodlog.db"
       "frontend/node_modules"
       "frontend/dist"
@@ -28,34 +31,60 @@ in
       make-shells.foodlog = {
         inputsFrom = [
           config.make-shells.default.finalPackage
-          config.packages.foodlog-backend.env
         ];
         buildInputs = with pkgs; [
-          haskellPackages.cabal-install
-          haskellPackages.haskell-language-server
-          haskellPackages.hlint
-          haskellPackages.ormolu
+          bun
 
           nodejs
           nodePackages.pnpm
           nodePackages.typescript-language-server
 
           sqlite
-          zlib
-          pkg-config
-
-          watch
         ];
 
         env = {
           VITE_API_URL = "http://localhost:8080/api";
-          LLM_MODEL = "google/gemini-3-flash-preview";
         };
       };
 
       packages = {
+        foodlog-backend = pkgs.stdenv.mkDerivation (finalAttrs: {
+          pname = "foodlog-backend";
+          version = (lib.importJSON ./backend/package.json).version;
 
-        foodlog-backend = pkgs.haskell.lib.dontHaddock (pkgs.haskellPackages.callCabal2nix "foodlog-backend" ./backend { });
+          src = ./backend;
+
+          nativeBuildInputs = with pkgs; [
+            nodejs
+            pnpm
+            pnpmConfigHook
+            makeBinaryWrapper
+          ];
+
+          pnpmDeps = pkgs.fetchPnpmDeps {
+            inherit (finalAttrs) pname version src;
+            fetcherVersion = 2;
+            hash = "sha256-gL4PZrLwMgArh97C8Op8Qh8WwF+iuYruCIRWja2tjw4=";
+          };
+
+          # No build step needed — Bun runs TypeScript directly
+          dontBuild = true;
+
+          installPhase = ''
+            runHook preInstall
+            mkdir -p $out/lib/foodlog-backend
+            cp -r src $out/lib/foodlog-backend/
+            cp -r node_modules $out/lib/foodlog-backend/
+            cp package.json $out/lib/foodlog-backend/
+
+            mkdir -p $out/bin
+            makeBinaryWrapper ${pkgs.bun}/bin/bun $out/bin/foodlog-backend \
+              --add-flags "run $out/lib/foodlog-backend/src/index.ts"
+            runHook postInstall
+          '';
+
+          meta.mainProgram = "foodlog-backend";
+        });
 
         foodlog-frontend = pkgs.stdenv.mkDerivation (finalAttrs: {
           pname = "foodlog-frontend";
@@ -72,7 +101,7 @@ in
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
             fetcherVersion = 2;
-            hash = "sha256-Th5I57TuZrt4IZx2vXHRxtpZ5hrax7W9QU6SPg7fDGM=";
+            hash = "sha256-T+h8RXbcri2JDpAEp07XuPpohg7byHqWvY4LM/zQNqE=";
           };
 
           buildPhase = ''
@@ -90,14 +119,11 @@ in
       };
 
       treefmt.programs = {
-        ormolu = {
-          enable = true;
-          includes = [ "${currentDir}/backend/**/*.hs" ];
-        };
         prettier = {
           enable = true;
           includes = [
             "${currentDir}/frontend/**/*.{js,jsx,ts,tsx,json,css,scss}"
+            "${currentDir}/backend/src/**/*.{ts,js,json}"
           ];
         };
       };
@@ -127,17 +153,14 @@ in
             default = 6547;
           };
 
-          llmModel = lib.mkOption {
+          model = lib.mkOption {
             type = lib.types.str;
-            default = "google/gemini-3-flash-preview";
+            default = "opus";
+            description = "Claude model to use (opus, sonnet, haiku)";
           };
 
           corsOrigins = lib.mkOption {
             type = lib.types.listOf lib.types.str;
-          };
-
-          environmentFile = lib.mkOption {
-            type = lib.types.path;
           };
 
           dataDir = lib.mkOption {
@@ -157,20 +180,36 @@ in
           group = "foodlog";
           home = cfg.backend.dataDir;
           createHome = true;
+          packages = [ pkgs.claude-code ];
         };
 
         users.groups.foodlog = { };
+
+        # To authenticate the Claude Agent SDK on the server, run:
+        #   sudo -u foodlog HOME=/var/lib/foodlog /etc/profiles/per-user/foodlog/bin/claude login
+        # This stores credentials in /var/lib/foodlog/.claude/
+        # The systemd service sets HOME to dataDir so the SDK finds them.
 
         systemd.services.foodlog-backend = {
           description = "Foodlog backend API";
           wantedBy = [ "multi-user.target" ];
           after = [ "network.target" ];
 
+          # claude-code in PATH is needed by the Claude Agent SDK at runtime
+          # (it spawns `claude` as a subprocess).
+          # bun is needed because the SDK detects the Bun runtime and spawns
+          # child processes using `bun` from PATH.
+          path = [
+            pkgs.claude-code
+            pkgs.bun
+          ];
+
           environment = {
             PORT = toString cfg.backend.port;
-            LLM_MODEL = cfg.backend.llmModel;
+            CLAUDE_MODEL = cfg.backend.model;
             DATABASE_PATH = "${cfg.backend.dataDir}/foodlog.db";
             CORS_ORIGINS = lib.concatStringsSep "," cfg.backend.corsOrigins;
+            HOME = cfg.backend.dataDir;
           };
 
           serviceConfig = {
@@ -178,15 +217,8 @@ in
             User = "foodlog";
             Group = "foodlog";
             StateDirectory = "foodlog";
+            StateDirectoryMode = "0750";
             WorkingDirectory = cfg.backend.dataDir;
-            EnvironmentFile = lib.mkIf (cfg.backend.environmentFile != null) cfg.backend.environmentFile;
-
-            # Security hardening - TEMPORARILY DISABLED FOR DEBUGGING
-            # NoNewPrivileges = true;
-            # PrivateTmp = true;
-            # ProtectSystem = "strict";
-            # ProtectHome = true;
-            # RestrictAddressFamilies = [ "AF_INET" "AF_INET6" ];
           };
         };
 
@@ -202,6 +234,13 @@ in
               proxy_set_header X-Real-IP $remote_addr;
               proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
               proxy_set_header X-Forwarded-Proto $scheme;
+
+              # SSE support
+              proxy_buffering off;
+              proxy_cache off;
+              proxy_read_timeout 300s;
+              proxy_set_header X-Accel-Buffering no;
+              chunked_transfer_encoding on;
             '';
           };
         };
@@ -211,6 +250,6 @@ in
   readme.parts.projects = ''
     ### Foodlog
 
-    Vibe coded AI-powered progressive web app for tracking my food intake.
+    AI-powered progressive web app for tracking food intake, powered by Claude Agent SDK with MCP tools.
   '';
 }

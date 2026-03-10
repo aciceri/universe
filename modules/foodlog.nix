@@ -5,8 +5,6 @@
       cfg = config.services.foodlog;
     in
     {
-      secrets.foodlog_environment_file.owner = "foodlog";
-
       environment.persistence."/persist".directories = [
         cfg.backend.dataDir
       ];
@@ -14,8 +12,10 @@
       services.foodlog = {
         backend = {
           enable = true;
+          model = "opus";
           corsOrigins = [ "https://${cfg.frontend.virtualHost}" ];
-          environmentFile = config.age.secrets.foodlog_environment_file.path;
+          # Authentication: run `sudo -u foodlog HOME=/var/lib/foodlog claude login`
+          # to store Claude credentials in /var/lib/foodlog/.claude/
         };
         frontend.virtualHost = "food.sisko.wg.aciceri.dev";
       };
