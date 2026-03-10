@@ -24,7 +24,7 @@
 
       services.kanidm = {
         server.enable = true;
-        package = pkgs.kanidmWithSecretProvisioning_1_8;
+        package = pkgs.kanidmWithSecretProvisioning_1_9;
 
         server.settings = {
           bindaddress = "[::]:4348";
