@@ -48,6 +48,7 @@
 
       services.prometheus = {
         enable = true;
+        retentionTime = "365d";
         checkConfig = false; # Otherwise it fails because it cannot access bearer_token_file at build time
         webExternalUrl = "https://status.wg.aciceri.dev";
         globalConfig.scrape_interval = "10s";
