@@ -9,10 +9,10 @@
         inkscape
 
         # 3d stuff
-        freecad-wayland
-        openscad
+        # freecad-wayland  # FIXME
+        # openscad  # FIXME
         cura-appimage
-        blender
+        # blender  # FIXME
 
         # Office
         libreoffice
@@ -27,7 +27,7 @@
         chirp
 
         # Other
-        calibre
+        # calibre
         tremotesf
         vial
         trilium-next-desktop
