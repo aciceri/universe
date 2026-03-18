@@ -21,7 +21,7 @@
             "http://ncps.sisko.wg.aciceri.dev:8501"
           ];
           trusted-public-keys = [
-            "ncps.sisko.wg.aciceri.dev:lSep0cd5UkyKvDR9AtYargQslCAqMYI3Xin2w+LiZb0="
+            "ncps.sisko.wg.aciceri.dev:jIWjtQrNKaYwklgkebFbqJIBeCkPl0ULSxSJ7YitxAQ="
           ];
         };
         nixPath = [ "nixpkgs=${inputs.nixpkgs}" ];
