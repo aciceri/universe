@@ -221,6 +221,17 @@ export function ChatInput({ onSend, onNewSession, disabled }: ChatInputProps) {
           </button>
         )}
 
+        {/* New session button */}
+        <button
+          type="button"
+          onClick={onNewSession}
+          disabled={disabled || whisperBusy}
+          className="flex-shrink-0 w-10 h-10 rounded-full bg-ctp-surface0 text-ctp-subtext0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ctp-surface1 transition-colors"
+          title="Nuova conversazione"
+        >
+          <RotateCcw size={18} />
+        </button>
+
         <textarea
           ref={textareaRef}
           value={input}
@@ -245,17 +256,6 @@ export function ChatInput({ onSend, onNewSession, disabled }: ChatInputProps) {
           className="flex-shrink-0 w-10 h-10 rounded-full bg-ctp-mauve text-ctp-base flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ctp-mauve/80 transition-colors active:scale-95"
         >
           <Send size={18} />
-        </button>
-
-        {/* New session button */}
-        <button
-          type="button"
-          onClick={onNewSession}
-          disabled={disabled || whisperBusy}
-          className="flex-shrink-0 w-10 h-10 rounded-full bg-ctp-surface0 text-ctp-subtext0 flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed hover:bg-ctp-surface1 transition-colors"
-          title="Nuova conversazione"
-        >
-          <RotateCcw size={18} />
         </button>
       </div>
     </form>
