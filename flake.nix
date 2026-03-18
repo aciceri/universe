@@ -104,7 +104,7 @@
     };
     nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
     arbi = {
-      url = "git+ssh://git@github.com/aciceri/arbi.git";
+      url = "git+https://github.com/aciceri/arbi.git";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         treefmt-nix.follows = "treefmt-nix";
