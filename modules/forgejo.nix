@@ -197,5 +197,8 @@
     users.users.root.openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJjfUJ/na5sHiniliSdJIJQ5EjUG8UTjqFymuLuVJ2E7" # SSH key used by Forgejo workflows for deployments
     ];
+
+    services.openssh.knownHosts."github.com".publicKey =
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl";
   };
 }
