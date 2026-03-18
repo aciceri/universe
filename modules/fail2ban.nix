@@ -8,18 +8,25 @@
     };
   };
 
-  configurations.nixos.sisko.module = {
-    services.fail2ban.jails = {
-      nginx-botsearch.settings = {
-        enabled = true;
-        filter = "nginx-botsearch";
-        logpath = "/var/log/nginx/access.log";
-      };
-      nginx-bad-request.settings = {
-        enabled = true;
-        filter = "nginx-bad-request";
-        logpath = "/var/log/nginx/access.log";
+  configurations.nixos.sisko.module =
+    { config, ... }:
+    let
+      cfg = config.services.fail2ban;
+    in
+    {
+      environment.persistence."/persist".directories = [ (dirOf cfg.daemonSettings.Definition.dbfile) ];
+
+      services.fail2ban.jails = {
+        nginx-botsearch.settings = {
+          enabled = true;
+          filter = "nginx-botsearch";
+          logpath = "/var/log/nginx/access.log";
+        };
+        nginx-bad-request.settings = {
+          enabled = true;
+          filter = "nginx-bad-request";
+          logpath = "/var/log/nginx/access.log";
+        };
       };
     };
-  };
 }
