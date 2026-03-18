@@ -4,7 +4,7 @@
     {
       services.trilium-server = {
         enable = true;
-        dataDir = "/mnt/hd/trilium";
+        dataDir = "/tank/trilium";
         nginx = {
           hostName = "trilium.sisko.wg.aciceri.dev";
           enable = true;

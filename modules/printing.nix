@@ -47,6 +47,9 @@ in
       }
     ];
 
+    # Don't fail the deploy if the printer is offline
+    systemd.services.ensure-printers.serviceConfig.SuccessExitStatus = [ 1 ];
+
     services.nginx.virtualHosts.${domain} = {
       forceSSL = true;
       useACMEHost = "aciceri.dev";

@@ -5,33 +5,30 @@
     {
       systemd.tmpfiles.rules = [
         "d /export 770 nobody nogroup"
-        "d /mnt/hd/seedvault 0750 seedvault-sync seedvault-sync -"
+        "d /tank/seedvault 0750 seedvault-sync seedvault-sync -"
       ];
 
       users.users.seedvault-sync = {
         isSystemUser = true;
         group = "seedvault-sync";
-        home = "/mnt/hd/seedvault";
+        home = "/tank/seedvault";
         createHome = false;
       };
 
       users.groups.seedvault-sync = { };
 
-      fileSystems."/export/hd" = {
-        device = "/mnt/hd";
-        options = [ "bind" ];
-      };
-
       services.nfs.server = {
         enable = true;
         exports = ''
-          /export     10.100.0.1/24(rw,fsid=0,no_subtree_check)
-          /export/hd  10.100.0.1/24(rw,nohide,insecure,no_subtree_check,no_root_squash)
+          /export          10.100.0.1/24(rw,fsid=0,no_subtree_check)
+          /tank/torrent    10.100.0.1/24(rw,nohide,insecure,no_subtree_check,no_root_squash)
+          /tank/media      10.100.0.1/24(rw,nohide,insecure,no_subtree_check,no_root_squash)
+          /tank/seedvault  10.100.0.1/24(rw,nohide,insecure,no_subtree_check,no_root_squash)
         '';
       };
 
       systemd.services.nfs-server.preStart = ''
-        chmod -R 775 /export/hd/torrent
+        chmod -R 775 /tank/torrent
       '';
 
       services.webdav-server-rs = {
@@ -44,7 +41,7 @@
           location = [
             {
               route = [ "/torrent/*path" ];
-              directory = "/mnt/hd/torrent";
+              directory = "/tank/torrent";
               handler = "filesystem";
               methods = [ "webdav-ro" ];
               autoindex = true;
@@ -68,17 +65,16 @@
 
       services.samba = {
         enable = true;
-        package = pkgs.samba4Full;
         settings = {
           torrent = {
-            path = "/mnt/hd/torrent";
-            comment = "hd";
+            path = "/tank/torrent";
+            comment = "torrent";
             "force user" = "transmission";
             browseable = "yes";
             writeable = "yes";
           };
           seedvault = {
-            path = "/mnt/hd/seedvault";
+            path = "/tank/seedvault";
             comment = "seedvault";
             "force user" = "seedvault-sync";
             browseable = "yes";
@@ -122,7 +118,7 @@
 
   flake.modules.nixos.pc = {
     fileSystems."/mnt/sisko" = {
-      device = "sisko.wg.aciceri.dev:/export/hd";
+      device = "sisko.wg.aciceri.dev:/tank";
       fsType = "nfs";
       options = [
         "x-systemd.automount"

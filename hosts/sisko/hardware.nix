@@ -1,31 +1,50 @@
 {
-  configurations.nixos.sisko.module = {
-    facter.reportPath = ./facter.json;
+  configurations.nixos.sisko.module =
+    { pkgs, ... }:
+    {
+      facter.reportPath = ./facter.json;
 
-    powerManagement = {
-      cpuFreqGovernor = "schedutil";
-      scsiLinkPolicy = "med_power_with_dipm";
-    };
+      powerManagement.cpuFreqGovernor = "schedutil";
 
-    hardware.deviceTree = {
-      enable = true;
-      name = "rockchip/rk3588-rock-5b.dtb";
-    };
+      zramSwap = {
+        enable = true;
+        memoryPercent = 100;
+        algorithm = "zstd";
+      };
 
-    systemd.services."serial-getty@ttyS2" = {
-      enable = true;
-      wantedBy = [ "getty.target" ];
-      serviceConfig.restart = "always";
-    };
+      boot.kernel.sysctl = {
+        "vm.swappiness" = 100;
+      };
 
-    zramSwap = {
-      enable = true;
-      memoryPercent = 100;
-      algorithm = "zstd";
-    };
+      services.logind.settings.Login = {
+        HandleLidSwitchExternalPower = "ignore";
+        HandleLidSwitch = "ignore";
+      };
 
-    boot.kernel.sysctl = {
-      "vm.swappiness" = 100;
+      services.zfs.autoScrub = {
+        enable = true;
+        interval = "monthly";
+        pools = [
+          "rpool"
+          "tank"
+        ];
+      };
+
+      services.zfs.autoSnapshot = {
+        enable = true;
+        monthly = 3;
+        weekly = 4;
+        daily = 7;
+        hourly = 24;
+        frequent = 4;
+      };
+
+      hardware.graphics = {
+        enable = true;
+        extraPackages = with pkgs; [
+          intel-media-driver
+          intel-compute-runtime
+        ];
+      };
     };
-  };
 }

@@ -6,11 +6,11 @@
       serverName = "Sisko";
       mediaDirectories = [
         {
-          path = "/mnt/hd/movies";
+          path = "/tank/media/movies";
           recursive = true;
         }
         {
-          path = "/mnt/hd/series";
+          path = "/tank/media/series";
           recursive = true;
         }
       ];

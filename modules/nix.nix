@@ -50,23 +50,6 @@
       extraOptions = ''
         extra-platforms = aarch64-linux arm-linux i686-linux riscv64-linux armv6l-linux
       '';
-      distributedBuilds = true;
-      buildMachines = [
-        {
-          hostName = "sisko.wg.aciceri.dev";
-          system = "aarch64-linux";
-          maxJobs = 7;
-          supportedFeatures = [
-            "kvm"
-            "nixos-test"
-            "big-parallel"
-            "benchmark"
-          ];
-          protocol = "ssh-ng";
-          sshUser = "root";
-          sshKey = "/run/agenix/ssh_user_key_ccr"; # FIXME even if it works conceptually we shouldn't use this key
-        }
-      ];
     };
 
     programs.nix-ld.enable = true;

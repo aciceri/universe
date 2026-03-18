@@ -8,21 +8,7 @@
 
       services.immich = {
         enable = true;
-        mediaLocation = "/mnt/hd/immich";
-      };
-
-      # The reason for this hack is quite bad
-      # Before using the NixOS module Immich was installed using Docker, for this
-      # reason the paths of the images in the database looks like `/photos/...`
-      # and after migrating to the NixOS module I kept getting 404s for all the
-      # old pictures.
-      # Frankly it seems weird that it saved the absolute paths in the DB, perhaps
-      # it saves somewhere else the media location root and then merge the paths,
-      # however, nevertheless just setting `mediaLocation` it didn't work
-      fileSystems."/photos" = {
-        device = "/mnt/hd/immich/";
-        fsType = "ext4";
-        options = [ "bind" ];
+        mediaLocation = "/tank/immich";
       };
 
       services.nginx.virtualHosts."photos.aciceri.dev" = {

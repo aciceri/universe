@@ -66,12 +66,12 @@
             };
             lfs = {
               enable = true;
-              contentDir = "/mnt/hd/forgejo-lfs";
+              contentDir = "/tank/forgejo-lfs";
             };
             secrets.mailer.PASSWD = config.age.secrets.autistici_password.path;
             dump = {
               enable = true;
-              backupDir = "/mnt/hd/forgejo-dumps";
+              backupDir = "/tank/forgejo-dumps";
             };
           };
 

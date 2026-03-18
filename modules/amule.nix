@@ -14,8 +14,8 @@
         WebServerPasswordFile = pkgs.writeText "password" "password";
         settings = {
           eMule = {
-            IncomingDir = "/mnt/hd/amule";
-            TempDir = "/mnt/hd/amule/Temp";
+            IncomingDir = "/tank/amule";
+            TempDir = "/tank/amule/Temp";
           };
           WebServer = {
             Enabled = 1;

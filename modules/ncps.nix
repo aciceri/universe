@@ -2,7 +2,7 @@
   configurations.nixos.sisko.module =
     { config, ... }:
     let
-      dir = "/mnt/hd/ncps";
+      dir = "/tank/ncps";
     in
     {
       secrets.nix_netrc = {

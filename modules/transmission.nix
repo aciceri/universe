@@ -8,10 +8,13 @@
         openRPCPort = true;
         openPeerPorts = true;
         settings = {
-          download-dir = "/mnt/hd/torrent";
-          incomplete-dir = "/mnt/hd/torrent/.incomplete";
+          download-dir = "/tank/torrent";
+          incomplete-dir = "/tank/torrent/.incomplete";
 
           download-queue-enabled = false;
+
+          # Allow group members (sonarr, radarr, etc...) to move/delete downloaded files
+          umask = 2;
 
           rpc-bind-address = "0.0.0.0";
           peer-port = 51413; # Forward both TCP and UDP on router traffic from router
@@ -44,8 +47,8 @@
       ];
 
       systemd.tmpfiles.rules = [
-        "d /mnt/hd/torrent 774 transmission transmission"
-        "d /mnt/hd/torrent/.incomplete 774 transmission transmission"
+        "d /tank/torrent 774 transmission transmission"
+        "d /tank/torrent/.incomplete 774 transmission transmission"
       ];
 
       environment.persistence."/persist".directories = [

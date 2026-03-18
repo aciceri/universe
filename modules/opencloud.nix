@@ -57,13 +57,13 @@
           PROXY_ROLE_ASSIGNMENT_OIDC_CLAIM = "roles";
 
           # Store user files on the HDD instead of the default stateDir
-          STORAGE_USERS_POSIX_ROOT = "/mnt/hd/opencloud";
+          STORAGE_USERS_POSIX_ROOT = "/tank/opencloud";
         };
       };
 
       # Allow OpenCloud to write to the HDD storage path
       # (the service runs with ProtectSystem=strict)
-      systemd.services.opencloud.serviceConfig.ReadWritePaths = [ "/mnt/hd/opencloud" ];
+      systemd.services.opencloud.serviceConfig.ReadWritePaths = [ "/tank/opencloud" ];
 
       services.nginx.virtualHosts."cloud.aciceri.dev" = {
         forceSSL = true;

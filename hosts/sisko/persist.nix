@@ -3,6 +3,17 @@
   configurations.nixos.sisko.module = {
     imports = [ inputs.impermanence.nixosModules.impermanence ];
 
+    boot.initrd.systemd.services."zfs-rollback-root" = {
+      description = "Rollback root to blank";
+      wantedBy = [ "initrd.target" ];
+      after = [ "zfs-import-rpool.service" ];
+      before = [ "sysroot.mount" ];
+      serviceConfig.Type = "oneshot";
+      script = ''
+        zfs rollback -r rpool/local/root@blank
+      '';
+    };
+
     environment.persistence."/persist" = {
       hideMounts = true;
       directories = [

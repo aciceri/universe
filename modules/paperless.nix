@@ -10,7 +10,7 @@
         domain = "paper.sisko.wg.aciceri.dev";
         address = "0.0.0.0";
         passwordFile = builtins.toFile "paperless-initial-password" "paperless";
-        mediaDir = "/mnt/hd/paperless/";
+        mediaDir = "/tank/paperless/";
         settings = {
           PAPERLESS_OCR_LANGUAGE = "ita+eng";
           PAPERLESS_CONSUMER_IGNORE_PATTERN = builtins.toJSON [

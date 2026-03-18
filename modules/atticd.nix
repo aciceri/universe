@@ -41,7 +41,7 @@
 
           storage = {
             type = "local";
-            path = "/mnt/hd/atticd";
+            path = "/tank/atticd";
           };
 
           garbage-collection.interval = "0 hours"; # disable garbage collection
