@@ -109,6 +109,7 @@
               {
                 picard = 16;
                 pike = 8;
+                sisko = 1;
               }
               .${name};
             instancesNames = lib.genList (n: "nix-${name}-${toString n}") numInstances;
@@ -189,6 +190,7 @@
       |> lib.genAttrs [
         "picard"
         "pike"
+        "sisko"
       ]
     )
   ];
