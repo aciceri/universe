@@ -27,7 +27,7 @@
         chirp
 
         # Other
-        # calibre
+        calibre
         tremotesf
         vial
         trilium-next-desktop
