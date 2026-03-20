@@ -1,17 +1,18 @@
 {
   configurations.nixos.sisko.module =
-    { config, pkgs, ... }:
+    { config, ... }:
     let
       cfg = config.services.amule;
     in
     {
+      secrets.amule_password.owner = cfg.user;
+
       services.amule = {
         enable = true;
         openPeerPorts = true;
         openWebServerPort = true;
-        # TODO the service is accessible only from the VPN, using agenix would be better
-        ExternalConnectPasswordFile = pkgs.writeText "password" "password";
-        WebServerPasswordFile = pkgs.writeText "password" "password";
+        ExternalConnectPasswordFile = config.age.secrets.amule_password.path;
+        WebServerPasswordFile = config.age.secrets.amule_password.path;
         settings = {
           eMule = {
             IncomingDir = "/tank/amule";
