@@ -12,7 +12,7 @@
         # freecad-wayland  # FIXME
         # openscad  # FIXME
         cura-appimage
-        # blender  # FIXME
+        blender
 
         # Office
         libreoffice
