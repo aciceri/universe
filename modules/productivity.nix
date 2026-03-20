@@ -9,7 +9,7 @@
         inkscape
 
         # 3d stuff
-        # freecad-wayland  # FIXME
+        freecad-wayland
         openscad
         cura-appimage
         blender
