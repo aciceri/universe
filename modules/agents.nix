@@ -155,7 +155,7 @@ in
             theme = lib.mkForce "catppuccin";
             formatter = false;
             plugin = [
-              "opencode-anthropic-auth@latest"
+              "opencode-claude-auth@latest"
               "opencode-openai-codex-auth@4.4.0"
             ];
             mcp = {
