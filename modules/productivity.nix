@@ -10,7 +10,7 @@
 
         # 3d stuff
         # freecad-wayland  # FIXME
-        # openscad  # FIXME
+        openscad
         cura-appimage
         blender
 
