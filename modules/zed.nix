@@ -1,7 +1,7 @@
 {
   flake.modules.homeManager.workstation = {
     programs.zed-editor = {
-      enable = false;
+      enable = true;
       extensions = [
         "nix"
         "catppuccin"
@@ -10,6 +10,7 @@
         "terraform"
       ];
       userSettings = {
+        semantic_tokens = "combined";
         features = {
           copilot = false;
         };
