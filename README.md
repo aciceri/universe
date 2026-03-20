@@ -166,7 +166,7 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
-### [helix-master](packages/helix-master/_package.nix) (version master-510edb5d65e09309a5b2664110ed45cee993f964)
+### [helix-master](packages/helix-master/_package.nix) (version master-0d7e1dc93aabc9351ee30ceddda374ef5d42c685)
 
 Post-modern modal text editor
 
