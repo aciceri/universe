@@ -32,17 +32,8 @@
           ExecStart = "${pkgs.writeShellScript "backlight-sync" ''
             BACKLIGHT=/sys/class/backlight/intel_backlight/bl_power
             FB_BLANK=/sys/class/graphics/fb0/blank
-            PREV=""
             while true; do
-              STATE=$(cat "$FB_BLANK")
-              if [ "$STATE" != "$PREV" ]; then
-                if [ "$STATE" = "1" ]; then
-                  echo 1 > "$BACKLIGHT"
-                else
-                  echo 0 > "$BACKLIGHT"
-                fi
-                PREV="$STATE"
-              fi
+              cat "$FB_BLANK" > "$BACKLIGHT"
               sleep 2
             done
           ''}";
