@@ -16,7 +16,7 @@
     in
     {
       home.packages = with pkgs; [
-        claude-code-acp
+        claude-agent-acp
         ruff
         nixd
         vtsls
