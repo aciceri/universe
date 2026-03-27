@@ -185,6 +185,10 @@ in
 
         users.groups.foodlog = { };
 
+        systemd.tmpfiles.rules = [
+          "d ${cfg.backend.dataDir} 0750 foodlog foodlog -"
+        ];
+
         # To authenticate the Claude Agent SDK on the server, run:
         #   sudo -u foodlog HOME=/var/lib/foodlog /etc/profiles/per-user/foodlog/bin/claude login
         # This stores credentials in /var/lib/foodlog/.claude/
