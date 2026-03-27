@@ -12,16 +12,18 @@
         enable32Bit = true;
       };
 
-      nvidia.open = true;
-      nvidia.prime = {
-        offload = {
-          enable = true;
-          enableOffloadCmd = true;
+      nvidia = {
+        open = true;
+        prime = {
+          offload = {
+            enable = true;
+            enableOffloadCmd = true;
+          };
+          intelBusId = "PCI:0:2:0";
+          nvidiaBusId = "PCI:1:0:0";
         };
-        intelBusId = "PCI:0:2:0";
-        nvidiaBusId = "PCI:1:0:0";
+        datacenter.enable = true;
       };
-
       nvidia-container-toolkit.enable = true;
     };
 
@@ -33,6 +35,5 @@
     services.zfs.autoScrub.enable = true;
     services.power-profiles-daemon.enable = true;
     services.upower.enable = true;
-    services.xserver.videoDrivers = [ "nvidia" ];
   };
 }
