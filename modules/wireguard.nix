@@ -132,11 +132,11 @@
             }) cfg.hosts;
 
             postSetup = ''
-              ${lib.getExe' pkgs.iptables "iptables"} -t nat -A POSTROUTING -s 10.100.0.0/24 -o enP4p65s0 -j MASQUERADE
+              ${lib.getExe' pkgs.iptables "iptables"} -t nat -A POSTROUTING -s 10.100.0.0/24 -o lan0 -j MASQUERADE
             '';
 
             postShutdown = ''
-              ${lib.getExe' pkgs.iptables "iptables"} -t nat -D POSTROUTING -s 10.100.0.0/24 -o enP4p65s0 -j MASQUERADE
+              ${lib.getExe' pkgs.iptables "iptables"} -t nat -D POSTROUTING -s 10.100.0.0/24 -o lan0 -j MASQUERADE
             '';
           };
         })

@@ -3,9 +3,14 @@
   configurations.nixos.sisko.module =
     { config, ... }:
     let
-      interfaceName = "enP4p65s0";
+      interfaceName = "lan0";
     in
     {
+      # Force a stable name for the USB ethernet dongle based on MAC address
+      services.udev.extraRules = ''
+        SUBSYSTEM=="net", ACTION=="add", ATTR{address}=="d0:c0:bf:2d:f2:6a", NAME="${interfaceName}"
+      '';
+
       services.adguardhome = {
         enable = true;
         mutableSettings = true;
