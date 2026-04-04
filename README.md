@@ -189,7 +189,7 @@ calls. Requires claude-code CLI installed and authenticated
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.03.17-unstable-2026-03-29)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.03.17-unstable-2026-04-04)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
