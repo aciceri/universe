@@ -173,6 +173,10 @@ in
                 enabled = false;
               };
             };
+            mode = {
+              build.prompt = "You are Claude Code, Anthropic's official CLI for Claude.";
+              plan.prompt = "You are Claude Code, Anthropic's official CLI for Claude.";
+            };
             provider.openai = {
               options = {
                 reasoningEffort = "medium";
