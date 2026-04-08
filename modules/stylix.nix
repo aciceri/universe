@@ -20,4 +20,11 @@
         };
       };
     };
+
+  flake.modules.homeManager.base =
+    { config, ... }:
+    {
+      # TODO should be possible removing this when 26.05 is out
+      gtk.gtk4.theme = config.gtk.theme;
+    };
 }
