@@ -23,7 +23,7 @@ in
       thirdparty =
         [
           (pkgs.runCommand "katex" { } ''
-            cp -r ${pkgs.nodePackages.katex}/lib/node_modules/katex/dist $out
+            cp -r ${pkgs.katex}/lib/node_modules/katex/dist $out
           '')
           (pkgs.runCommand "asciinema-player" { } ''
             cp -r ${config.packages.asciinema-player}/lib/asciinema-player/bundle $out

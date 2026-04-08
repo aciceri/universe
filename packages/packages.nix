@@ -45,7 +45,13 @@ in
     in
     {
       packages = {
-        inherit (inputs'.claude-desktop.packages) claude-desktop;
+        claude-desktop = inputs'.claude-desktop.packages.claude-desktop.override {
+          # FIXME remove once it's merged
+          # https://github.com/k3d3/claude-desktop-linux-flake/pull/89
+          nodePackages = {
+            inherit (pkgs) asar;
+          };
+        };
         inherit update-packages;
       }
       // (

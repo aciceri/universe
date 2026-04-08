@@ -36,8 +36,8 @@ in
           bun
 
           nodejs
-          nodePackages.pnpm
-          nodePackages.typescript-language-server
+          pnpm
+          typescript-language-server
 
           sqlite
         ];
