@@ -151,8 +151,8 @@ in
 
         opencode = {
           enable = true;
+          tui.theme = lib.mkForce "catppuccin";
           settings = {
-            theme = lib.mkForce "catppuccin";
             formatter = false;
             plugin = [
               "opencode-claude-auth@latest"
