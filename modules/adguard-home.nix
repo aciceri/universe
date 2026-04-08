@@ -21,7 +21,7 @@
 
             dhcpv4 = {
               gateway_ip = "10.1.1.1";
-              range_start = "10.1.1.2";
+              range_start = "10.1.1.3";
               range_end = "10.1.1.255";
               subnet_mask = "255.255.255.0";
             };
@@ -51,17 +51,16 @@
       ];
       networking.firewall.allowedTCPPorts = [ 53 ];
 
-      networking.interfaces.${interfaceName} = {
-        ipv4.addresses = [
-          {
-            address = "10.1.1.2";
-            prefixLength = 24;
-          }
-        ];
-        useDHCP = false;
-      };
+      # Use systemd-networkd for lan0 so the static IP is applied
+      # as soon as udev creates the interface (handles hotplug properly)
+      networking.useNetworkd = true;
 
-      networking.defaultGateway = "10.1.1.1";
+      systemd.network.networks."10-lan0" = {
+        matchConfig.Name = interfaceName;
+        address = [ "10.1.1.2/24" ];
+        gateway = [ "10.1.1.1" ];
+        networkConfig.DHCP = "no";
+      };
 
       environment.persistence."/persist".directories = [
         "/var/lib/AdGuardHome"

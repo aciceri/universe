@@ -1,7 +1,7 @@
 { lib, ... }:
 {
   flake.modules.nixos.base =
-    { config, pkgs, ... }:
+    { config, ... }:
     let
       cfg = config.wireguard;
       inherit (config.networking) hostName;
@@ -117,7 +117,11 @@
         (lib.mkIf (!cfg.isClient) {
           secrets."wireguard_private_key_${hostName}" = { };
 
-          networking.nat.enable = true;
+          networking.nat = {
+            enable = true;
+            externalInterface = "lan0";
+            internalInterfaces = [ "wg0" ];
+          };
 
           networking.firewall.allowedUDPPorts = [ config.networking.wireguard.interfaces.wg0.listenPort ];
 
@@ -130,14 +134,6 @@
               publicKey = host.publicKey;
               allowedIPs = [ "${host.ip}/32" ];
             }) cfg.hosts;
-
-            postSetup = ''
-              ${lib.getExe' pkgs.iptables "iptables"} -t nat -A POSTROUTING -s 10.100.0.0/24 -o lan0 -j MASQUERADE
-            '';
-
-            postShutdown = ''
-              ${lib.getExe' pkgs.iptables "iptables"} -t nat -D POSTROUTING -s 10.100.0.0/24 -o lan0 -j MASQUERADE
-            '';
           };
         })
       ];
