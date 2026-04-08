@@ -51,6 +51,7 @@
             rainbow-delimiters
             envrc
             eat
+            nael
           ];
       };
     };
