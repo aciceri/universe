@@ -114,6 +114,19 @@
         nix-github-actions.follows = "";
       };
     };
+    spicetify = {
+      url = "github:Gerg-L/spicetify-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    llm-agents = {
+      url = "github:numtide/llm-agents.nix";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "nix-systems_";
+        blueprint.follows = "blueprint_";
+        flake-parts.follows = "flake-parts";
+      };
+    };
   };
 
   # Grab SSH keys from GitHub
