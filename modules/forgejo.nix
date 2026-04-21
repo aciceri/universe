@@ -109,7 +109,7 @@
               {
                 picard = 16;
                 pike = 8;
-                sisko = 1;
+                sisko = 0;
               }
               .${name};
             instancesNames = lib.genList (n: "nix-${name}-${toString n}") numInstances;
