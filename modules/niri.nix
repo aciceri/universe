@@ -269,9 +269,10 @@
                 |> lib.getExe;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
-              spotify = lib.getExe pkgs.nur.repos.nltch.spotify-adblock;
+              spotify = lib.getExe config.programs.spicetify.spicedSpotify;
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
+              emacs = "emacs";
               run-floating-btop =
                 pkgs.writeScriptBin "run-floating-btop" ''
                   ${alacritty'} --title='bTop' -e btop
@@ -292,6 +293,7 @@
               "Mod+M".action = spawn spotify;
               "Mod+Shift+M".action = focus-workspace "mail";
               "Mod+N".action = spawn trilium;
+              "Mod+X".action = spawn emacs;
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
