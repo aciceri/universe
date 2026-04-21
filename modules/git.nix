@@ -35,6 +35,23 @@
           };
         };
 
+        programs.jujutsu = {
+          enable = true;
+          settings = {
+            user = {
+              email = "andrea.ciceri@autistici.org";
+              name = "Andrea Ciceri";
+            };
+          };
+        };
+
+        programs.difftastic = {
+          enable = true;
+          jujutsu.enable = true;
+        };
+
+        programs.jjui.enable = true;
+
         programs.nushell.shellAliases = {
           lg = lib.getExe config.programs.lazygit.package;
         };
