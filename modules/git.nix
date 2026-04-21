@@ -29,7 +29,7 @@
           settings = {
             git.pagers = [
               {
-                pager = "${lib.getExe pkgs.delta} --dark --paging=never";
+                pager = "${lib.getExe pkgs.delta} --${config.stylix.polarity} --paging=never";
               }
             ];
           };
