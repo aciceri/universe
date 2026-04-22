@@ -73,6 +73,16 @@ fpArgs@{ inputs, ... }:
             '';
           };
         };
+
+        kernel.sysctl = {
+          "vm.swappiness" = 10; # reduce tendency to swap pages to disk
+          "vm.vfs_cache_pressure" = 50; # keep directory/inode caches longer in memory
+          "vm.dirty_ratio" = 10; # max % of RAM for dirty pages before sync stall
+          "vm.dirty_background_ratio" = 5; # start background writeback earlier
+          "vm.compaction_proactiveness" = 0; # disable proactive compaction to avoid latency spikes
+          "vm.zone_reclaim_mode" = 0; # don't reclaim memory from local zones, avoids desktop stalls
+          "vm.page_lock_unfairness" = 1; # reduce lock contention latency on page faults
+        };
       };
     };
 }
