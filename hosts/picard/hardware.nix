@@ -24,6 +24,12 @@
       algorithm = "zstd";
     };
 
-    services.zfs.autoScrub.enable = true;
+    services = {
+      zfs.autoScrub.enable = true;
+      scx = {
+        enable = true;
+        scheduler = "scx_bpfland";
+      };
+    };
   };
 }

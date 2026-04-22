@@ -32,8 +32,14 @@
       algorithm = "zstd";
     };
 
-    services.zfs.autoScrub.enable = true;
-    services.power-profiles-daemon.enable = true;
-    services.upower.enable = true;
+    services = {
+      zfs.autoScrub.enable = true;
+      power-profiles-daemon.enable = true;
+      upower.enable = true;
+      scx = {
+        enable = true;
+        scheduler = "scx_bpfland";
+      };
+    };
   };
 }
