@@ -8,6 +8,7 @@ fpArgs: {
     }:
     {
       boot = {
+        kernelPackages = pkgs.linuxPackages_zen;
         kernelParams = [ "ip=dhcp" ];
 
         initrd.kernelModules = [ "amdgpu" ];

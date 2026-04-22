@@ -11,6 +11,7 @@ fpArgs@{ inputs, ... }:
       imports = [ inputs.lanzaboote.nixosModules.lanzaboote ];
 
       boot = {
+        kernelPackages = pkgs.linuxPackages_zen;
         kernelParams = [ "ip=dhcp" ];
 
         initrd.kernelModules = [ "amdgpu" ];
