@@ -12,6 +12,8 @@
         algorithm = "zstd";
       };
 
+      boot.kernelParams = [ "usb-storage.quirks=0bda:9201:u" ];
+
       boot.kernel.sysctl = {
         "vm.swappiness" = 100;
       };
