@@ -4,6 +4,7 @@
       enable = true;
       openFirewall = true;
       serverName = "Sisko";
+      interface = "lan0";
       mediaDirectories = [
         {
           path = "/tank/media/movies";
