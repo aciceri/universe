@@ -78,11 +78,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1772137676,
-        "narHash": "sha256-ouqhYM0xM5clHApgj5p+N8FNOMahF5NizVKjc+QnU+4=",
+        "lastModified": 1777886837,
+        "narHash": "sha256-fazpghGUhroSCGlS48PY7mYfHT6DZCn6mPrVUxFh6qM=",
         "ref": "refs/heads/master",
-        "rev": "dbca4ad0a2b938ab6ad50edaa5b507ef6343192b",
-        "revCount": 52,
+        "rev": "3655afc2d7643c827fa2fb9dde79f941b7cf9fa7",
+        "revCount": 54,
         "type": "git",
         "url": "https://github.com/aciceri/arbi.git"
       },
