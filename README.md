@@ -166,7 +166,7 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
-### [helix-master](packages/helix-master/_package.nix) (version master-3beb268068d23294a26b47eab43b0a13a2a3a951)
+### [helix-master](packages/helix-master/_package.nix) (version master-87d5c05c4432a079d3b7aaa10cda1cfe1803c18c)
 
 Post-modern modal text editor
 
@@ -189,7 +189,7 @@ calls. Requires claude-code CLI installed and authenticated
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.03.17-unstable-2026-04-19)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.03.17-unstable-2026-05-03)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
