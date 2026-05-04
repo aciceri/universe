@@ -39,6 +39,8 @@ in
 {
   flake.modules.nixos.workstation = {
     nixpkgs.overlays = [ inputs.llm-agents.overlays.shared-nixpkgs ];
+
+    secrets.openrouter_api_key.owner = "ccr";
   };
 
   flake.modules.homeManager.workstation =
@@ -106,6 +108,10 @@ in
       home.packages = with pkgs; [
         llm-agents.omp
       ];
+
+      programs.nushell.extraConfig = ''
+        $env.OPENROUTER_API_KEY = (open ${osConfig.age.secrets.openrouter_api_key.path} | str trim)
+      '';
     };
 
   configurations.nixos.sisko.module =
