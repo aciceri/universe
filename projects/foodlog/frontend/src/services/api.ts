@@ -265,3 +265,21 @@ export async function deleteFood(foodId: number): Promise<void> {
     throw new Error(`API error: ${response.statusText}`);
   }
 }
+
+/** Fetch the canonical session ID from the server. */
+export async function getCurrentSession(): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/session/current`);
+  if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+  const data = (await response.json()) as { sessionId: string };
+  return data.sessionId;
+}
+
+/** Ask the server to create a new session and return its ID. */
+export async function resetSession(): Promise<string> {
+  const response = await fetch(`${API_BASE_URL}/session/reset`, {
+    method: "POST",
+  });
+  if (!response.ok) throw new Error(`API error: ${response.statusText}`);
+  const data = (await response.json()) as { sessionId: string };
+  return data.sessionId;
+}

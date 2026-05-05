@@ -1,9 +1,18 @@
 import { Hono } from "hono";
 import { streamSSE } from "hono/streaming";
-import { getSessionMessages } from "@anthropic-ai/claude-agent-sdk";
 import { mkdirSync, existsSync, readFileSync, writeFileSync } from "fs";
 import { join } from "path";
-import { getMeals, deleteFood, saveChatImage, getChatImages } from "./db.js";
+import {
+  getMeals,
+  deleteFood,
+  saveChatImage,
+  getChatImages,
+  getSessionStoredMessages,
+  sessionExists,
+  getCurrentSessionId,
+  resetCurrentSession,
+  type StoredContentPart,
+} from "./db.js";
 import { runAgent, type PendingMealConfirmation } from "./agent.js";
 
 const DATA_DIR = process.env.DATABASE_PATH
@@ -11,7 +20,6 @@ const DATA_DIR = process.env.DATABASE_PATH
   : ".";
 const IMAGES_DIR = join(DATA_DIR, "images");
 
-// Ensure images directory exists
 mkdirSync(IMAGES_DIR, { recursive: true });
 
 const api = new Hono();
@@ -22,17 +30,10 @@ const api = new Hono();
  */
 const pendingConfirmations = new Map<string, PendingMealConfirmation>();
 
-/**
- * POST /api/chat
- *
- * Accepts a chat message (and optional image), streams back SSE events.
- * Events:
- *   - { event: "request_id", data: { requestId } }  Request ID for confirmation
- *   - { event: "text", data: { content } }           Assistant text chunk
- *   - { event: "confirm", data: { mealData } }       Meal needs confirmation
- *   - { event: "done", data: { sessionId } }         Conversation turn complete
- *   - { event: "error", data: { message } }          Error occurred
- */
+// ---------------------------------------------------------------------------
+// POST /api/chat
+// ---------------------------------------------------------------------------
+
 api.post("/api/chat", async (c) => {
   const body = await c.req.json<{
     message: string;
@@ -42,25 +43,23 @@ api.post("/api/chat", async (c) => {
 
   const requestId = crypto.randomUUID();
 
-  // Save uploaded image to filesystem if present
+  // Save uploaded image to disk before starting the agent so we can pass
+  // the filename (not the raw base64) into runAgent for lean DB storage.
   let savedImageFilename: string | undefined;
   if (body.image) {
     const ext = body.image.media_type.split("/")[1] || "jpg";
     savedImageFilename = `${crypto.randomUUID()}.${ext}`;
-    const imagePath = join(IMAGES_DIR, savedImageFilename);
     const buffer = Buffer.from(body.image.base64, "base64");
-    writeFileSync(imagePath, buffer);
+    writeFileSync(join(IMAGES_DIR, savedImageFilename), buffer);
   }
 
   return streamSSE(c, async (stream) => {
-    // Send the request ID so the frontend can use it for confirmation
     await stream.writeSSE({
       event: "request_id",
       data: JSON.stringify({ requestId }),
       id: requestId,
     });
 
-    // Track the resolved session ID to save image association
     let resolvedSessionId: string | undefined;
 
     await runAgent({
@@ -68,6 +67,7 @@ api.post("/api/chat", async (c) => {
       image: body.image
         ? { base64: body.image.base64, mediaType: body.image.media_type }
         : undefined,
+      savedImageFilename,
       sessionId: body.session_id,
       onEvent: async (event) => {
         await stream.writeSSE({
@@ -76,19 +76,13 @@ api.post("/api/chat", async (c) => {
           id: requestId,
         });
 
-        // Capture session ID and save image association
-        if (event.type === "done" && event.sessionId) {
+        if (event.type === "done") {
           resolvedSessionId = event.sessionId;
 
-          if (savedImageFilename) {
-            // Use the count of already-saved images as the index
-            // (0 for first image, 1 for second, etc.)
-            const existingImages = getChatImages(event.sessionId);
-            saveChatImage(
-              event.sessionId,
-              existingImages.length,
-              savedImageFilename,
-            );
+          // Record image → session association for chat restore.
+          if (savedImageFilename && resolvedSessionId) {
+            const existing = getChatImages(resolvedSessionId);
+            saveChatImage(resolvedSessionId, existing.length, savedImageFilename);
           }
         }
       },
@@ -97,35 +91,26 @@ api.post("/api/chat", async (c) => {
       },
     });
 
-    // Clean up in case confirmation was never resolved
     pendingConfirmations.delete(requestId);
   });
 });
 
-/**
- * POST /api/chat/confirm
- *
- * Confirm or reject a pending meal save.
- * Body: { request_id: string, confirm: boolean }
- */
+// ---------------------------------------------------------------------------
+// POST /api/chat/confirm
+// ---------------------------------------------------------------------------
+
 api.post("/api/chat/confirm", async (c) => {
-  const body = await c.req.json<{
-    request_id: string;
-    confirm: boolean;
-  }>();
+  const body = await c.req.json<{ request_id: string; confirm: boolean }>();
 
   const pending = pendingConfirmations.get(body.request_id);
   if (!pending) {
-    return c.json(
-      { error: "No pending confirmation found for this request" },
-      404,
-    );
+    return c.json({ error: "No pending confirmation found for this request" }, 404);
   }
 
   pendingConfirmations.delete(body.request_id);
 
   if (body.confirm) {
-    pending.resolve({ behavior: "allow", updatedInput: pending.toolInput });
+    pending.resolve({ behavior: "allow" });
   } else {
     pending.resolve({
       behavior: "deny",
@@ -136,15 +121,13 @@ api.post("/api/chat/confirm", async (c) => {
   return c.json({ success: true });
 });
 
-/**
- * GET /api/images/:filename
- *
- * Serve uploaded chat images from the filesystem.
- */
+// ---------------------------------------------------------------------------
+// GET /api/images/:filename
+// ---------------------------------------------------------------------------
+
 api.get("/api/images/:filename", (c) => {
   const filename = c.req.param("filename");
 
-  // Prevent directory traversal
   if (filename.includes("/") || filename.includes("..")) {
     return c.json({ error: "Invalid filename" }, 400);
   }
@@ -173,81 +156,90 @@ api.get("/api/images/:filename", (c) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// GET /api/session/:id/messages
+// ---------------------------------------------------------------------------
+
 /**
- * GET /api/session/:id/messages
- *
- * Retrieve historical messages from a session via the Claude Agent SDK.
- * Returns user and assistant messages for restoring chat on page reload.
- * User messages include image URLs if photos were uploaded.
+ * Restore chat history for display in the frontend.
+ * We read from our own session_message table and strip out tool-only turns,
+ * attaching image URLs from the chat_image table where applicable.
  */
-api.get("/api/session/:id/messages", async (c) => {
+api.get("/api/session/:id/messages", (c) => {
   const sessionId = c.req.param("id");
 
   try {
-    const messages = await getSessionMessages(sessionId);
+    if (!sessionExists(sessionId)) {
+      return c.json({ messages: [] });
+    }
 
-    // Get image associations for this session (ordered by index)
+    const stored = getSessionStoredMessages(sessionId);
     const images = getChatImages(sessionId);
-    // Queue of images to assign to visible user messages in order
+    // Queue images in order; each user message with a file_ref consumes one.
     const imageQueue = images.map((img) => img.filename);
-    let nextImageIdx = 0;
+    let imageIdx = 0;
 
-    const chatMessages = messages
-      .map((msg) => {
-        const sdkMessage = msg.message as {
-          role: string;
-          content: string | Array<{ type: string; text?: string }>;
-        };
+    const chatMessages: Array<{
+      role: "user" | "assistant";
+      content: string;
+      image?: string;
+    }> = [];
 
-        // Extract text from content (can be string or array of content blocks)
-        let text = "";
-        if (typeof sdkMessage.content === "string") {
-          text = sdkMessage.content;
-        } else if (Array.isArray(sdkMessage.content)) {
-          text = sdkMessage.content
-            .filter((block) => block.type === "text" && block.text)
-            .map((block) => block.text!)
-            .join("\n");
+    for (const msg of stored) {
+      // Skip tool-result messages — not displayable as chat bubbles.
+      if (msg.role === "tool") continue;
+
+      // Extract plain text from the content.
+      let text = "";
+      if (typeof msg.content === "string") {
+        text = msg.content;
+      } else if (Array.isArray(msg.content)) {
+        text = (msg.content as StoredContentPart[])
+          .filter((p): p is { type: "text"; text: string } => p.type === "text")
+          .map((p) => p.text)
+          .join("\n");
+      }
+
+      if (!text?.trim() && msg.role === "assistant") continue;
+
+      // Attach image URL for user messages that included a photo.
+      let imageUrl: string | undefined;
+      if (msg.role === "user") {
+        const hasFileRef =
+          Array.isArray(msg.content) &&
+          (msg.content as StoredContentPart[]).some((p) => p.type === "file_ref");
+        if (hasFileRef && imageIdx < imageQueue.length) {
+          imageUrl = toAbsoluteImageUrl(`/api/images/${imageQueue[imageIdx++]}`);
         }
+      }
 
-        // Skip empty messages (e.g. tool-only turns)
-        if (!text.trim()) return null;
-
-        // For visible user messages, check if there's an image
-        // (images sent by the user are matched in chronological order)
-        let image: string | undefined;
-        if (msg.type === "user") {
-          // Check if the SDK message had image content blocks
-          const hasImageContent =
-            Array.isArray(sdkMessage.content) &&
-            sdkMessage.content.some((block) => block.type === "image");
-          if (hasImageContent && nextImageIdx < imageQueue.length) {
-            image = `/api/images/${imageQueue[nextImageIdx]}`;
-            nextImageIdx++;
-          }
-        }
-
-        return {
-          role: msg.type as "user" | "assistant",
-          content: text,
-          image,
-        };
-      })
-      .filter(Boolean);
+      chatMessages.push({
+        role: msg.role as "user" | "assistant",
+        content: text,
+        ...(imageUrl ? { image: imageUrl } : {}),
+      });
+    }
 
     return c.json({ messages: chatMessages });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
-    return c.json({ messages: [], error: errorMessage }, 200);
+    const msg = error instanceof Error ? error.message : String(error);
+    return c.json({ messages: [], error: msg }, 200);
   }
 });
 
-/**
- * GET /api/meals?from=YYYY-MM-DD&to=YYYY-MM-DD
- *
- * Get meals for a date range. Direct SQLite query, no agent needed.
- */
+// ---------------------------------------------------------------------------
+// GET /api/meals
+// ---------------------------------------------------------------------------
+
+api.get("/api/session/current", (c) => {
+  return c.json({ sessionId: getCurrentSessionId() });
+});
+
+api.post("/api/session/reset", (c) => {
+  const sessionId = resetCurrentSession();
+  return c.json({ sessionId });
+});
+
 api.get("/api/meals", (c) => {
   const from = c.req.query("from");
   const to = c.req.query("to");
@@ -256,15 +248,13 @@ api.get("/api/meals", (c) => {
     return c.json({ error: "Missing 'from' and 'to' query parameters" }, 400);
   }
 
-  const meals = getMeals(from, to);
-  return c.json({ meals });
+  return c.json({ meals: getMeals(from, to) });
 });
 
-/**
- * DELETE /api/foods/:id
- *
- * Delete a food item. Direct SQLite operation, no agent needed.
- */
+// ---------------------------------------------------------------------------
+// DELETE /api/foods/:id
+// ---------------------------------------------------------------------------
+
 api.delete("/api/foods/:id", (c) => {
   const foodId = parseInt(c.req.param("id"), 10);
 
@@ -280,5 +270,16 @@ api.delete("/api/foods/:id", (c) => {
 
   return c.json({ success: true, message: "Alimento cancellato con successo" });
 });
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function toAbsoluteImageUrl(path: string): string {
+  const apiBase = process.env.VITE_API_URL || "";
+  const origin = apiBase.replace(/\/api$/, "");
+  if (!origin) return path;
+  return origin + path;
+}
 
 export { api };

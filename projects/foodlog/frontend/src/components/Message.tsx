@@ -1,4 +1,5 @@
 import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "../services/api";
 import { User, Bot } from "lucide-react";
 
@@ -51,9 +52,13 @@ export function Message({ message }: MessageProps) {
                 [&>p:first-child]:mt-0 [&>p:last-child]:mb-0
                 [&_strong]:text-ctp-text [&_em]:text-ctp-subtext1
                 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4
-                [&_code]:bg-ctp-mantle [&_code]:px-1 [&_code]:rounded [&_code]:text-xs"
+                [&_code]:bg-ctp-mantle [&_code]:px-1 [&_code]:rounded [&_code]:text-xs
+                [&_table]:border-collapse [&_table]:w-full [&_table]:my-2
+                [&_th]:bg-ctp-surface1 [&_th]:px-3 [&_th]:py-1.5 [&_th]:text-left [&_th]:font-semibold [&_th]:text-ctp-text [&_th]:border [&_th]:border-ctp-surface2
+                [&_td]:px-3 [&_td]:py-1.5 [&_td]:border [&_td]:border-ctp-surface2 [&_td]:text-ctp-subtext1
+                [&_tr:nth-child(even)]:bg-ctp-mantle"
             >
-              <Markdown>{message.content}</Markdown>
+              <Markdown remarkPlugins={[remarkGfm]}>{message.content}</Markdown>
             </div>
           ))}
       </div>

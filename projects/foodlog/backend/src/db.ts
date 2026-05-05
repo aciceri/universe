@@ -48,8 +48,36 @@ export function getDb(): Database {
         ON chat_image(session_id);
     `);
 
+    // Store conversation history for OpenRouter sessions
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS session_message (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        session_id TEXT NOT NULL,
+        content_json TEXT NOT NULL,
+        timestamp TEXT NOT NULL DEFAULT (datetime('now'))
+      );
+      CREATE INDEX IF NOT EXISTS idx_session_message_session
+        ON session_message(session_id);
+    `);
+
     // Drop the unused 'message' table if it exists from the old backend
     db.exec("DROP TABLE IF EXISTS message;");
+
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS settings (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `);
+    // Auto-generate the canonical session ID on first run.
+    const hasSession = db
+      .prepare("SELECT 1 FROM settings WHERE key = 'current_session_id'")
+      .get();
+    if (!hasSession) {
+      db.prepare("INSERT INTO settings (key, value) VALUES ('current_session_id', ?)").run(
+        crypto.randomUUID()
+      );
+    }
   }
   return db;
 }
@@ -317,4 +345,73 @@ export function deleteFood(foodId: number): boolean {
   });
 
   return transaction();
+}
+
+
+// ---------------------------------------------------------------------------
+// Session message storage (used by the OpenRouter agent loop)
+// Messages are stored as opaque JSON matching the OpenAI message format.
+// Images are stored as { type: "file_ref", filename } inside content arrays
+// so we avoid persisting large base64 blobs in the DB.
+// ---------------------------------------------------------------------------
+
+export type StoredContentPart =
+  | { type: "text"; text: string }
+  | { type: "image_url"; image_url: { url: string } }
+  | { type: "file_ref"; filename: string };
+
+/** Opaque message shape compatible with OpenAI ChatCompletionMessageParam. */
+export interface StoredMessage {
+  role: "user" | "assistant" | "tool";
+  /** Serialised content — may be a string or StoredContentPart[]. */
+  content: string | StoredContentPart[] | null;
+  /** Present on assistant messages that issued tool calls. */
+  tool_calls?: Array<{
+    id: string;
+    type: "function";
+    function: { name: string; arguments: string };
+  }>;
+  /** Present on tool-result messages. */
+  tool_call_id?: string;
+}
+
+export function appendSessionMessage(sessionId: string, message: StoredMessage): void {
+  getDb()
+    .prepare(
+      "INSERT INTO session_message (session_id, content_json) VALUES (?, ?)"
+    )
+    .run(sessionId, JSON.stringify(message));
+}
+
+export function getSessionStoredMessages(sessionId: string): StoredMessage[] {
+  const rows = getDb()
+    .prepare(
+      "SELECT content_json FROM session_message WHERE session_id = ? ORDER BY id"
+    )
+    .all(sessionId) as Array<{ content_json: string }>;
+  return rows.map((r) => JSON.parse(r.content_json) as StoredMessage);
+}
+
+export function sessionExists(sessionId: string): boolean {
+  const row = getDb()
+    .prepare(
+      "SELECT 1 FROM session_message WHERE session_id = ? LIMIT 1"
+    )
+    .get(sessionId);
+  return row !== null;
+}
+
+export function getCurrentSessionId(): string {
+  const row = getDb()
+    .prepare("SELECT value FROM settings WHERE key = 'current_session_id'")
+    .get() as { value: string };
+  return row.value;
+}
+
+export function resetCurrentSession(): string {
+  const newId = crypto.randomUUID();
+  getDb()
+    .prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('current_session_id', ?)")
+    .run(newId);
+  return newId;
 }

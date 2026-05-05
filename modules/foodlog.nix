@@ -12,10 +12,7 @@
       services.foodlog = {
         backend = {
           enable = true;
-          model = "opus";
           corsOrigins = [ "https://${cfg.frontend.virtualHost}" ];
-          # Authentication: run `sudo -u foodlog HOME=/var/lib/foodlog claude login`
-          # to store Claude credentials in /var/lib/foodlog/.claude/
         };
         frontend.virtualHost = "food.sisko.wg.aciceri.dev";
       };

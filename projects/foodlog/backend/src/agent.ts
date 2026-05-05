@@ -1,232 +1,292 @@
-import { query } from "@anthropic-ai/claude-agent-sdk";
-import { createFoodlogMcpServer, SAVE_MEAL_TOOL_NAME } from "./tools.js";
+import OpenAI from "openai";
 import { readFileSync } from "fs";
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import { TOOL_DEFINITIONS, executeTool } from "./tools.js";
+import {
+  appendSessionMessage,
+  getSessionStoredMessages,
+  saveMealWithFoods,
+  type StoredMessage,
+  type StoredContentPart,
+} from "./db.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const SYSTEM_PROMPT_TEMPLATE = readFileSync(
-  join(__dirname, "prompt.txt"),
-  "utf-8",
-);
+const SYSTEM_PROMPT_TEMPLATE = readFileSync(join(__dirname, "prompt.txt"), "utf-8");
 
-const MODEL = process.env.CLAUDE_MODEL || "opus";
+const MODEL = process.env.OPENROUTER_MODEL || "deepseek/deepseek-v4-flash";
+// Keep the last N stored messages when resuming, to bound context size.
+const MAX_HISTORY = 50;
+const SAVE_MEAL_TOOL = "save_meal";
 
-/**
- * Represents the data of a save_meal tool call that needs user confirmation.
- */
+// Resolve the images directory from DATABASE_PATH (same parent dir as the DB).
+const DATA_DIR = process.env.DATABASE_PATH
+  ? join(process.env.DATABASE_PATH, "..")
+  : ".";
+const IMAGES_DIR = join(DATA_DIR, "images");
+
+// ---------------------------------------------------------------------------
+// Public types
+// ---------------------------------------------------------------------------
+
 export interface PendingMealConfirmation {
   toolInput: Record<string, unknown>;
-  resolve: (result: {
-    behavior: "allow" | "deny";
-    updatedInput?: Record<string, unknown>;
-    message?: string;
-  }) => void;
+  resolve: (result: { behavior: "allow" | "deny"; message?: string }) => void;
 }
 
-/**
- * Represents an SSE event sent to the frontend.
- */
 export type SSEEvent =
   | { type: "text"; content: string }
   | { type: "confirm"; mealData: Record<string, unknown> }
   | { type: "done"; sessionId: string }
   | { type: "error"; message: string };
 
+// ---------------------------------------------------------------------------
+// Message helpers
+// ---------------------------------------------------------------------------
+
 /**
- * Run the Claude agent for a chat message.
- *
- * Uses streaming input mode for full MCP + canUseTool support.
- * The onEvent callback is called for each SSE event to send to the frontend.
- * The onConfirmationNeeded callback fires when the agent blocks waiting for
- * user confirmation on a save_meal — this lets the caller store the pending
- * confirmation immediately (before runAgent returns).
+ * Expand file_ref parts to base64 image_url so the API receives real data.
+ * Parts that are already text or image_url pass through unchanged.
  */
+function expandContent(
+  content: StoredMessage["content"]
+): OpenAI.ChatCompletionContentPart[] | string | null {
+  if (typeof content === "string" || content === null) return content;
+
+  return content.map((part): OpenAI.ChatCompletionContentPart => {
+    if (part.type === "file_ref") {
+      try {
+        const filePath = join(IMAGES_DIR, part.filename);
+        const buffer = readFileSync(filePath);
+        const ext = part.filename.split(".").pop() ?? "jpg";
+        const mime =
+          ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+        return {
+          type: "image_url",
+          image_url: { url: `data:${mime};base64,${buffer.toString("base64")}` },
+        };
+      } catch {
+        // Image file missing — replace with a text notice so the model context stays valid.
+        return { type: "text", text: "[immagine non disponibile]" };
+      }
+    }
+    // Cast is safe: StoredContentPart text/image_url are strict subsets of the OpenAI type.
+    return part as OpenAI.ChatCompletionContentPart;
+  });
+}
+
+/**
+ * Convert stored messages to the OpenAI API format, expanding file_refs.
+ */
+function toApiMessages(
+  stored: StoredMessage[]
+): OpenAI.ChatCompletionMessageParam[] {
+  return stored.map((m) => {
+    const content = expandContent(m.content);
+    if (m.role === "tool") {
+      return {
+        role: "tool",
+        content: typeof content === "string" ? content : JSON.stringify(content),
+        tool_call_id: m.tool_call_id!,
+      };
+    }
+    if (m.role === "assistant") {
+      return {
+        role: "assistant",
+        content: typeof content === "string" ? content : null,
+        ...(m.tool_calls ? { tool_calls: m.tool_calls } : {}),
+      } as OpenAI.ChatCompletionAssistantMessageParam;
+    }
+    return {
+      role: "user",
+      content: content ?? "",
+    } as OpenAI.ChatCompletionUserMessageParam;
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Main agent entry point
+// ---------------------------------------------------------------------------
+
 export async function runAgent(options: {
   message: string;
+  /** Base64 image uploaded in this turn (not yet saved to disk). */
   image?: { base64: string; mediaType: string };
+  /** Filename already saved to disk (supplied by routes.ts after writing). */
+  savedImageFilename?: string;
   sessionId?: string;
-  onEvent: (event: SSEEvent) => void;
+  onEvent: (event: SSEEvent) => Promise<void>;
   onConfirmationNeeded: (confirmation: PendingMealConfirmation) => void;
 }): Promise<void> {
-  const { message, image, sessionId, onEvent, onConfirmationNeeded } = options;
+  const { message, image, savedImageFilename, sessionId, onEvent, onConfirmationNeeded } =
+    options;
+
+  const client = new OpenAI({
+    baseURL: "https://openrouter.ai/api/v1",
+    apiKey: process.env.OPENROUTER_API_KEY ?? "",
+    defaultHeaders: {
+      "HTTP-Referer": "https://github.com/aciceri/foodlog",
+      "X-Title": "FoodLog",
+    },
+  });
 
   const currentTime = new Date().toLocaleString("it-IT", {
     timeZone: "Europe/Rome",
     dateStyle: "full",
     timeStyle: "medium",
   });
+  const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace("{CURRENT_TIME}", currentTime);
 
-  const systemPrompt = SYSTEM_PROMPT_TEMPLATE.replace(
-    "{CURRENT_TIME}",
-    currentTime,
-  );
+  const activeSessionId = sessionId ?? crypto.randomUUID();
 
-  // Build message content (text + optional image)
-  const contentParts: Array<
-    | { type: "text"; text: string }
-    | {
-        type: "image";
-        source: { type: "base64"; media_type: string; data: string };
-      }
-  > = [];
+  // Load history (capped to avoid unbounded context growth).
+  const storedHistory = getSessionStoredMessages(activeSessionId).slice(-MAX_HISTORY);
 
-  if (image) {
-    contentParts.push({
-      type: "image",
-      source: {
-        type: "base64",
-        media_type: image.mediaType,
-        data: image.base64,
-      },
+  // Build the new user message for storage — replace base64 with a file_ref.
+  const userContent: StoredContentPart[] = [];
+  if (image && savedImageFilename) {
+    userContent.push({ type: "file_ref", filename: savedImageFilename });
+  } else if (image) {
+    // Fallback: no filename yet — embed inline (shouldn't happen in normal flow).
+    userContent.push({
+      type: "image_url",
+      image_url: { url: `data:${image.mediaType};base64,${image.base64}` },
     });
   }
+  userContent.push({ type: "text", text: message || "Analizza questa immagine" });
 
-  contentParts.push({
-    type: "text",
-    text: message || "Analizza questa immagine",
-  });
-
-  // Generate messages for streaming input mode
-  // SDKUserMessage requires parent_tool_use_id and session_id
-  async function* generateMessages() {
-    yield {
-      type: "user" as const,
-      message: {
-        role: "user" as const,
-        content: contentParts,
-      },
-      parent_tool_use_id: null,
-      session_id: sessionId || "",
-    };
-  }
-
-  const queryOptions: Parameters<typeof query>[0]["options"] = {
-    systemPrompt: systemPrompt,
-    model: MODEL,
-    mcpServers: {
-      foodlog: createFoodlogMcpServer(),
-    },
-    allowedTools: [
-      // Auto-approve read-only tools
-      "mcp__foodlog__get_meals",
-      "mcp__foodlog__get_daily_summary",
-      "mcp__foodlog__delete_food",
-    ],
-    // save_meal is NOT in allowedTools — it will trigger canUseTool
-    maxTurns: 10,
-    // Enable partial/streaming messages for real-time text streaming
-    includePartialMessages: true,
-    canUseTool: async (_toolName, _input, _options) => {
-      if (_toolName === SAVE_MEAL_TOOL_NAME) {
-        // Send confirmation request to frontend via SSE
-        onEvent({ type: "confirm", mealData: _input });
-
-        // Block the agent and expose the resolve function to the caller
-        return new Promise((resolve) => {
-          const confirmation: PendingMealConfirmation = {
-            toolInput: _input,
-            resolve: (result) => {
-              if (result.behavior === "allow") {
-                resolve({
-                  behavior: "allow",
-                  updatedInput: result.updatedInput || _input,
-                });
-              } else {
-                resolve({
-                  behavior: "deny",
-                  message:
-                    result.message ||
-                    "L'utente ha rifiutato il salvataggio del pasto.",
-                });
-              }
-            },
-          };
-          // Notify caller immediately so they can store it for the confirm endpoint
-          onConfirmationNeeded(confirmation);
-        });
-      }
-
-      // Auto-approve everything else
-      return { behavior: "allow" as const, updatedInput: _input };
-    },
-    // Required workaround for canUseTool in streaming mode:
-    // a dummy PreToolUse hook that returns continue_ to keep the stream open
-    hooks: {
-      PreToolUse: [
-        {
-          matcher: undefined,
-          hooks: [
-            async (
-              _input: unknown,
-              _toolUseID: string | undefined,
-              _opts: { signal: AbortSignal },
-            ) => {
-              return { continue: true };
-            },
-          ],
-        },
-      ],
-    },
+  const userMsg: StoredMessage = {
+    role: "user",
+    content: userContent.length === 1 ? userContent[0].text as string : userContent,
   };
-
-  // Resume an existing session if provided
-  if (sessionId) {
-    (queryOptions as Record<string, unknown>).resume = sessionId;
-  }
-
-  let resolvedSessionId: string | undefined;
+  appendSessionMessage(activeSessionId, userMsg);
+  storedHistory.push(userMsg);
 
   try {
-    const stream = query({
-      prompt: generateMessages(),
-      options: queryOptions,
-    });
+    // Tool loop: keep iterating as long as the model returns tool calls.
+    while (true) {
+      const apiMessages: OpenAI.ChatCompletionMessageParam[] = [
+        { role: "system", content: systemPrompt },
+        ...toApiMessages(storedHistory),
+      ];
 
-    for await (const msg of stream) {
-      // Capture session ID from init message
-      if (
-        msg.type === "system" &&
-        "subtype" in msg &&
-        msg.subtype === "init"
-      ) {
-        resolvedSessionId = (msg as { session_id: string }).session_id;
-      }
+      const stream = await client.chat.completions.create({
+        model: MODEL,
+        messages: apiMessages,
+        tools: TOOL_DEFINITIONS,
+        tool_choice: "auto",
+        stream: true,
+      });
 
-      // Handle partial/streaming text for real-time display
-      if (msg.type === "stream_event") {
-        const event = (msg as { event: Record<string, unknown> }).event;
-        // content_block_delta with text_delta contains streaming text chunks
-        if (event.type === "content_block_delta") {
-          const delta = event.delta as Record<string, unknown> | undefined;
-          if (
-            delta?.type === "text_delta" &&
-            typeof delta.text === "string"
-          ) {
-            onEvent({ type: "text", content: delta.text });
+      let assistantText = "";
+      // Accumulate streamed tool-call fragments keyed by index.
+      const tcAcc: Record<
+        number,
+        { id: string; type: "function"; function: { name: string; arguments: string } }
+      > = {};
+
+      for await (const chunk of stream) {
+        const delta = chunk.choices[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.content) {
+          assistantText += delta.content;
+          await onEvent({ type: "text", content: delta.content });
+        }
+
+        if (delta.tool_calls) {
+          for (const tc of delta.tool_calls) {
+            if (!tcAcc[tc.index]) {
+              tcAcc[tc.index] = {
+                id: tc.id ?? "",
+                type: "function",
+                function: { name: tc.function?.name ?? "", arguments: "" },
+              };
+            }
+            if (tc.id) tcAcc[tc.index].id = tc.id;
+            if (tc.function?.name) tcAcc[tc.index].function.name = tc.function.name;
+            if (tc.function?.arguments) {
+              tcAcc[tc.index].function.arguments += tc.function.arguments;
+            }
           }
         }
       }
 
-      // Handle result — agent turn is complete
-      if (msg.type === "result") {
-        const resultMsg = msg as { subtype: string; session_id: string };
-        if (resultMsg.subtype === "success") {
-          onEvent({
-            type: "done",
-            sessionId: resolvedSessionId || resultMsg.session_id,
-          });
+      const toolCalls = Object.values(tcAcc);
+
+      // Persist assistant turn.
+      const assistantMsg: StoredMessage = {
+        role: "assistant",
+        content: assistantText || null,
+        ...(toolCalls.length > 0 ? { tool_calls: toolCalls } : {}),
+      };
+      appendSessionMessage(activeSessionId, assistantMsg);
+      storedHistory.push(assistantMsg);
+
+      // No tool calls → model gave a final answer, we're done.
+      if (toolCalls.length === 0) break;
+
+      // Execute each tool call and collect results.
+      for (const tc of toolCalls) {
+        let result: unknown;
+
+        if (tc.function.name === SAVE_MEAL_TOOL) {
+          const toolInput = JSON.parse(tc.function.arguments) as Record<string, unknown>;
+
+          // Tell the frontend to show the confirmation card.
+          await onEvent({ type: "confirm", mealData: toolInput });
+
+          // Block the loop until the user confirms or rejects.
+          const decision = await new Promise<{ behavior: "allow" | "deny"; message?: string }>(
+            (resolve) => onConfirmationNeeded({ toolInput, resolve })
+          );
+
+          if (decision.behavior === "allow") {
+            type FoodArg = Record<string, unknown>;
+            const foods = ((toolInput.foods as FoodArg[]) ?? []).map((f) => ({
+              name: f.name as string,
+              calories: f.calories as number | undefined,
+              protein: f.protein as number | undefined,
+              carbs: f.carbs as number | undefined,
+              fats: f.fats as number | undefined,
+              fiber: f.fiber as number | undefined,
+              sugars: f.sugars as number | undefined,
+              notes: f.notes as string | undefined,
+            }));
+            const saved = saveMealWithFoods(
+              toolInput.meal_type as string,
+              foods,
+              toolInput.date as string | undefined
+            );
+            result = { success: true, mealId: saved.mealId, foodIds: saved.foodIds };
+          } else {
+            result = {
+              success: false,
+              message: decision.message ?? "L'utente ha rifiutato il salvataggio del pasto.",
+            };
+          }
         } else {
-          onEvent({
-            type: "error",
-            message: `Agent error: ${resultMsg.subtype}`,
-          });
+          try {
+            const args = JSON.parse(tc.function.arguments) as Record<string, unknown>;
+            result = await executeTool(tc.function.name, args);
+          } catch (err) {
+            result = { error: String(err) };
+          }
         }
+
+        const toolMsg: StoredMessage = {
+          role: "tool",
+          content: JSON.stringify(result),
+          tool_call_id: tc.id,
+        };
+        appendSessionMessage(activeSessionId, toolMsg);
+        storedHistory.push(toolMsg);
       }
     }
+
+    await onEvent({ type: "done", sessionId: activeSessionId });
   } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : String(error);
-    onEvent({ type: "error", message: errorMessage });
+    const msg = error instanceof Error ? error.message : String(error);
+    await onEvent({ type: "error", message: msg });
   }
 }

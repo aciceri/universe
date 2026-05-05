@@ -64,7 +64,7 @@ in
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
             fetcherVersion = 2;
-            hash = "sha256-gL4PZrLwMgArh97C8Op8Qh8WwF+iuYruCIRWja2tjw4=";
+            hash = "sha256-BKa/bvHQ26BZvii4n8NeWYtLE9XnBU7C+euIIuskCw0=";
           };
 
           # No build step needed — Bun runs TypeScript directly
@@ -101,7 +101,7 @@ in
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
             fetcherVersion = 2;
-            hash = "sha256-T+h8RXbcri2JDpAEp07XuPpohg7byHqWvY4LM/zQNqE=";
+            hash = "sha256-qfnRuWzNxnjCDSA13d6JgB3R4TfoeETdbRTgGDbHwY4=";
           };
 
           buildPhase = ''
@@ -155,8 +155,7 @@ in
 
           model = lib.mkOption {
             type = lib.types.str;
-            default = "opus";
-            description = "Claude model to use (opus, sonnet, haiku)";
+            default = "deepseek/deepseek-v4-flash";
           };
 
           corsOrigins = lib.mkOption {
@@ -180,7 +179,7 @@ in
           group = "foodlog";
           home = cfg.backend.dataDir;
           createHome = true;
-          packages = [ pkgs.claude-code ];
+          packages = [ ];
         };
 
         users.groups.foodlog = { };
@@ -189,28 +188,18 @@ in
           "d ${cfg.backend.dataDir} 0750 foodlog foodlog -"
         ];
 
-        # To authenticate the Claude Agent SDK on the server, run:
-        #   sudo -u foodlog HOME=/var/lib/foodlog /etc/profiles/per-user/foodlog/bin/claude login
-        # This stores credentials in /var/lib/foodlog/.claude/
-        # The systemd service sets HOME to dataDir so the SDK finds them.
+        secrets.foodlog_environment_file.group = "foodlog";
 
         systemd.services.foodlog-backend = {
           description = "Foodlog backend API";
           wantedBy = [ "multi-user.target" ];
           after = [ "network.target" ];
 
-          # claude-code in PATH is needed by the Claude Agent SDK at runtime
-          # (it spawns `claude` as a subprocess).
-          # bun is needed because the SDK detects the Bun runtime and spawns
-          # child processes using `bun` from PATH.
-          path = [
-            pkgs.claude-code
-            pkgs.bun
-          ];
+          path = [ pkgs.bun ];
 
           environment = {
             PORT = toString cfg.backend.port;
-            CLAUDE_MODEL = cfg.backend.model;
+            OPENROUTER_MODEL = cfg.backend.model;
             DATABASE_PATH = "${cfg.backend.dataDir}/foodlog.db";
             CORS_ORIGINS = lib.concatStringsSep "," cfg.backend.corsOrigins;
             HOME = cfg.backend.dataDir;
@@ -223,6 +212,7 @@ in
             StateDirectory = "foodlog";
             StateDirectoryMode = "0750";
             WorkingDirectory = cfg.backend.dataDir;
+            EnvironmentFile = config.age.secrets.foodlog_environment_file.path;
           };
         };
 
@@ -254,6 +244,6 @@ in
   readme.parts.projects = ''
     ### Foodlog
 
-    AI-powered progressive web app for tracking food intake, powered by Claude Agent SDK with MCP tools.
+    AI-powered progressive web app for tracking food intake.
   '';
 }

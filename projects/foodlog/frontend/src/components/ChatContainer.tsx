@@ -4,6 +4,8 @@ import {
   sendChatMessage,
   confirmMeal,
   getSessionMessages,
+  getCurrentSession,
+  resetSession,
 } from "../services/api";
 import { MessageList } from "./MessageList";
 import { ChatInput } from "./ChatInput";
@@ -17,16 +19,6 @@ interface ChatContainerProps {
   onMealConfirmed?: () => void;
 }
 
-const SESSION_KEY = "foodlog_session_id";
-
-function getStoredSessionId(): string | undefined {
-  return localStorage.getItem(SESSION_KEY) || undefined;
-}
-
-function storeSessionId(sessionId: string): void {
-  localStorage.setItem(SESSION_KEY, sessionId);
-}
-
 export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,36 +27,27 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
   const [confirmedMeal, setConfirmedMeal] = useState<MealSummary | null>(null);
   const [rejectedMeals, setRejectedMeals] = useState<RejectedMeal[]>([]);
 
-  // Track the current request ID for confirming meals
   const currentRequestId = useRef<string | null>(null);
-  const sessionId = useRef<string | undefined>(getStoredSessionId());
+  // Session ID is always fetched from the server — shared across devices.
+  const sessionId = useRef<string | undefined>(undefined);
 
-  // Restore chat history from the SDK session on mount
+  // On mount: fetch canonical session ID from server, then restore history.
   useEffect(() => {
-    const storedId = sessionId.current;
-    if (!storedId) return;
-
     let cancelled = false;
     setIsLoading(true);
 
-    getSessionMessages(storedId)
-      .then((restored) => {
+    getCurrentSession()
+      .then((id) => {
         if (cancelled) return;
-        if (restored.length > 0) {
-          setMessages(restored);
-        } else {
-          // Session no longer exists (e.g. DB was reset) — clear stale ID
-          localStorage.removeItem(SESSION_KEY);
-          sessionId.current = undefined;
-        }
+        sessionId.current = id;
+        return getSessionMessages(id);
+      })
+      .then((restored) => {
+        if (cancelled || !restored) return;
+        if (restored.length > 0) setMessages(restored);
       })
       .catch((err) => {
-        console.warn("Failed to restore session messages:", err);
-        if (!cancelled) {
-          // Clear stale session ID so we don't try to resume a dead session
-          localStorage.removeItem(SESSION_KEY);
-          sessionId.current = undefined;
-        }
+        console.warn("Failed to initialise session:", err);
       })
       .finally(() => {
         if (!cancelled) setIsLoading(false);
@@ -79,9 +62,7 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
     async (content: string, image?: { base64: string; mediaType: string }) => {
       const now = new Date();
 
-      // If there's a pending confirmation that wasn't accepted, reject it
       if (pendingConfirmation) {
-        // Also reject via API so the agent knows
         if (currentRequestId.current) {
           confirmMeal(currentRequestId.current, false).catch(console.error);
         }
@@ -106,7 +87,6 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
       setConfirmedMeal(null);
       currentRequestId.current = null;
 
-      // Accumulate text chunks into a single assistant message
       let assistantText = "";
 
       try {
@@ -122,7 +102,6 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
 
               case "text":
                 assistantText += event.content;
-                // Update the assistant message in-place for streaming effect
                 setMessages((prev) => {
                   const lastMsg = prev[prev.length - 1];
                   if (lastMsg?.role === "assistant") {
@@ -144,18 +123,12 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
 
               case "confirm":
                 setPendingConfirmation(event.mealData);
-                // Stop loading so the confirm button is clickable
-                // and the "Sto pensando..." spinner disappears.
-                // The SSE stream is still open (waiting for confirmation),
-                // but from the user's perspective we're waiting for their input.
                 setIsLoading(false);
                 break;
 
               case "done":
-                if (event.sessionId) {
-                  sessionId.current = event.sessionId;
-                  storeSessionId(event.sessionId);
-                }
+                // Server echoes back the session ID — keep our ref in sync.
+                if (event.sessionId) sessionId.current = event.sessionId;
                 break;
 
               case "error":
@@ -190,17 +163,11 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
 
   const handleConfirm = useCallback(async () => {
     if (!pendingConfirmation || !currentRequestId.current) return;
-
     setIsLoading(true);
-
     try {
       await confirmMeal(currentRequestId.current, true);
-
-      // Move from pending to confirmed
       setConfirmedMeal(pendingConfirmation);
       setPendingConfirmation(null);
-
-      // Notify parent that a meal was saved (refreshes stats)
       onMealConfirmed?.();
     } catch (error) {
       console.error("Error confirming:", error);
@@ -217,9 +184,13 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
     }
   }, [pendingConfirmation, onMealConfirmed]);
 
-  const handleNewSession = useCallback(() => {
-    localStorage.removeItem(SESSION_KEY);
-    sessionId.current = undefined;
+  const handleNewSession = useCallback(async () => {
+    try {
+      const newId = await resetSession();
+      sessionId.current = newId;
+    } catch (err) {
+      console.error("Failed to reset session:", err);
+    }
     setMessages([]);
     setPendingConfirmation(null);
     setConfirmedMeal(null);
@@ -237,7 +208,6 @@ export function ChatContainer({ onMealConfirmed }: ChatContainerProps) {
         rejectedMeals={rejectedMeals}
         onConfirm={handleConfirm}
       />
-
       <ChatInput
         onSend={handleSendMessage}
         onNewSession={handleNewSession}

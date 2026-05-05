@@ -24,9 +24,13 @@ export function MessageList({
   onConfirm,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
+  const initialScrollDone = useRef(false);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (!bottomRef.current) return;
+    const behavior = initialScrollDone.current ? "smooth" : "instant";
+    bottomRef.current.scrollIntoView({ behavior });
+    initialScrollDone.current = true;
   }, [messages, isLoading, pendingConfirmation, confirmedMeal, rejectedMeals]);
 
   // Combina messaggi e pasti rifiutati, ordinati per timestamp
