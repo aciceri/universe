@@ -63,8 +63,8 @@ in
 
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
-            fetcherVersion = 2;
-            hash = "sha256-BKa/bvHQ26BZvii4n8NeWYtLE9XnBU7C+euIIuskCw0=";
+            fetcherVersion = 4;
+            hash = "sha256-KPgVNy9XfuNA/XNB9ez+fVMk6NIOUgVYtwShEoXWpvI=";
           };
 
           # No build step needed — Bun runs TypeScript directly
@@ -100,8 +100,8 @@ in
 
           pnpmDeps = pkgs.fetchPnpmDeps {
             inherit (finalAttrs) pname version src;
-            fetcherVersion = 2;
-            hash = "sha256-qfnRuWzNxnjCDSA13d6JgB3R4TfoeETdbRTgGDbHwY4=";
+            fetcherVersion = 4;
+            hash = "sha256-3rZK8zwxqEN6QLkFY2bP+uklUgmPy+8brfCHzYqitX0=";
           };
 
           buildPhase = ''

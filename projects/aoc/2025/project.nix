@@ -19,9 +19,10 @@ in
     {
       config,
       pkgs,
+      system,
       ...
     }:
-    {
+    lib.optionalAttrs (lib.hasSuffix "-linux" system) {
       make-shells.aoc-2025 = {
         inputsFrom = [
           config.make-shells.default.finalPackage

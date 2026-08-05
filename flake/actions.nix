@@ -73,7 +73,9 @@ in
   perSystem =
     { config, pkgs, ... }:
     {
-      checks = config.packages; # all the packages are also checks
+      # All packages are also checks, but only those buildable on this system
+      # (e.g. ds4 is aarch64-darwin-only and must not become an x86_64 CI job).
+      checks = lib.filterAttrs (_: lib.meta.availableOn pkgs.stdenv.hostPlatform) config.packages;
 
       files.files = [
         {

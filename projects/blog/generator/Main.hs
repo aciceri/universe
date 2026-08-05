@@ -7,6 +7,7 @@ import Data.Void
 import Fields
 import GHC.IO.Encoding
 import Hakyll
+import Hakyll.Core.Dependencies (DependencyKind (..))
 import Hakyll.Images
   ( compressJpgCompiler,
     ensureFitCompiler,
@@ -110,7 +111,7 @@ main = do
           >>= loadAndApplyTemplate "generator/templates/default.html" (postContext tags)
           >>= relativizeUrls
 
-      depends <- makePatternDependency "generator/css/**.scss"
+      depends <- makePatternDependency KindContent "generator/css/**.scss"
       rulesExtraDependencies [depends] $ do
         match (fromRegex "^generator/css/custom.scss") $ do
           route $ stripRoute "generator/" `composeRoutes` setExtension "css"

@@ -29,7 +29,9 @@
           # MANUAL_END_DATE = "2025-12-31";
         };
         serviceConfig = {
-          ExecStart = lib.getExe pkgs.garmin-grafana;
+          # FIXME upstream v0.5.0 hardcodes 0.3.0 in pyproject.toml, tripping
+          # nixpkgs' pythonMetadataCheckPhase; drop once fixed upstream
+          ExecStart = lib.getExe (pkgs.garmin-grafana.overrideAttrs { dontCheckPythonMetadata = true; });
           Group = "garmin-grafana";
           User = "garmin-grafana";
           WorkingDirectory = "/var/lib/garmin-grafana";

@@ -43,6 +43,7 @@ in
       order = [
         "intro"
         "nixos"
+        "darwin"
         "projects"
         "packages"
         "files"

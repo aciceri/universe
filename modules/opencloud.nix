@@ -8,6 +8,7 @@
     {
       environment.persistence."/persist".directories = [
         cfg.stateDir
+        "/etc/opencloud"
       ];
 
       services.opencloud = {
