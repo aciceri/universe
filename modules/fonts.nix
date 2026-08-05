@@ -1,5 +1,6 @@
-{
-  flake.modules.nixos.base =
+{ lib, ... }:
+let
+  fontsConfig =
     { pkgs, ... }:
     {
       stylix.fonts = {
@@ -28,6 +29,7 @@
           desktop = 13;
         };
       };
+
       fonts.packages =
         with pkgs;
         [
@@ -37,6 +39,9 @@
           vegur
         ]
         ++ (builtins.filter lib.attrsets.isDerivation (builtins.attrValues nerd-fonts));
-
     };
+in
+{
+  flake.modules.nixos.base = fontsConfig;
+  flake.modules.darwin.base = fontsConfig;
 }

@@ -1,10 +1,9 @@
-{ config, lib, ... }:
-{
-  flake.modules.homeManager.git-fetch =
-    { config, pkgs, ... }:
+{ ... }:
+let
+  # Option declaration (cross-platform).
+  gitFetchOptions =
+    { lib, ... }:
     let
-      cfg = config.services.git-fetch;
-
       repositoryType = lib.types.submodule {
         options = {
           path = lib.mkOption {
@@ -18,11 +17,27 @@
           };
         };
       };
+    in
+    {
+      options.services.git-fetch.repositories = lib.mkOption {
+        type = lib.types.attrsOf repositoryType;
+        default = { };
+      };
+    };
+
+  # systemd-user implementation (Linux only).
+  gitFetchSystemd =
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      cfg = config.services.git-fetch;
 
       mkGitCloneService = name: repo: {
-        Unit = {
-          Description = "Git fetch for ${name}";
-        };
+        Unit.Description = "Git fetch for ${name}";
         Service = {
           Type = "oneshot";
           ExecStart =
@@ -48,42 +63,37 @@
       };
 
       mkGitCloneTimer = name: repo: {
-        Unit = {
-          Description = "Timer for git clone/fetch ${name}";
-        };
+        Unit.Description = "Timer for git clone/fetch ${name}";
         Timer = {
           OnUnitActiveSec = "${toString repo.interval}s";
           OnStartupSec = "10s";
           Persistent = true;
         };
-        Install = {
-          WantedBy = [ "timers.target" ];
-        };
+        Install.WantedBy = [ "timers.target" ];
       };
     in
-    {
-      options = {
-        services.git-fetch = {
-          repositories = lib.mkOption {
-            type = lib.types.attrsOf repositoryType;
-            default = { };
-          };
-        };
-      };
-
-      config = lib.mkIf (cfg.repositories != { }) {
-        systemd.user.services =
-          cfg.repositories
-          |> lib.mapAttrs (name: repo: mkGitCloneService name repo)
-          |> lib.mapAttrs' (name: service: lib.nameValuePair "git-fetch-${name}" service);
-        systemd.user.timers =
-          cfg.repositories
-          |> lib.mapAttrs (name: repo: mkGitCloneTimer name repo)
-          |> lib.mapAttrs' (name: timer: lib.nameValuePair "git-fetch-${name}" timer);
-      };
+    lib.mkIf (cfg.repositories != { }) {
+      systemd.user.services =
+        cfg.repositories
+        |> lib.mapAttrs (name: repo: mkGitCloneService name repo)
+        |> lib.mapAttrs' (name: service: lib.nameValuePair "git-fetch-${name}" service);
+      systemd.user.timers =
+        cfg.repositories
+        |> lib.mapAttrs (name: repo: mkGitCloneTimer name repo)
+        |> lib.mapAttrs' (name: timer: lib.nameValuePair "git-fetch-${name}" timer);
     };
-
+in
+{
+  # Inject HM modules at system level.
   flake.modules.nixos.base = {
-    home-manager.sharedModules = [ config.flake.modules.homeManager.git-fetch ];
+    home-manager.sharedModules = [
+      gitFetchOptions
+      gitFetchSystemd
+    ];
+  };
+
+  # No git-fetch implementation for darwin (launchd) yet, only the options.
+  flake.modules.darwin.base = {
+    home-manager.sharedModules = [ gitFetchOptions ];
   };
 }

@@ -1,6 +1,8 @@
-{ lib, ... }:
+{ config, lib, ... }:
 {
-  flake.modules.homeManager.pc =
+  flake.modules.homeManager.pc.imports = [ config.flake.modules.homeManager.alacritty ];
+
+  flake.modules.homeManager.alacritty =
     { config, pkgs, ... }:
     {
       programs.alacritty = {

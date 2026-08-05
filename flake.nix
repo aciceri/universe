@@ -12,7 +12,6 @@
       inputs = {
         nixpkgs.follows = "";
         flake-compat.follows = "";
-        gitignore.follows = "";
       };
     };
     make-shell = {
@@ -58,6 +57,27 @@
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    nix-darwin = {
+      url = "github:nix-darwin/nix-darwin";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    nix-homebrew.url = "github:zhaofengli/nix-homebrew";
+    homebrew-core = {
+      url = "github:homebrew/homebrew-core";
+      flake = false;
+    };
+    homebrew-cask = {
+      url = "github:homebrew/homebrew-cask";
+      flake = false;
+    };
+    homebrew-bundle = {
+      url = "github:homebrew/homebrew-bundle";
+      flake = false;
+    };
+    homebrew-barutsrb-tap = {
+      url = "github:BarutSRB/homebrew-tap";
+      flake = false;
+    };
     stylix = {
       url = "github:nix-community/stylix";
       inputs = {
@@ -102,29 +122,34 @@
         flake-utils.follows = "flake-utils_";
       };
     };
-    nixpkgs-influxdb.url = "github:aciceri/nixpkgs/fix-libflux";
-    arbi = {
-      url = "git+https://github.com/aciceri/arbi.git";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-        treefmt-nix.follows = "treefmt-nix";
-        git-hooks.follows = "git-hooks";
-        agenix-shell.follows = "agenix-shell";
-        flake-root.follows = "flake-root_";
-        nix-github-actions.follows = "";
-      };
-    };
     spicetify = {
       url = "github:Gerg-L/spicetify-nix";
       inputs.nixpkgs.follows = "nixpkgs";
+    };
+    # Pinned to the 0.10.0 rc line until nixpkgs ships ncps >= 0.10.0
+    # (0.9.x 500s on opaque NAR URLs, kalbasit/ncps#1331) — see modules/ncps.nix.
+    ncps = {
+      url = "github:kalbasit/ncps/v0.10.0-rc16";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        flake-parts.follows = "flake-parts";
+        treefmt-nix.follows = "treefmt-nix";
+        git-hooks-nix.follows = "git-hooks";
+      };
     };
     llm-agents = {
       url = "github:numtide/llm-agents.nix";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         systems.follows = "nix-systems_";
-        blueprint.follows = "blueprint_";
         flake-parts.follows = "flake-parts";
+      };
+    };
+    meridian = {
+      url = "github:rynfar/meridian";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        systems.follows = "nix-systems_";
       };
     };
   };
@@ -145,8 +170,24 @@
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    flake-compat_ = {
-      url = "github:edolstra/flake-compat";
+    homebrew-startergo-qemu-virgl = {
+      url = "github:startergo/homebrew-qemu-virgl-kosmickrisp";
+      flake = false;
+    };
+    homebrew-startergo-virglrenderer = {
+      url = "github:startergo/homebrew-virglrenderer";
+      flake = false;
+    };
+    homebrew-startergo-libepoxy = {
+      url = "github:startergo/homebrew-libepoxy";
+      flake = false;
+    };
+    homebrew-startergo-angle = {
+      url = "github:startergo/homebrew-angle";
+      flake = false;
+    };
+    homebrew-startergo-gn = {
+      url = "github:startergo/homebrew-gn";
       flake = false;
     };
     crane_.url = "github:ipetkov/crane";
@@ -155,10 +196,6 @@
       inputs.systems.follows = "nix-systems_";
     };
     nixpkgs-stable_.url = "github:NixOS/nixpkgs/nixos-25.05";
-    blueprint_ = {
-      url = "github:numtide/blueprint";
-      inputs.systems.follows = "nix-systems_";
-    };
   };
 
   nixConfig.allow-import-from-derivation = true;

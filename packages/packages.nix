@@ -44,27 +44,31 @@ in
         |> pkgs.writeShellScriptBin "update-packages";
     in
     {
-      packages = {
-        claude-desktop = inputs'.claude-desktop.packages.claude-desktop.override {
-          # FIXME remove once it's merged
-          # https://github.com/k3d3/claude-desktop-linux-flake/pull/89
-          nodePackages = {
-            inherit (pkgs) asar;
-          };
-        };
-        inherit update-packages;
-      }
-      // (
-        personalPackagePaths
-        |> lib.mapAttrs (
-          _: p:
-          (pkgs.callPackage p { }).overrideAttrs (old: {
-            passthru = (old.passthru or { }) // {
-              nur = true; # mark packages from this packages set
+      packages =
+        # claude-desktop's flake only supports x86_64-linux.
+        lib.optionalAttrs (inputs.claude-desktop.packages ? ${pkgs.stdenv.system}) {
+          claude-desktop = inputs'.claude-desktop.packages.claude-desktop.override {
+            # FIXME remove once it's merged
+            # https://github.com/k3d3/claude-desktop-linux-flake/pull/89
+            nodePackages = {
+              inherit (pkgs) asar;
             };
-          })
-        )
-      );
+          };
+        }
+        // {
+          inherit update-packages;
+        }
+        // (
+          personalPackagePaths
+          |> lib.mapAttrs (
+            _: p:
+            (pkgs.callPackage p { }).overrideAttrs (old: {
+              passthru = (old.passthru or { }) // {
+                nur = true; # mark packages from this packages set
+              };
+            })
+          )
+        );
 
       files.files = [
         {
@@ -82,11 +86,24 @@ in
       nixpkgs.overlays = [
         (_: _: (getSystem config.nixpkgs.hostPlatform.system).packages)
         inputs.nur.overlays.default
+        inputs.meridian.overlays.default
+      ];
+    };
+
+  flake.modules.darwin.base =
+    { config, ... }:
+    {
+      nixpkgs.overlays = [
+        (_: _: (getSystem config.nixpkgs.hostPlatform.system).packages)
       ];
     };
 
   readme.parts.packages =
-    (getSystem (lib.head config.systems)).packages
+    let
+      nurNames = builtins.readDir ./. |> lib.filterAttrs (_: type: type == "directory") |> lib.attrNames;
+      sysPkgs = (getSystem (lib.head config.systems)).packages;
+    in
+    lib.genAttrs (lib.filter (n: sysPkgs ? ${n}) nurNames) (n: sysPkgs.${n})
     |> lib.filterAttrs (_: pkg: pkg.passthru.nur or false)
     |> lib.mapAttrsToList (
       name: pkg: ''

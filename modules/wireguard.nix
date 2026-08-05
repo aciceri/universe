@@ -65,6 +65,10 @@
               ip = "10.100.0.8";
               publicKey = "16ctjunXCXDPLSUhocstJ9z9l45/YuJFxlLkpoxChjI=";
             };
+            archer = {
+              ip = "10.100.0.5";
+              publicKey = "u3wOVwQjmRLRCrNSJ4fmJveTTWOf+KK+jan2D6H85iI=";
+            };
           };
 
           networking.firewall.trustedInterfaces = [ cfg.interfaceName ];

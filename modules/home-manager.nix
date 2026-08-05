@@ -4,6 +4,35 @@
   inputs,
   ...
 }:
+let
+  hmUsers =
+    {
+      sysArgs,
+      hmStateVersion,
+      includeRoot ? false,
+    }:
+    config.users // (lib.optionalAttrs includeRoot { root = { }; })
+    |> lib.mapAttrs (
+      username: _:
+      (
+        { pkgs, ... }:
+        {
+          imports = [
+            {
+              _module.args = { inherit (sysArgs.config) age; };
+              home = {
+                stateVersion = hmStateVersion;
+                inherit username;
+              };
+              home.packages = [ pkgs.home-manager ];
+              programs.home-manager.enable = true;
+              systemd.user.startServices = "sd-switch";
+            }
+          ];
+        }
+      )
+    );
+in
 {
   flake.modules.nixos.base = nixosArgs: {
     imports = [
@@ -24,28 +53,27 @@
     home-manager = {
       useGlobalPkgs = true;
       extraSpecialArgs.hasGlobalPkgs = true;
-      users =
-        config.users // { root = { }; }
-        |> lib.mapAttrs (
-          username: _:
-          (
-            { pkgs, ... }:
-            {
-              imports = [
-                {
-                  _module.args = { inherit (nixosArgs.config) age; };
-                  home = {
-                    stateVersion = nixosArgs.config.system.stateVersion;
-                    inherit username;
-                  };
-                  home.packages = [ pkgs.home-manager ];
-                  programs.home-manager.enable = true;
-                  systemd.user.startServices = "sd-switch";
-                }
-              ];
-            }
-          )
-        );
+      users = hmUsers {
+        sysArgs = nixosArgs;
+        hmStateVersion = nixosArgs.config.system.stateVersion;
+        includeRoot = true;
+      };
+    };
+  };
+
+  flake.modules.darwin.base = darwinArgs: {
+    imports = [
+      inputs.home-manager.darwinModules.home-manager
+    ];
+
+    home-manager = {
+      useGlobalPkgs = true;
+      extraSpecialArgs.hasGlobalPkgs = true;
+      backupFileExtension = "hm-backup";
+      users = hmUsers {
+        sysArgs = darwinArgs;
+        hmStateVersion = "26.05";
+      };
     };
   };
 }

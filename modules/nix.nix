@@ -1,10 +1,8 @@
 { inputs, ... }:
-{
-  flake.modules.nixos.base =
-    { config, pkgs, ... }:
+let
+  commonNix =
+    { pkgs, ... }:
     {
-      secrets.nix_netrc = { };
-
       nix = {
         package = pkgs.nixVersions.latest;
 
@@ -16,7 +14,8 @@
             "root"
             "@wheel"
           ];
-          netrc-file = config.age.secrets.nix_netrc.path;
+          # Served by ncps on sisko (modules/ncps.nix, pinned to 0.10-rc which
+          # fixes the 0.9 "invalid nar hash" 500s on opaque NAR URLs).
           substituters = [
             "http://ncps.sisko.wg.aciceri.dev:8501"
           ];
@@ -35,6 +34,30 @@
           };
           n = nixpkgs;
         };
+      };
+    };
+in
+{
+  flake.modules.nixos.base =
+    { config, pkgs, ... }:
+    {
+      imports = [ (commonNix { inherit pkgs; }) ];
+
+      secrets.nix_netrc = { };
+
+      nix.settings.netrc-file = config.age.secrets.nix_netrc.path;
+    };
+
+  flake.modules.darwin.base =
+    { config, pkgs, ... }:
+    {
+      imports = [ (commonNix { inherit pkgs; }) ];
+
+      secrets.nix_netrc = { };
+
+      nix.settings = {
+        netrc-file = config.age.secrets.nix_netrc.path;
+        trusted-users = [ "@admin" ];
       };
     };
 

@@ -51,10 +51,10 @@
       programs.ssh = {
         enable = true;
         enableDefaultConfig = false;
-        matchBlocks."*" = {
-          setEnv.TERM = "xterm-256color";
-          hashKnownHosts = false;
-          identityFile =
+        settings."*" = {
+          SetEnv.TERM = "xterm-256color";
+          HashKnownHosts = false;
+          IdentityFile =
             if config.home.username == "root" then
               age.secrets."ssh_host_key_${osConfig.networking.hostName}".path # the host shares the key with root
             else

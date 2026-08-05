@@ -57,6 +57,8 @@ in
 {
   flake.packages =
     config.flake.nixosConfigurations
+    # Skip aarch64-linux configs — they use darwin-vm.nix instead.
+    |> lib.filterAttrs (_: nixos: nixos.config.nixpkgs.hostPlatform.system == "x86_64-linux")
     |> lib.mapAttrsToList (
       name: nixos:
       let

@@ -1,13 +1,28 @@
 { lib, ... }:
 {
   flake.modules.homeManager.base =
-    { pkgs, ... }:
+    { pkgs, config, ... }:
+    let
+      steelixDarwin = pkgs.steelix.overrideAttrs {
+        patches = [
+          (pkgs.fetchpatch {
+            name = "revert-dylib-grammar-extension.patch";
+            url = "https://github.com/helix-editor/helix/commit/430914b298a32653ab1847fdfdf2177a002be04c.patch";
+            revert = true;
+            hash = "sha256-4KUFppkso4/XwNU+mGIgLvl+mJXHZWkmaguYMy8oTyI=";
+          })
+        ];
+      };
+    in
     {
       programs.helix = {
         enable = true;
-        package = pkgs.helix-master;
+        package = if pkgs.stdenv.isDarwin then steelixDarwin else pkgs.steelix;
         defaultEditor = true; # doesn't seem to work with nushell
         settings = {
+          # Stylix's base16 theme paints "hint" with base03, the same color as
+          # comments, so hint-severity virtual text (harper-ls) is unreadable.
+          theme = lib.mkForce "stylix-hints";
           editor = {
             mouse = true;
             middle-click-paste = true;
@@ -87,7 +102,7 @@
             harper-ls = {
               command = lib.getExe pkgs.harper;
               args = [ "--stdio" ];
-              config.SentenceCapitalization = false;
+              config.harper-ls.linters.SentenceCapitalization = false;
             };
             nixd = {
               command = lib.getExe pkgs.nixd;
@@ -117,6 +132,19 @@
             }
           ];
         };
+
+        themes.stylix-hints =
+          let
+            teal = config.lib.stylix.colors.withHashtag.base0C;
+          in
+          {
+            inherits = "stylix";
+            hint = teal;
+            "diagnostic.hint".underline = {
+              style = "curl";
+              color = teal;
+            };
+          };
       };
 
       programs.nushell.environmentVariables.EDITOR = "hx";

@@ -1,5 +1,6 @@
+{ config, ... }:
 {
-  flake.modules.homeManager.workstation =
+  flake.modules.homeManager.development =
     { pkgs, ... }:
     {
       home.packages = with pkgs; [
@@ -27,6 +28,8 @@
 
       programs.gh-dash.enable = true;
 
+      # NB: nixpkgs-review-and-post is tuned for Linux remote builders.
+      # Available everywhere, but useful only when those builders are reachable.
       programs.nushell.extraConfig = ''
         def nixpkgs-review-and-post [pr: int] {
           let ssh_key = $"($env.HOME)/.ssh/id_ed25519"
@@ -35,4 +38,8 @@
          }
       '';
     };
+
+  flake.modules.homeManager.workstation.imports = with config.flake.modules.homeManager; [
+    development
+  ];
 }

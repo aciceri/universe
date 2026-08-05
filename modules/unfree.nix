@@ -1,6 +1,6 @@
 { lib, ... }:
-{
-  flake.modules.nixos.base = {
+let
+  unfreeConfig = {
     nixpkgs.config = {
       allowUnfreePredicate =
         pkg:
@@ -22,8 +22,13 @@
           "brscan4-etc-files"
           "spotify"
           "cursor-cli"
+          "open-webui"
         ];
       nvidia.acceptLicense = true;
     };
   };
+in
+{
+  flake.modules.nixos.base = unfreeConfig;
+  flake.modules.darwin.base = unfreeConfig;
 }

@@ -109,7 +109,7 @@
                 };
               };
             }
-            .${osConfig.networking.hostName};
+            .${osConfig.networking.hostName} or { }; # VM / unknown hosts get no output pinning
 
           workspaces = {
             mail = { };
@@ -269,7 +269,7 @@
                 |> lib.getExe;
               wpctl = lib.getExe' pkgs.wireplumber "wpctl";
               brightnessctl = lib.getExe pkgs.brightnessctl;
-              spotify = lib.getExe config.programs.spicetify.spicedSpotify;
+              spotify = if config.programs ? spicetify then lib.getExe config.programs.spicetify.spicedSpotify else "spotify";
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
               emacs = "emacs";
