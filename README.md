@@ -25,6 +25,7 @@ Running on my decommissioned Thinkpad Carbon X1 gen 7
 - [auth.aciceri.dev](https://auth.aciceri.dev)
 - [blog.aciceri.dev](https://blog.aciceri.dev)
 - [cal.aciceri.dev](https://cal.aciceri.dev)
+- [claude.aciceri.dev](https://claude.aciceri.dev)
 - [cloud.aciceri.dev](https://cloud.aciceri.dev)
 - [cv.aciceri.dev](https://cv.aciceri.dev)
 - [git.aciceri.dev](https://git.aciceri.dev)
@@ -39,11 +40,11 @@ Running on my decommissioned Thinkpad Carbon X1 gen 7
 - [adguard.sisko.wg.aciceri.dev](https://adguard.sisko.wg.aciceri.dev)
 - [amule.sisko.wg.aciceri.dev](https://amule.sisko.wg.aciceri.dev)
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
+- [calibre.sisko.wg.aciceri.dev](https://calibre.sisko.wg.aciceri.dev)
 - [claude.sisko.wg.aciceri.dev](https://claude.sisko.wg.aciceri.dev)
 - [cups.sisko.wg.aciceri.dev](https://cups.sisko.wg.aciceri.dev)
 - [food.sisko.wg.aciceri.dev](https://food.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
-- [litellm.sisko.wg.aciceri.dev](https://litellm.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
 - [radarr.sisko.wg.aciceri.dev](https://radarr.sisko.wg.aciceri.dev)
@@ -63,6 +64,17 @@ Configured to closely mirror my main workstation `picard` for seamless work when
 
 My main workstation—a custom-built powerhouse featuring an AMD Ryzen 9 7900X,
 64GB of DDR5 RAM, and blazing-fast NVMe storage.
+
+### Kirk
+
+A NixOS desktop VM (`aarch64-linux`) running on Archer via QEMU with
+GPU acceleration (virgl over Metal).
+
+## nix-darwin configurations
+
+### Archer
+
+My MacBook Pro (Apple Silicon, `aarch64-darwin`), managed via nix-darwin.
 
 ## Projects
 
@@ -166,6 +178,10 @@ A web player for terminal session recordings
 
 DMS plugin showing Claude Code billing block usage
 
+### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-06-17)
+
+DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
+
 ### [helix-master](packages/helix-master/_package.nix) (version master-72d583700adf1f0e4e79356662b563cd3a76ab88)
 
 Post-modern modal text editor
@@ -177,13 +193,6 @@ Hyphenation for node and Polyfill for client-side hyphenation
 ### [mirror-checks](packages/mirror-checks/_package.nix) (version 1.0.0)
 
 Utility to synchronize CI checks from Forgejo to GitHub
-
-### [opencode-claude-max-proxy](packages/opencode-claude-max-proxy/_package.nix) (version 1.0.2-unstable-2026-01-30)
-
-Use your Claude Max subscription with OpenCode or any Anthropic
-API-compatible tool. Translates API requests into Claude Agent SDK
-calls. Requires claude-code CLI installed and authenticated
-(claude login).
 
 ### [reinstall-magisk-on-lineageos](packages/reinstall-magisk-on-lineageos/_package.nix) (version 1ca911e)
 

@@ -1,5 +1,6 @@
 .direnv
 .pre-commit-config.yaml
+kirk.qcow2
 picard.qcow2
 pike.qcow2
 projects/aoc/2025/_cache
