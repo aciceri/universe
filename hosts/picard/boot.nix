@@ -11,7 +11,10 @@ fpArgs@{ inputs, ... }:
       imports = [ inputs.lanzaboote.nixosModules.lanzaboote ];
 
       boot = {
-        kernelPackages = pkgs.linuxPackages_zen;
+        # FIXME: back to linuxPackages_zen once ZFS supports kernel 7.1.x
+        # (zfs-kernel is marked broken against zen 7.1.5; 6.18 LTS is the
+        # newest compatible kernel).
+        kernelPackages = pkgs.linuxPackages;
         kernelParams = [ "ip=dhcp" ];
 
         initrd.kernelModules = [ "amdgpu" ];
