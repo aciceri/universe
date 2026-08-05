@@ -50,6 +50,7 @@
           "prometheus"
           "openai_conversation"
           "mcp_server"
+          "shelly"
         ];
         customComponents = with pkgs.home-assistant-custom-components; [
           localtuya
@@ -118,14 +119,13 @@
       virtualisation.oci-containers = {
         containers = {
           whisper = {
-            image = "rhasspy/wyoming-whisper:latest";
+            image = "lscr.io/linuxserver/faster-whisper:latest";
             ports = [ "10300:10300" ];
-            cmd = [
-              "--model"
-              "medium-int8"
-              "--language"
-              "it"
-            ];
+            environment = {
+              WHISPER_MODEL = "small-int8";
+              WHISPER_LANG = "it";
+              WHISPER_BEAM = "1";
+            };
           };
           piper = {
             image = "rhasspy/wyoming-piper:latest";
