@@ -34,85 +34,114 @@ let
     - Comments for "why", not "what"
     - Break complex operations into readable steps
   '';
+
+  llmAgentsOverlay =
+    { inputs }:
+    {
+      nixpkgs.overlays = [ inputs.llm-agents.overlays.shared-nixpkgs ];
+    };
 in
-{ inputs, lib, ... }:
 {
-  flake.modules.nixos.workstation = {
-    nixpkgs.overlays = [ inputs.llm-agents.overlays.shared-nixpkgs ];
+  config,
+  inputs,
+  ...
+}:
+{
+  # Provide the llm-agents overlay (and `omp`) on every host that wants
+  # claude-code/opencode.
+  flake.modules.nixos.claude-code-overlay = llmAgentsOverlay { inherit inputs; };
+  flake.modules.darwin.claude-code-overlay = llmAgentsOverlay { inherit inputs; };
 
-    secrets.openrouter_api_key.owner = "ccr";
-  };
-
-  flake.modules.homeManager.workstation =
+  # Cross-platform claude-code config + opencode (omp).
+  flake.modules.homeManager.claude-code =
+    { pkgs, lib, ... }:
     {
-      osConfig,
-      pkgs,
-      config,
-      ...
-    }:
-    {
-      programs = {
-        claude-code = {
-          enable = true;
-          memory.text = instructions;
-          settings = {
-            env = {
-              CLAUDE_CODE_ENABLE_TELEMETRY = "1";
-              OTEL_METRICS_EXPORTER = "otlp";
-              OTEL_LOGS_EXPORTER = "otlp";
-              OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "http://sisko.wg.aciceri.dev:4317";
-              OTEL_EXPORTER_OTLP_LOGS_ENDPOINT = "http://sisko.wg.aciceri.dev:3100/otlp/v1/logs";
-              OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = "grpc";
-              OTEL_EXPORTER_OTLP_LOGS_PROTOCOL = "http/protobuf";
-              OTEL_RESOURCE_ATTRIBUTES = "host.name=${osConfig.networking.hostName},user.name=${config.home.username}";
-              OTEL_LOG_USER_PROMPTS = "1";
-              OTEL_METRIC_EXPORT_INTERVAL = "60000";
-              OTEL_LOGS_EXPORT_INTERVAL = "5000";
+      programs.claude-code = {
+        enable = true;
+        context = instructions;
+        mcpServers =
+          let
+            npxWithNode = pkgs.writeShellScript "npx-with-node" ''
+              export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
+              exec ${lib.getExe' pkgs.nodejs "npx"} "$@"
+            '';
+          in
+          {
+            linear = {
+              command = "${npxWithNode}";
+              args = [
+                "-y"
+                "mcp-remote"
+                "https://mcp.linear.app/mcp"
+              ];
+              disabled = true;
+            };
+            home-assistant = {
+              command =
+                let
+                  wrapper = pkgs.writeShellScript "ha-mcp" ''
+                    export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
+                    TOKEN=$(cat ~/.config/home-assistant/mcp-token)
+                    exec ${lib.getExe' pkgs.nodejs "npx"} -y mcp-remote \
+                      https://home.aciceri.dev/api/mcp \
+                      --header "Authorization: Bearer $TOKEN"
+                  '';
+                in
+                "${wrapper}";
+              disabled = true;
             };
           };
-          mcpServers =
-            let
-              npxWithNode = pkgs.writeShellScript "npx-with-node" ''
-                export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
-                exec ${lib.getExe' pkgs.nodejs "npx"} "$@"
-              '';
-            in
-            {
-              linear = {
-                command = "${npxWithNode}";
-                args = [
-                  "-y"
-                  "mcp-remote"
-                  "https://mcp.linear.app/mcp"
-                ];
-                disabled = true;
-              };
-              home-assistant = {
-                command =
-                  let
-                    wrapper = pkgs.writeShellScript "ha-mcp" ''
-                      export PATH="${lib.makeBinPath [ pkgs.nodejs ]}:$PATH"
-                      TOKEN=$(cat ~/.config/home-assistant/mcp-token)
-                      exec ${lib.getExe' pkgs.nodejs "npx"} -y mcp-remote \
-                        https://home.aciceri.dev/api/mcp \
-                        --header "Authorization: Bearer $TOKEN"
-                    '';
-                  in
-                  "${wrapper}";
-                disabled = true;
-              };
-            };
-        };
       };
 
       home.packages = with pkgs; [
         llm-agents.omp
+        llm-agents.hermes-agent
+        llm-agents.hermes-desktop
+        llm-agents.zeroclaw
       ];
+    };
 
+  # OTEL telemetry endpoints — point to sisko inside WireGuard. Useful only
+  # for hosts that can reach the WG network.
+  flake.modules.homeManager.claude-code-otel =
+    { osConfig, config, ... }:
+    {
+      programs.claude-code.settings.env = {
+        CLAUDE_CODE_ENABLE_TELEMETRY = "1";
+        OTEL_METRICS_EXPORTER = "otlp";
+        OTEL_LOGS_EXPORTER = "otlp";
+        OTEL_EXPORTER_OTLP_METRICS_ENDPOINT = "http://sisko.wg.aciceri.dev:4317";
+        OTEL_EXPORTER_OTLP_LOGS_ENDPOINT = "http://sisko.wg.aciceri.dev:3100/otlp/v1/logs";
+        OTEL_EXPORTER_OTLP_METRICS_PROTOCOL = "grpc";
+        OTEL_EXPORTER_OTLP_LOGS_PROTOCOL = "http/protobuf";
+        OTEL_RESOURCE_ATTRIBUTES = "host.name=${osConfig.networking.hostName},user.name=${config.home.username}";
+        OTEL_LOG_USER_PROMPTS = "1";
+        OTEL_METRIC_EXPORT_INTERVAL = "60000";
+        OTEL_LOGS_EXPORT_INTERVAL = "5000";
+      };
+    };
+
+  # Inject OPENROUTER_API_KEY into nushell from an agenix secret. Requires
+  # the host to declare `secrets.openrouter_api_key.owner = "<user>";`.
+  flake.modules.homeManager.claude-code-openrouter-env =
+    { osConfig, ... }:
+    {
       programs.nushell.extraConfig = ''
         $env.OPENROUTER_API_KEY = (open ${osConfig.age.secrets.openrouter_api_key.path} | str trim)
       '';
     };
+
+  # NixOS workstations get the full bundle (overlay + secret + HM extras).
+  flake.modules.nixos.workstation = {
+    imports = with config.flake.modules.nixos; [ claude-code-overlay ];
+    secrets.openrouter_api_key.owner = "ccr";
+  };
+
+  flake.modules.homeManager.workstation.imports = with config.flake.modules.homeManager; [
+    claude-code
+    claude-code-otel
+    claude-code-openrouter-env
+  ];
 
   configurations.nixos.sisko.module =
     {
@@ -130,8 +159,8 @@ in
         createHome = true;
       };
 
-      systemd.services.claude-proxy = {
-        description = "Proxy bridging Anthropic API to Claude Max via Claude Agent SDK";
+      systemd.services.meridian = {
+        description = "Meridian - local Anthropic API powered by Claude Max";
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
         wantedBy = [ "multi-user.target" ];
@@ -139,11 +168,20 @@ in
           pkgs.claude-code
           pkgs.which
         ];
+        environment = {
+          MERIDIAN_HOST = "127.0.0.1";
+          MERIDIAN_PORT = "3456";
+          MERIDIAN_CLAUDE_PATH = lib.getExe pkgs.claude-code;
+        };
         serviceConfig = {
+          # Long-lived OAuth token from `claude setup-token`, stored manually:
+          #   echo "CLAUDE_CODE_OAUTH_TOKEN=sk-ant-oat01-..." > /var/lib/claude-heartbeat/oauth-token.env
+          # The `-` prefix makes it optional so the service still starts without it.
+          EnvironmentFile = [ "-/var/lib/claude-heartbeat/oauth-token.env" ];
           Type = "simple";
           User = "claude-heartbeat";
           WorkingDirectory = config.users.users.claude-heartbeat.home;
-          ExecStart = lib.getExe pkgs.opencode-claude-max-proxy;
+          ExecStart = lib.getExe pkgs.meridian;
           Restart = "always";
           RestartSec = 5;
         };
@@ -152,19 +190,24 @@ in
       services.nginx.virtualHosts."claude.sisko.wg.aciceri.dev" = {
         forceSSL = true;
         useACMEHost = "aciceri.dev";
+        serverAliases = [ "claude.sisko.zt.aciceri.dev" ];
         locations."/" = {
-          proxyPass = "http://localhost:3456";
+          proxyPass = "http://127.0.0.1:3456";
           proxyWebsockets = true;
+          # Streaming (SSE) + large multimodal uploads.
           extraConfig = ''
             proxy_buffering off;
+            proxy_request_buffering off;
             proxy_cache off;
-            proxy_read_timeout 300s;
+            proxy_read_timeout 600s;
+            proxy_send_timeout 600s;
+            client_max_body_size 100m;
           '';
         };
-        serverAliases = [ "claude.sisko.zt.aciceri.dev" ];
         extraConfig = ''
           allow 10.100.0.0/24;
           allow 10.100.1.0/24;
+          allow 10.88.0.0/16;
           allow 127.0.0.1;
           deny all;
         '';
@@ -202,50 +245,6 @@ in
           Unit = "claude-heartbeat.service";
         };
       };
-
-      services.litellm = {
-        enable = true;
-        port = 41929;
-        settings.model_list = [
-          {
-            model_name = "claude-opus";
-            litellm_params = {
-              model = "anthropic/claude-opus";
-              api_base = "https://claude.sisko.wg.aciceri.dev";
-              api_key = "dummy";
-            };
-          }
-          {
-            model_name = "claude-sonnet";
-            litellm_params = {
-              model = "anthropic/claude-sonnet";
-              api_base = "https://claude.sisko.wg.aciceri.dev";
-              api_key = "dummy";
-            };
-          }
-        ];
-      };
-
-      services.nginx.virtualHosts."litellm.sisko.wg.aciceri.dev" = {
-        forceSSL = true;
-        useACMEHost = "aciceri.dev";
-        locations."/" = {
-          proxyPass = "http://127.0.0.1:41929";
-          proxyWebsockets = true;
-          extraConfig = ''
-            proxy_buffering off;
-            proxy_cache off;
-            proxy_read_timeout 300s;
-          '';
-        };
-        extraConfig = ''
-          allow 10.100.0.0/24;
-          allow 10.100.1.0/24;
-          allow 127.0.0.1;
-          deny all;
-        '';
-      };
-
       environment.persistence."/persist".directories = [
         "/var/lib/claude-heartbeat"
       ];
