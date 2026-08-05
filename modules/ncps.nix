@@ -1,6 +1,12 @@
+{ inputs, ... }:
 {
   configurations.nixos.sisko.module =
-    { config, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
     let
       dir = "/tank/ncps";
     in
@@ -14,7 +20,19 @@
         "d ${dir} 770 ncps ncps"
       ];
 
+      # The nixpkgs module's preStart runs `dbmate-ncps up`, which no longer
+      # exists in the 0.10 rc package (migrations moved to ent/atlas, run via
+      # `ncps migrate up`). Drop together with the pin above.
+      systemd.services.ncps.preStart = lib.mkForce ''
+        ${lib.getExe config.services.ncps.package} migrate up \
+          --cache-database-url="sqlite:${dir}/db/db.sqlite"
+      '';
+
       services.ncps = {
+        # ncps 0.9.x 500s ("invalid nar hash") on narinfos whose NAR URL is
+        # opaque (attic's UUID names). Fixed upstream in v0.10.0-rc13
+        # (kalbasit/ncps#1331); drop this pin once nixpkgs ships >= 0.10.0.
+        package = inputs.ncps.packages.${pkgs.system}.ncps;
         enable = true;
         cache = {
           hostName = "ncps.sisko.wg.aciceri.dev";
@@ -30,14 +48,12 @@
             urls = [
               "https://cache.nixos.org"
               "https://nix-community.cachix.org"
-              "https://mlabs.cachix.org"
               "https://cache.iog.io"
               "http://sisko.wg.aciceri.dev:8081/sisko"
             ];
             publicKeys = [
               "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
               "nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs="
-              "mlabs.cachix.org-1:gStKdEqNKcrlSQw5iMW6wFCj3+b+1ASpBVY2SYuNV2M="
               "hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="
               "sisko:4A3G4hgZVjhfPLh7Hy9V6xhRzRJp1l4fDDbLqQrQsbU="
             ];
