@@ -3,6 +3,13 @@
 ;;; Code:
 
 (use-package emacs
+  :init
+  ;; Emacs creates backup dirs on demand but NOT auto-save/lock-file targets;
+  ;; a missing ~/.emacs-saves/ makes every auto-save error out.
+  (make-directory "~/.emacs-saves/" t)
+  ;; No titlebar: OmniWM tiles the frames, so the native decoration is
+  ;; wasted vertical space. Applies to every frame, emacsclient ones too.
+  (add-to-list 'default-frame-alist '(undecorated . t))
   :custom
   ;; Performance
   (gc-cons-threshold 100000000)
@@ -57,6 +64,12 @@
   (show-paren-mode t)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
+  ;; Stylix injects the font (13pt, shared with the terminal) via the
+  ;; generated default.el, which loads AFTER init.el — bump the size for
+  ;; Emacs only once startup is done, so it wins over stylix.
+  (add-hook 'after-init-hook
+            (lambda () (set-face-attribute 'default nil :height 170)))
+
   ;; Editing
   (electric-pair-mode t)
   (prefer-coding-system 'utf-8)
@@ -69,7 +82,30 @@
   ;; File management
   (global-auto-revert-mode t)
   (recentf-mode t)
-  (save-place-mode t))
+  (save-place-mode t)
+
+  ;; Nerd icons: pin the private-use-area ranges to the dedicated symbols
+  ;; font (same glyph source Ghostty's patched fonts use). Without this,
+  ;; fallback lands on whichever patched Nerd font sorts first, with
+  ;; mismatched metrics.
+  (when (member "Symbols Nerd Font Mono" (font-family-list))
+    (dolist (range '((#xe000 . #xf8ff) (#xf0000 . #xfffff)))
+      (set-fontset-font t range "Symbols Nerd Font Mono"))))
+
+;; macOS GUI apps (and the Mac port) start with a minimal PATH; expose the
+;; nix-profile tools (LSP servers, direnv, …) to Emacs and eglot.
+(let ((nix-bin (expand-file-name "~/.nix-profile/bin")))
+  (when (file-directory-p nix-bin)
+    (add-to-list 'exec-path nix-bin)
+    (setenv "PATH" (concat nix-bin path-separator (getenv "PATH")))))
+
+;; Start the server unless one is already running (e.g. when launched as a
+;; daemon, or when the launchd agent already spawned a GUI instance whose
+;; server owns the socket).
+(use-package server
+  :config
+  (unless (or (daemonp) (server-running-p))
+    (server-start)))
 
 (use-package envrc
   :init
@@ -182,6 +218,12 @@
 (use-package flyover
   :hook (flymake-mode . flyover-mode)
   :custom
+  ;; Render diagnostics at the end of the offending line (like Helix's
+  ;; end-of-line-diagnostics) instead of on a virtual line above it, which
+  ;; made line spacing jump when the cursor idled on a diagnosed line.
+  (flyover-show-at-eol t)
+  (flyover-show-virtual-line nil)
+  (flyover-wrap-messages nil)
   (flyover-line-position-offset 0))
 
 (use-package indent-bars
@@ -199,42 +241,70 @@
 (use-package rainbow-delimiters
   :hook (prog-mode . rainbow-delimiters-mode))
 
-(use-package multiple-cursors)
+(use-package which-key
+  :init
+  (which-key-mode))
 
-(use-package helix
+(use-package hel
   :demand t
-  :after multiple-cursors
+  :custom
+  ;; Match Helix: block cursor in normal mode, bar while inserting
+  ;; (hel ships them the other way around).
+  (hel-normal-state-cursor-type 'box)
+  (hel-insert-state-cursor-type 'bar)
   :config
-  (helix-multiple-cursors-setup)
-  (helix-mode)
+  (hel-mode)
+  ;; hel-leader turns SPC into a gateway to the "C-c" prefix ("SPC x" -> C-x),
+  ;; so the former "SPC ..." leader bindings now live under "C-c ...".
 
-  ;; Create window management keymap under SPC w
-  (defvar helix-window-map (make-sparse-keymap) "Keymap for window commands")
-  (define-key helix-space-map "w" helix-window-map)
+  ;; Window management: SPC w {v,s,q,o,h,j,k,l}
+  (keymap-global-set "C-c w v" #'split-window-right)
+  (keymap-global-set "C-c w s" #'split-window-below)
+  (keymap-global-set "C-c w q" #'delete-window)
+  (keymap-global-set "C-c w o" #'delete-other-windows)
+  (keymap-global-set "C-c w h" #'windmove-left)
+  (keymap-global-set "C-c w j" #'windmove-down)
+  (keymap-global-set "C-c w k" #'windmove-up)
+  (keymap-global-set "C-c w l" #'windmove-right)
 
-  ;; Window management keybindings
-  (define-key helix-window-map "v" #'split-window-right)
-  (define-key helix-window-map "s" #'split-window-below)
-  (define-key helix-window-map "q" #'delete-window)
-  (define-key helix-window-map "o" #'delete-other-windows)
-  (define-key helix-window-map "h" #'windmove-left)
-  (define-key helix-window-map "j" #'windmove-down)
-  (define-key helix-window-map "k" #'windmove-up)
-  (define-key helix-window-map "l" #'windmove-right)
+  ;; consult integration: SPC f / SPC b / SPC / / SPC d
+  (keymap-global-set "C-c f" #'consult-project-extra-find)
+  (keymap-global-set "C-c b" #'consult-project-buffer)
+  (keymap-global-set "C-c /" #'consult-ripgrep)
+  (keymap-global-set "C-c d" #'consult-flymake))
 
-  ;; Override SPC f, SPC b, and SPC / for consult integration
-  (define-key helix-space-map "f" #'consult-project-extra-find)
-  (define-key helix-space-map "b" #'consult-project-buffer)
-  (define-key helix-space-map "/" #'consult-ripgrep)
+;; SPC leader: bridges SPC to the C-c/C-x prefixes, with which-key previews.
+(use-package hel-leader
+  :after hel)
 
-  ;; Diagnostics - SPC d for diagnostics (similar to helix's space+d)
-  (define-key helix-space-map "d" #'consult-flymake))
+;; Org-mode editing model.
+(use-package hel-org
+  :after (hel org))
+
+;; libghostty terminal. The grammar/module is shipped by nix, so never
+;; auto-download it at runtime.
+(use-package ghostel
+  :bind (("C-c o t" . ghostel))
+  :config
+  ;; show-paren flags the nushell prompt arrow 〉 as an unmatched paren,
+  ;; painting it with show-paren-mismatch until the cursor moves.
+  (add-hook 'ghostel-mode-hook (lambda () (show-paren-local-mode -1))))
+
+;; Helix editing model inside ghostel buffers; without this hel-local-mode
+;; has no terminal state and swallows all self-inserting keys.
+(use-package hel-ghostel
+  :after (hel ghostel)
+  :demand t)
 
 (use-package eglot
-  :after helix
+  :after hel
   :custom
   (eglot-autoshutdown t)
   (eglot-events-buffer-size 0)
+  ;; Keep code-action availability in eldoc only: the default margin
+  ;; indicator (an emoji from a fallback font) is taller than Iosevka and
+  ;; visibly grows the cursor line after eldoc-idle-delay.
+  (eglot-code-action-indications '(eldoc-hint))
   :config
   ;; Register language servers
   (add-to-list 'eglot-server-programs '(nix-ts-mode . ("nixd")))
@@ -245,19 +315,15 @@
   (add-to-list 'eglot-server-programs '((js-ts-mode typescript-ts-mode tsx-ts-mode) . ("vtsls" "--stdio")))
   (add-to-list 'eglot-server-programs '(terraform-ts-mode . ("terraform-ls" "serve")))
 
-  ;; Create LSP keymap under SPC l (following helix pattern)
-  (defvar helix-lsp-map (make-sparse-keymap) "Keymap for LSP commands")
-  (define-key helix-space-map "l" helix-lsp-map)
-
-  ;; LSP keybindings
-  (define-key helix-lsp-map "s" #'eglot-shutdown)
-  (define-key helix-lsp-map "r" #'eglot-rename)
-  (define-key helix-lsp-map "a" #'eglot-code-actions)
-  (define-key helix-lsp-map "f" #'eglot-format)
-  (define-key helix-lsp-map "h" #'eldoc-doc-buffer)
-  (define-key helix-lsp-map "d" #'xref-find-definitions)
-  (define-key helix-lsp-map "t" #'eglot-find-typeDefinition)
-  (define-key helix-lsp-map "i" #'eglot-find-implementation)
+  ;; LSP keymap under SPC l (the C-c l prefix, reached via hel-leader)
+  (keymap-global-set "C-c l s" #'eglot-shutdown)
+  (keymap-global-set "C-c l r" #'eglot-rename)
+  (keymap-global-set "C-c l a" #'eglot-code-actions)
+  (keymap-global-set "C-c l f" #'eglot-format)
+  (keymap-global-set "C-c l h" #'eldoc-doc-buffer)
+  (keymap-global-set "C-c l d" #'xref-find-definitions)
+  (keymap-global-set "C-c l t" #'eglot-find-typeDefinition)
+  (keymap-global-set "C-c l i" #'eglot-find-implementation)
 
   :hook ((nix-ts-mode . eglot-ensure)
          (rust-ts-mode . eglot-ensure)
@@ -272,9 +338,9 @@
               ("M-RET" . eglot-code-actions)))
 
 (use-package consult-eglot
-  :after (consult eglot helix)
+  :after (consult eglot)
   :config
-  (define-key helix-lsp-map "g" #'consult-eglot-symbols))
+  (keymap-global-set "C-c l g" #'consult-eglot-symbols))
 
 (use-package nix-ts-mode
   :mode "\\.nix\\'")
@@ -317,13 +383,51 @@
 (use-package terraform-ts-mode
   :mode "\\.tf\\'")
 
+;; Coding agents via ACP. Layout stolen from helheim-emacs: the first
+;; shell opens in another window, every subsequent agent buffer reuses
+;; that window. Default agent: Oh My Pi (`omp acp` speaks ACP natively).
 (use-package agent-shell
+  :custom
+  (agent-shell-pi-acp-command '("omp" "acp"))
+  (agent-shell-preferred-agent-config 'pi)
+  (agent-shell-display-action nil)
+  :bind (("C-c a RET" . agent-shell)
+         ("C-c a n" . agent-shell-new-shell)
+         ("C-c a w" . agent-shell-new-worktree-shell)
+         ("C-c a s" . agent-shell-send-dwim))
   :config
-  (setopt agent-shell-provider 'anthropic)
-  :bind (("C-c a a" . agent-shell-chat)
-         ("C-c a r" . agent-shell-region)
-         ("C-c a b" . agent-shell-buffer)
-         ("C-c a f" . agent-shell-file)
-         ("C-c a s" . agent-shell-summarize)))
+  (add-to-list 'display-buffer-alist
+               '((or (major-mode . agent-shell-mode)
+                     (major-mode . agent-shell-viewport-view-mode)
+                     (major-mode . agent-shell-viewport-edit-mode))
+                 (display-buffer-reuse-mode-window
+                  display-buffer-pop-up-window)
+                 (mode . (agent-shell-mode
+                          agent-shell-viewport-view-mode
+                          agent-shell-viewport-edit-mode)))))
+
+(use-package hel-agent-shell
+  :after (hel agent-shell))
+
+;; MCP server exposing this Emacs session to LLM agents (buffers, elisp,
+;; diagnostics, org tools). Connect with e.g.:
+;;   claude mcp add emacs -- socat - UNIX-CONNECT:<socket printed by M-x mcp-server-status>
+(use-package mcp-server
+  :demand t
+  :custom
+  (mcp-server-security-prompt-for-permissions t)
+  :config
+  (with-eval-after-load 'org
+    (setopt mcp-server-emacs-tools-org-allowed-roots (list org-directory)
+            mcp-server-emacs-tools-org-auto-save t))
+  ;; Don't ask about killing the server process when quitting Emacs.
+  (defun my/mcp-server-no-query-on-exit (&rest _)
+    (dolist (proc (list (bound-and-true-p mcp-server-transport-unix--server-process)
+                        (bound-and-true-p mcp-server-transport-tcp--server-process)))
+      (when (processp proc)
+        (set-process-query-on-exit-flag proc nil))))
+  (advice-add 'mcp-server-transport-unix--start :after #'my/mcp-server-no-query-on-exit)
+  (advice-add 'mcp-server-transport-tcp--start :after #'my/mcp-server-no-query-on-exit)
+  (mcp-server-start))
 
 ;;; init.el ends here
