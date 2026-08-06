@@ -13,6 +13,8 @@ fpArgs: {
         # newest compatible kernel).
         kernelPackages = pkgs.linuxPackages;
         kernelParams = [ "ip=dhcp" ];
+        # Explicit new default (26.11); silences the eval warning.
+        zfs.forceImportRoot = false;
 
         initrd.kernelModules = [ "amdgpu" ];
         initrd.availableKernelModules = [

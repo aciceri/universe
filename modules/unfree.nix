@@ -23,6 +23,7 @@ let
           "spotify"
           "cursor-cli"
           "open-webui"
+          "antigravity-cli"
         ];
       nvidia.acceptLicense = true;
     };

@@ -25,7 +25,7 @@ in
           config.make-shells.default.finalPackage
         ];
         buildInputs = with pkgs; [
-          texlive.combined.scheme-full
+          texliveFull
         ];
       };
       packages = {
@@ -43,7 +43,7 @@ in
             ''
               mkdir -p /tmp/fontconfig-cache
               cp -r ${./src}/* .
-              ${lib.getExe' pkgs.texlive.combined.scheme-full "xelatex"} cv.tex
+              ${lib.getExe' pkgs.texliveFull "xelatex"} cv.tex
               mkdir $out
               cp {cv.pdf,index.html} $out
             '';

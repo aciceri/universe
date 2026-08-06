@@ -24,7 +24,8 @@
 
       services.kanidm = {
         server.enable = true;
-        package = pkgs.kanidmWithSecretProvisioning_1_9;
+        # Kanidm only supports single-step upgrades: 1.9 -> 1.10 -> 1.11.
+        package = pkgs.kanidmWithSecretProvisioning_1_10;
 
         server.settings = {
           bindaddress = "[::]:4348";

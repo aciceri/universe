@@ -8,6 +8,8 @@
       imports = [ inputs.disko.nixosModules.default ];
 
       boot.zfs.extraPools = [ "tank" ];
+      # Explicit new default (26.11); silences the eval warning.
+      boot.zfs.forceImportRoot = false;
       # ZFS datasets on the `tank` disk have been created manually
       # zfs create tank/forgejo-dumps
       # zfs create tank/forgejo-lfs

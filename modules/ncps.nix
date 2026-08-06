@@ -32,7 +32,7 @@
         # ncps 0.9.x 500s ("invalid nar hash") on narinfos whose NAR URL is
         # opaque (attic's UUID names). Fixed upstream in v0.10.0-rc13
         # (kalbasit/ncps#1331); drop this pin once nixpkgs ships >= 0.10.0.
-        package = inputs.ncps.packages.${pkgs.system}.ncps;
+        package = inputs.ncps.packages.${pkgs.stdenv.hostPlatform.system}.ncps;
         enable = true;
         cache = {
           hostName = "ncps.sisko.wg.aciceri.dev";

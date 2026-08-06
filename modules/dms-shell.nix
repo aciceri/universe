@@ -6,7 +6,9 @@
   flake.modules.nixos.pc =
     { pkgs, ... }:
     let
-      inherit (withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.dms.packages)) quickshell dms-shell;
+      # quickshell is no longer shipped by the DMS flake; use nixpkgs' package.
+      inherit (withSystem pkgs.stdenv.system ({ inputs', ... }: inputs'.dms.packages)) dms-shell;
+      inherit (pkgs) quickshell;
     in
     {
       programs.dms-shell = {
