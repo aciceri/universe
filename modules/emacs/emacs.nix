@@ -21,6 +21,17 @@
         };
         packageRequires = [ ];
       };
+      # Bridges an MCP client's stdio to the Emacs MCP server socket.
+      # init.el exports EMACS_MCP_SOCKET to every Emacs subprocess, so omp
+      # launched from agent-shell (or any shell inside Emacs) connects
+      # automatically; outside Emacs it fails fast.
+      emacs-mcp-stdio = pkgs.writeShellScriptBin "emacs-mcp-stdio" ''
+        if [ ! -S "''${EMACS_MCP_SOCKET:-}" ]; then
+          echo "emacs-mcp-stdio: EMACS_MCP_SOCKET unset or stale (not inside Emacs?)" >&2
+          exit 1
+        fi
+        exec ${lib.getExe pkgs.socat} STDIO "UNIX-CONNECT:$EMACS_MCP_SOCKET"
+      '';
     in
     lib.mkMerge [
       {
@@ -30,7 +41,13 @@
           nixd
           vtsls
           terraform-ls
+          emacs-mcp-stdio
         ];
+
+        # catppuccin-theme (loaded from init.el) is far better curated for
+        # Emacs than stylix's generated base16 theme, which would load later
+        # and shadow it. Font is set in init.el too.
+        stylix.targets.emacs.enable = false;
 
         home.file.".config/emacs/init.el".source =
           config.lib.file.mkOutOfStoreSymlink "${config.universePath}/modules/emacs/init.el";
@@ -64,13 +81,35 @@
                 };
               hel = helSrc {
                 pname = "hel";
-                rev = "ed555d96e0373a9f67a0e292993db6c72fb5a521";
-                hash = "sha256-cx3tDEYuTwrVVFOKyzdrXiL3SeG0PcJhcDZkVnRXIu8=";
+                rev = "d58cd5dc0f2e54f5a5bf5e16230c377410557099";
+                hash = "sha256-xKU0DaGBFOU1gt/u02ELgbpfXusSMdetFUX64aNaK5c=";
                 deps = with epkgs; [
                   dash
                   avy
                   pcre2el
+                  ultra-scroll
                 ];
+              };
+              # hel-collection (Hel bindings for third-party packages) absorbed
+              # the now-archived hel-agent-shell. Its modes/ tree is loaded by
+              # path at runtime, so install it alongside the elisp instead of
+              # flattening like mcp-server below.
+              hel-collection = epkgs.trivialBuild rec {
+                pname = "hel-collection";
+                version = "0-unstable-" + builtins.substring 0 7 src.rev;
+                src = pkgs.fetchFromGitHub {
+                  owner = "helheim-emacs";
+                  repo = "hel-collection";
+                  rev = "5cbaa1b14bf476fca8724c79f710eb1a46cf38d9";
+                  hash = "sha256-PWs4G3H6h1WwBabTeXnWILpaHbe8rcwg0g3Zu/MN/HY=";
+                };
+                packageRequires = [
+                  hel
+                  epkgs.dash
+                ];
+                postInstall = ''
+                  cp -r modes $out/share/emacs/site-lisp/
+                '';
               };
               # emacs-mcp-server (MCP server exposing Emacs to LLM agents) is
               # not on MELPA; build it like hel above. The tool definitions
@@ -116,35 +155,26 @@
               hel
               (helSrc {
                 pname = "hel-leader";
-                rev = "9e7bd67d6e1ce0915bfd5f2341eb0b9ea5217bbf";
-                hash = "sha256-uJ684ik1hUeRQv6uQPQx7urKfo3yqqt4X3dHwnUxGlI=";
+                rev = "32230075e01749ace44ddf2d25fca0ba6aa98fbd";
+                hash = "sha256-2cJxCJWwnGWLyodYU4rbnnQ3uzV6oWl+zATVniraDSw=";
                 deps = [
                   hel
                   dash
                   s
                 ];
               })
-              (helSrc {
-                pname = "hel-agent-shell";
-                rev = "78156b5090bfb35d0562cf426715244cbf83df55";
-                hash = "sha256-JlJHADhVBu5FytprO58wpLXBm1ejuGnAQDSA8MzohLg=";
-                deps = [
-                  hel
-                  agent-shell
-                  dash
-                ];
-              })
+              hel-collection
               (helSrc {
                 pname = "hel-org";
-                rev = "5748f19ea3e46860a8cdb475d1241926808a290a";
-                hash = "sha256-17xrWnJBYCSe1+yKv3Qbj95yMy/XMZ4VwpZOM7I9SCE=";
+                rev = "3d7dc4e4e05533f319a05da17d8defe36d6b35b7";
+                hash = "sha256-73128sCRot/B//mqZ9gRJa25a57S+T/Wg2QQlYbtUOU=";
                 deps = [ hel ];
               })
               ghostel
               (helSrc {
                 pname = "hel-ghostel";
-                rev = "cb324661d6817a140d4447a85a634478f66deaac";
-                hash = "sha256-qmArbZhYcYArlHSR/bl880UKfQUnQXJ3lzBDQjpHZTE=";
+                rev = "999df8dfa84cb0074e8ae739262c1cbba9e3d3f3";
+                hash = "sha256-1NMGK6PBAKWdK/BCyQmmxBr2T4fx2yvU5wzbM4TSGL0=";
                 deps = [
                   hel
                   ghostel
@@ -198,6 +228,16 @@
             exec ${config.programs.emacs.finalPackage}/bin/emacsclient -c -n -F '((window-system . mac))' "$@"
           '')
         ];
+      })
+      (lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+        # Run Emacs as a systemd user daemon; niri's Mod+X spawns
+        # `emacsclient -c` against it. init.el's server-start guard skips
+        # starting a second server inside the daemon's client frames.
+        services.emacs = {
+          enable = true;
+          startWithUserSession = "graphical";
+          client.enable = true;
+        };
       })
     ];
 }

@@ -64,13 +64,13 @@
   (show-paren-mode t)
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
-  ;; Stylix injects the font (13pt, shared with the terminal) via the
-  ;; generated default.el, which loads AFTER init.el. On macOS 13pt is too
-  ;; small for the Retina display, so bump Emacs once startup is done (it
-  ;; then wins over stylix); on Linux the stylix size is right — keep it.
-  (when (eq system-type 'darwin)
-    (add-hook 'after-init-hook
-              (lambda () (set-face-attribute 'default nil :height 170))))
+  ;; Theming is owned by catppuccin-theme (stylix's emacs target is
+  ;; disabled: its base16 theme is less polished and used to shadow
+  ;; catppuccin), so set the font ourselves. Same family the terminal
+  ;; uses; 13pt on Linux, bigger on the macOS Retina display.
+  (set-face-attribute 'default nil
+                      :family "Iosevka Comfy"
+                      :height (if (eq system-type 'darwin) 170 130))
 
   ;; Editing
   (electric-pair-mode t)
@@ -417,12 +417,21 @@
                           agent-shell-viewport-view-mode
                           agent-shell-viewport-edit-mode)))))
 
-(use-package hel-agent-shell
-  :after (hel agent-shell))
+;; Hel bindings for third-party packages; the agent-shell integration
+;; moved here from the archived hel-agent-shell. Init only registers
+;; with-eval-after-load forms, so it is cheap to call eagerly.
+(use-package hel-collection
+  :after hel
+  :demand t
+  :config
+  (hel-collection-init '(agent-shell)))
 
 ;; MCP server exposing this Emacs session to LLM agents (buffers, elisp,
-;; diagnostics, org tools). Connect with e.g.:
-;;   claude mcp add emacs -- socat - UNIX-CONNECT:<socket printed by M-x mcp-server-status>
+;; diagnostics, org tools). omp picks it up automatically when launched
+;; from inside Emacs: ~/.omp/agent/mcp.json points at emacs-mcp-stdio,
+;; which dials the socket exported below as EMACS_MCP_SOCKET. Other
+;; clients can connect with e.g.:
+;;   claude mcp add emacs -- emacs-mcp-stdio
 (use-package mcp-server
   :demand t
   :custom
@@ -439,6 +448,10 @@
         (set-process-query-on-exit-flag proc nil))))
   (advice-add 'mcp-server-transport-unix--start :after #'my/mcp-server-no-query-on-exit)
   (advice-add 'mcp-server-transport-tcp--start :after #'my/mcp-server-no-query-on-exit)
-  (mcp-server-start))
+  (mcp-server-start)
+  ;; Expose the socket to every Emacs subprocess so agent-shell's omp
+  ;; (and any shell spawned in here) can reach this session's MCP server.
+  (when (bound-and-true-p mcp-server-transport-unix--socket-path)
+    (setenv "EMACS_MCP_SOCKET" mcp-server-transport-unix--socket-path)))
 
 ;;; init.el ends here

@@ -272,7 +272,7 @@
               spotify = if config.programs ? spicetify then lib.getExe config.programs.spicetify.spicedSpotify else "spotify";
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
-              emacs = "emacs";
+              emacsclient = "emacsclient";
               run-floating-btop =
                 pkgs.writeScriptBin "run-floating-btop" ''
                   ${alacritty'} --title='bTop' -e btop
@@ -284,7 +284,11 @@
               "Mod+Shift+Slash".action = show-hotkey-overlay;
 
               # Application launchers
-              "Mod+T".action = spawn alacritty;
+              # Primary terminal: ghostel frame off the emacs daemon
+              # (-a '': autostart the daemon if it is down). Alacritty stays
+              # on Shift as the escape hatch that survives emacs.
+              "Mod+T".action = spawn emacsclient "-c" "-n" "-a" "" "-e" "(ghostel t)";
+              "Mod+Shift+T".action = spawn alacritty;
               "Mod+D".action = spawn rofi "-show" "drun";
               "Mod+W".action = spawn rofi "-show" "window";
               "Mod+Shift+S".action = spawn rofi "-show" "ssh";
@@ -293,7 +297,8 @@
               "Mod+M".action = spawn spotify;
               "Mod+Shift+M".action = focus-workspace "mail";
               "Mod+N".action = spawn trilium;
-              "Mod+X".action = spawn emacs;
+              # -a '': if the emacs.service daemon is down, autostart one.
+              "Mod+X".action = spawn emacsclient "-c" "-n" "-a" "";
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
@@ -496,6 +501,38 @@
               border: none;  /* Remove the external border */
             }
           '';
+        };
+        # pike: when an external monitor is plugged in, switch off the
+        # laptop panel. niri implements wlr-output-management, so kanshi
+        # handles this; neither static niri output config nor DMS can
+        # react to hotplug.
+        kanshi = lib.mkIf (osConfig.networking.hostName == "pike") {
+          enable = true;
+          systemdTarget = "graphical-session.target";
+          settings = [
+            {
+              profile.name = "undocked";
+              profile.outputs = [
+                {
+                  criteria = "eDP-1";
+                  status = "enable";
+                }
+              ];
+            }
+            {
+              profile.name = "docked";
+              profile.outputs = [
+                {
+                  criteria = "eDP-1";
+                  status = "disable";
+                }
+                {
+                  criteria = "*";
+                  status = "enable";
+                }
+              ];
+            }
+          ];
         };
 
         gammastep = {

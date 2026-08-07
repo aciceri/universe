@@ -27,6 +27,7 @@ let
         sizes = {
           terminal = 13;
           desktop = 13;
+          applications = 13; # keep app UIs at the same size as the terminal
         };
       };
 
