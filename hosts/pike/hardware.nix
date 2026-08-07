@@ -22,7 +22,6 @@
           intelBusId = "PCI:0:2:0";
           nvidiaBusId = "PCI:1:0:0";
         };
-        datacenter.enable = true;
       };
       nvidia-container-toolkit.enable = true;
     };
@@ -34,6 +33,9 @@
 
     services = {
       zfs.autoScrub.enable = true;
+      # Loads the nvidia kernel driver (works under Wayland too); required by
+      # nvidia-container-toolkit and hardware.nvidia.prime.
+      xserver.videoDrivers = [ "nvidia" ];
       power-profiles-daemon.enable = true;
       upower.enable = true;
       scx = {
