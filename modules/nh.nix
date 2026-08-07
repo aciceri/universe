@@ -12,5 +12,8 @@
       };
 
       home.sessionVariables.NH_FLAKE = config.universePath;
+      # home.sessionVariables only reaches POSIX shells via hm-session-vars.sh;
+      # nushell (the login shell) needs the variable delivered explicitly.
+      programs.nushell.environmentVariables.NH_FLAKE = config.universePath;
     };
 }
