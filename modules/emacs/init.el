@@ -65,10 +65,12 @@
   (add-hook 'prog-mode-hook #'display-line-numbers-mode)
 
   ;; Stylix injects the font (13pt, shared with the terminal) via the
-  ;; generated default.el, which loads AFTER init.el — bump the size for
-  ;; Emacs only once startup is done, so it wins over stylix.
-  (add-hook 'after-init-hook
-            (lambda () (set-face-attribute 'default nil :height 170)))
+  ;; generated default.el, which loads AFTER init.el. On macOS 13pt is too
+  ;; small for the Retina display, so bump Emacs once startup is done (it
+  ;; then wins over stylix); on Linux the stylix size is right — keep it.
+  (when (eq system-type 'darwin)
+    (add-hook 'after-init-hook
+              (lambda () (set-face-attribute 'default nil :height 170))))
 
   ;; Editing
   (electric-pair-mode t)
@@ -391,11 +393,20 @@
   (agent-shell-pi-acp-command '("omp" "acp"))
   (agent-shell-preferred-agent-config 'pi)
   (agent-shell-display-action nil)
+  ;; Slim UI: collapse tool-call runs into a single expandable header line
+  ;; (TAB expands), compact count-style header labels, and no welcome
+  ;; banner / graphical SVG header / busy animation.
+  (agent-shell-activity-group-expand-by-default nil)
+  (agent-shell-show-welcome-message nil)
+  (agent-shell-header-style 'text)
+  (agent-shell-show-busy-indicator nil)
   :bind (("C-c a RET" . agent-shell)
          ("C-c a n" . agent-shell-new-shell)
          ("C-c a w" . agent-shell-new-worktree-shell)
          ("C-c a s" . agent-shell-send-dwim))
   :config
+  (setq agent-shell-activity-group-header-label-function
+        #'agent-shell-activity-group-count-label)
   (add-to-list 'display-buffer-alist
                '((or (major-mode . agent-shell-mode)
                      (major-mode . agent-shell-viewport-view-mode)
