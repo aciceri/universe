@@ -7,6 +7,14 @@ let
     - Reply to me in the same language I use (Italian, English, etc.)
     - Keep technical terms in English even in non-English responses
 
+    ## MCP Tools (omp)
+    - MCP tools ARE available even when they don't appear among native tools:
+      omp mounts them as `xd://mcp__<server>_<tool>` devices (see "MCP Tool
+      Routes" in the system prompt). Invoke one by writing its JSON args to
+      that path.
+    - Never claim an MCP server (grain, linear, slack, gcal, emacs, ...) is
+      unavailable without first checking the routes or reading `xd://`.
+
     ## Environment: NixOS
     - System: NixOS with Home Manager and Flakes
     - Never attempt imperative installations (no apt, dnf, curl | bash, etc.)
