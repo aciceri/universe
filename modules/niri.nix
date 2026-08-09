@@ -243,6 +243,17 @@
               open-floating = true;
               open-focused = true;
             }
+            # Bitwarden browser extension popup (Zen)
+            {
+              matches = [
+                {
+                  app-id = "^zen";
+                  title = ''^Extension: \(Bitwarden Password Manager\)'';
+                }
+              ];
+              open-floating = true;
+              open-focused = true;
+            }
           ];
 
           layer-rules = [
@@ -572,6 +583,47 @@
         };
         Service = {
           ExecStart = lib.getExe pkgs.thunderbird;
+          Restart = "always";
+          Type = "simple";
+        };
+        Install.WantedBy = [ "graphical-session.target" ];
+      };
+      # Zen/Firefox extension popups (e.g. Bitwarden) are mapped with the
+      # generic "Zen Browser" title and only later retitled to
+      # "Extension: (...)", so niri's open-floating rules (evaluated once,
+      # at the first commit) can never match them. Watch the event stream
+      # and float such windows as soon as the real title shows up. Each
+      # window is floated at most once, so re-tiling it by hand sticks.
+      systemd.user.services.niri-float-extension-popups = {
+        Unit = {
+          Description = "Float browser extension popup windows in niri";
+          After = [ "graphical-session.target" ];
+          PartOf = [ "graphical-session.target" ];
+        };
+        Service = {
+          ExecStart = lib.getExe (
+            pkgs.writeShellApplication {
+              name = "niri-float-extension-popups";
+              runtimeInputs = [
+                config.programs.niri.package
+                pkgs.jq
+              ];
+              text = ''
+                seen=""
+                niri msg -j event-stream | jq --unbuffered -r '
+                  select(.WindowOpenedOrChanged != null)
+                  | .WindowOpenedOrChanged.window
+                  | select(.is_floating == false)
+                  | select((.title // "") | startswith("Extension: (Bitwarden"))
+                  | .id
+                ' | while read -r id; do
+                  case " $seen " in *" $id "*) continue ;; esac
+                  seen="$seen $id"
+                  niri msg action move-window-to-floating --id "$id"
+                done
+              '';
+            }
+          );
           Restart = "always";
           Type = "simple";
         };
