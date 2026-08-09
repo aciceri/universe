@@ -181,6 +181,10 @@
                   };
                   environment.NIX_CONFIG = ''
                     post-build-hook = ${atticPushHook}
+                    # If a substituter advertises a path but the NAR download
+                    # fails (e.g. cache metadata/storage desync), rebuild
+                    # locally instead of failing the CI job.
+                    fallback = true
                   '';
                 };
               }) instancesNames
