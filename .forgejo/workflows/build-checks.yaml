@@ -11,6 +11,7 @@
         "x86_64-linux/blog-shell",
         "x86_64-linux/caltrack",
         "x86_64-linux/caltrack-shell",
+        "x86_64-linux/catppuccin-gitea",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
@@ -19,6 +20,15 @@
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
         "x86_64-linux/dms-ccusage-plugin",
+        "x86_64-linux/emacs-hel",
+        "x86_64-linux/emacs-hel-collection",
+        "x86_64-linux/emacs-hel-ghostel",
+        "x86_64-linux/emacs-hel-leader",
+        "x86_64-linux/emacs-hel-org",
+        "x86_64-linux/emacs-mcp-server",
+        "x86_64-linux/emacs-niri-awareness",
+        "x86_64-linux/emacs-terraform-ts-mode",
+        "x86_64-linux/emacs-vertico-buffer-frame",
         "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
@@ -26,6 +36,8 @@
         "x86_64-linux/foodlog-backend",
         "x86_64-linux/foodlog-frontend",
         "x86_64-linux/foodlog-shell",
+        "x86_64-linux/hass-garmin-connect",
+        "x86_64-linux/hass-pun-sensor",
         "x86_64-linux/helix-master",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
@@ -57,6 +69,7 @@
         "x86_64-linux/blog-shell",
         "x86_64-linux/caltrack",
         "x86_64-linux/caltrack-shell",
+        "x86_64-linux/catppuccin-gitea",
         "x86_64-linux/claude-desktop",
         "x86_64-linux/configurations/nixos/picard",
         "x86_64-linux/configurations/nixos/pike",
@@ -65,6 +78,15 @@
         "x86_64-linux/cv-shell",
         "x86_64-linux/default-shell",
         "x86_64-linux/dms-ccusage-plugin",
+        "x86_64-linux/emacs-hel",
+        "x86_64-linux/emacs-hel-collection",
+        "x86_64-linux/emacs-hel-ghostel",
+        "x86_64-linux/emacs-hel-leader",
+        "x86_64-linux/emacs-hel-org",
+        "x86_64-linux/emacs-mcp-server",
+        "x86_64-linux/emacs-niri-awareness",
+        "x86_64-linux/emacs-terraform-ts-mode",
+        "x86_64-linux/emacs-vertico-buffer-frame",
         "x86_64-linux/files/.forgejo/workflows/build-checks.yaml",
         "x86_64-linux/files/.gitignore",
         "x86_64-linux/files/README.md",
@@ -72,6 +94,8 @@
         "x86_64-linux/foodlog-backend",
         "x86_64-linux/foodlog-frontend",
         "x86_64-linux/foodlog-shell",
+        "x86_64-linux/hass-garmin-connect",
+        "x86_64-linux/hass-pun-sensor",
         "x86_64-linux/helix-master",
         "x86_64-linux/hyphenopoly",
         "x86_64-linux/mirror-checks",
@@ -206,6 +230,19 @@
         }
       ]
     },
+    "x86_64-linux/catppuccin-gitea": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"catppuccin-gitea\"' -L"
+        }
+      ]
+    },
     "x86_64-linux/claude-desktop": {
       "runs-on": "native",
       "steps": [
@@ -310,6 +347,123 @@
         }
       ]
     },
+    "x86_64-linux/emacs-hel": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-hel\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-hel-collection": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-hel-collection\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-hel-ghostel": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-hel-ghostel\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-hel-leader": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-hel-leader\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-hel-org": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-hel-org\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-mcp-server": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-mcp-server\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-niri-awareness": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-niri-awareness\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-terraform-ts-mode": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-terraform-ts-mode\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/emacs-vertico-buffer-frame": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"emacs-vertico-buffer-frame\"' -L"
+        }
+      ]
+    },
     "x86_64-linux/files/.forgejo/workflows/build-checks.yaml": {
       "runs-on": "native",
       "steps": [
@@ -398,6 +552,32 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"foodlog-shell\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/hass-garmin-connect": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"hass-garmin-connect\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/hass-pun-sensor": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"hass-pun-sensor\"' -L"
         }
       ]
     },

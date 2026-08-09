@@ -5,11 +5,7 @@
       sisko.module =
         { config, pkgs, ... }:
         let
-          theme = pkgs.fetchzip {
-            url = "https://github.com/catppuccin/gitea/releases/download/v1.0.1/catppuccin-gitea.tar.gz";
-            hash = "sha256-et5luA3SI7iOcEIQ3CVIu0+eiLs8C/8mOitYlWQa/uI=";
-            stripRoot = false;
-          };
+          theme = pkgs.catppuccin-gitea;
           cfg = config.services.forgejo;
           inherit (cfg) stateDir;
         in

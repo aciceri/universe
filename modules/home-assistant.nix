@@ -2,20 +2,6 @@
 {
   configurations.nixos.sisko.module =
     { config, pkgs, ... }:
-    let
-      pun_sensor = pkgs.fetchFromGitHub {
-        owner = "virtualdj";
-        repo = "pun_sensor";
-        rev = "51b216fab5c0d454d66060647c36e81bebfaf059";
-        hash = "sha256-bGVJx3bObXdf4AiC6bDvafs53NGS2aufRcTUmXy8nAI=";
-      };
-      garmin_connect = pkgs.fetchFromGitHub {
-        owner = "cyberjunky";
-        repo = "home-assistant-garmin_connect";
-        rev = "e2deaed42b66c982b150ca9a9e543031ad51228c";
-        hash = "sha256-TtrcgLGnhNRBF1SqKMkPlEi/XEBUtDAnaWfzkh50+D8=";
-      };
-    in
     {
       secrets = {
         home_assistant_ssh_key.owner = "hass";
@@ -67,6 +53,10 @@
         config = {
           default_config = { };
           http = {
+            # nixpkgs dropped the `http.server_port` option default, but both
+            # `openFirewall` and the nginx proxy below still read it, so pin
+            # Home Assistant's own default explicitly.
+            server_port = 8123;
             use_x_forwarded_for = true;
             trusted_proxies = [
               "127.0.0.1"
@@ -99,8 +89,8 @@
 
       systemd.tmpfiles.rules = [
         "d ${config.services.home-assistant.configDir}/custom_components 770 hass hass"
-        "C+ ${config.services.home-assistant.configDir}/custom_components/pun_sensor 770 hass hass - ${pun_sensor}/custom_components/pun_sensor"
-        "C+ ${config.services.home-assistant.configDir}/custom_components/garmin_connect 770 hass hass - ${garmin_connect}/custom_components/garmin_connect"
+        "C+ ${config.services.home-assistant.configDir}/custom_components/pun_sensor 770 hass hass - ${pkgs.hass-pun-sensor}/custom_components/pun_sensor"
+        "C+ ${config.services.home-assistant.configDir}/custom_components/garmin_connect 770 hass hass - ${pkgs.hass-garmin-connect}/custom_components/garmin_connect"
 
         "d ${config.services.home-assistant.configDir}/.ssh 770 hass hass"
         "C ${config.services.home-assistant.configDir}/.ssh/id_ed25519 700 hass hass - ${config.age.secrets.home_assistant_ssh_key.path}"

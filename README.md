@@ -170,19 +170,67 @@ To start a development server with hot reload, run:
 This repository also acts as a NUR repository. Note that not all packages in the `packages`
 flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
-### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.15.1)
+### [asciinema-player](packages/asciinema-player/_package.nix) (version 3.17.0)
 
 A web player for terminal session recordings
+
+### [catppuccin-gitea](packages/catppuccin-gitea/_package.nix) (version 1.0.2)
+
+Soothing pastel theme for Gitea and Forgejo
 
 ### [dms-ccusage-plugin](packages/dms-ccusage-plugin/_package.nix) (version 1.0.0)
 
 DMS plugin showing Claude Code billing block usage
 
-### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-06-17)
+### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-08-09)
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
-### [helix-master](packages/helix-master/_package.nix) (version master-72d583700adf1f0e4e79356662b563cd3a76ab88)
+### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-03)
+
+Helix emulation layer for Emacs
+
+### [emacs-hel-collection](packages/emacs-hel-collection/_package.nix) (version 0-unstable-2026-08-07)
+
+Collection of Hel keybindings for built-in and third-party Emacs packages
+
+### [emacs-hel-ghostel](packages/emacs-hel-ghostel/_package.nix) (version 0.3.0-unstable-2026-07-09)
+
+Hel integration for the Ghostel terminal emulator
+
+### [emacs-hel-leader](packages/emacs-hel-leader/_package.nix) (version 2.1-unstable-2026-07-09)
+
+Leader key for Hel, the Emacs Helix emulation layer
+
+### [emacs-hel-org](packages/emacs-hel-org/_package.nix) (version 0-unstable-2026-07-09)
+
+Hel integration with Org mode
+
+### [emacs-mcp-server](packages/emacs-mcp-server/_package.nix) (version 0.7.0-unstable-2026-05-04)
+
+Pure Elisp MCP server exposing Emacs to LLM agents
+
+### [emacs-niri-awareness](packages/emacs-niri-awareness/_package.nix) (version 0-unstable-2026-07-31)
+
+Emacs IPC client for the niri Wayland compositor
+
+### [emacs-terraform-ts-mode](packages/emacs-terraform-ts-mode/_package.nix) (version 0.6-unstable-2026-05-31)
+
+Terraform major mode for Emacs using tree-sitter and eglot
+
+### [emacs-vertico-buffer-frame](packages/emacs-vertico-buffer-frame/_package.nix) (version 0-unstable-2026-06-12)
+
+Child-frame display for Vertico completions
+
+### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.14-unstable-2026-08-09)
+
+Home Assistant integration exposing and uploading Garmin Connect data
+
+### [hass-pun-sensor](packages/hass-pun-sensor/_package.nix) (version 4.0.1-unstable-2026-04-18)
+
+Home Assistant integration exposing the Italian PUN electricity prices
+
+### [helix-master](packages/helix-master/_package.nix) (version master-079a789e8cb08ead67f19e1971a1b7438b37354b)
 
 Post-modern modal text editor
 
@@ -198,7 +246,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.03.17-unstable-2026-05-25)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.07.04-unstable-2026-08-04)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
