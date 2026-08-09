@@ -51,6 +51,7 @@
 
         home.file.".config/emacs/init.el".source =
           config.lib.file.mkOutOfStoreSymlink "${config.universePath}/modules/emacs/init.el";
+        home.file.".config/emacs/lisp".source = config.lib.file.mkOutOfStoreSymlink "${config.universePath}/modules/emacs/lisp";
         programs.emacs = {
           enable = true;
           # pgtk targets Wayland/X11; on macOS the native Mitsuharu port is the
@@ -149,6 +150,40 @@
                   })
                 else
                   epkgs.ghostel;
+              # emacs-niri-awareness: IPC client for the niri compositor
+              # (niri-rpc + niri-frame + niri-frame-visible). Personal project,
+              # not on MELPA; pin the rev. Tests at the repo root would be
+              # byte-compiled too, so drop them first.
+              niri-awareness = epkgs.trivialBuild rec {
+                pname = "niri-awareness";
+                version = "0-unstable-" + builtins.substring 0 7 src.rev;
+                src = pkgs.fetchFromGitHub {
+                  owner = "binarin";
+                  repo = "emacs-niri-awareness";
+                  rev = "8474ac212d56527507a94c59566273e0735001ac";
+                  hash = "sha256-+HeWcoPr5ivylZm5xIwgxsnRwmKQ7mkZfWgV7UlkwOM=";
+                };
+                preBuild = ''
+                  rm -f ./*-test.el
+                '';
+              };
+              # vertico-buffer-frame: centered child-frame display for vertico
+              # (dmenu-style completion). Not on MELPA; pin the rev. Successor
+              # of vertico-posframe-preview, no private-API advice.
+              vertico-buffer-frame = epkgs.trivialBuild rec {
+                pname = "vertico-buffer-frame";
+                version = "0-unstable-" + builtins.substring 0 7 src.rev;
+                src = pkgs.fetchFromGitHub {
+                  owner = "kn66";
+                  repo = "vertico-buffer-frame";
+                  rev = "af12d6fe94fa9802dbdcf844a52cb49bd30baa61";
+                  hash = "sha256-bj1DOw9SV7hk+3cF7KQhfVoRjxEWc9RYw1uEEkfIy38=";
+                };
+                packageRequires = [
+                  epkgs.vertico
+                  epkgs.consult
+                ];
+              };
             in
             with epkgs;
             [
@@ -184,11 +219,13 @@
               consult-project-extra
               consult-eglot
               vertico
+              vertico-buffer-frame
               corfu
               nix-ts-mode
               haskell-ts-mode
               agent-shell
               mcp-server
+              niri-awareness
               orderless
               marginalia
               god-mode
@@ -199,7 +236,6 @@
               catppuccin-theme
               rainbow-delimiters
               envrc
-              eat
               nael
             ];
         };
