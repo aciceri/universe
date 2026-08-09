@@ -12,7 +12,14 @@ fpArgs: {
         # (zfs-kernel is marked broken against zen 7.1.5; 6.18 LTS is the
         # newest compatible kernel).
         kernelPackages = pkgs.linuxPackages;
-        kernelParams = [ "ip=dhcp" ];
+        kernelParams = [
+          "ip=dhcp"
+          # The firmware advertises S3 but Raptor Lake platforms only get
+          # validated for Modern Standby: entering "deep" sleep hard-hangs
+          # in ACPI (journal ends at "PM: suspend entry (deep)", forced
+          # reboot required). Force the supported s2idle path instead.
+          "mem_sleep_default=s2idle"
+        ];
         # Explicit new default (26.11); silences the eval warning.
         zfs.forceImportRoot = false;
 
