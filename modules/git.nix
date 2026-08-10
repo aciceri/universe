@@ -27,9 +27,9 @@
         programs.lazygit = {
           enable = true;
           settings = {
-            git.pagers = [
+            git.diffRenderers = [
               {
-                pager = "${lib.getExe pkgs.delta} --${config.stylix.polarity or "dark"} --paging=never";
+                command = "${lib.getExe pkgs.delta} --${config.stylix.polarity or "dark"} --paging=never";
               }
             ];
           };
