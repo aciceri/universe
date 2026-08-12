@@ -186,7 +186,7 @@ DMS plugin showing Claude Code billing block usage
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
-### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-03)
+### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-09)
 
 Helix emulation layer for Emacs
 
@@ -222,7 +222,7 @@ Terraform major mode for Emacs using tree-sitter and eglot
 
 Child-frame display for Vertico completions
 
-### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.14-unstable-2026-08-09)
+### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.15-unstable-2026-08-11)
 
 Home Assistant integration exposing and uploading Garmin Connect data
 
