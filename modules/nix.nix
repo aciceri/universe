@@ -70,6 +70,10 @@ in
     ];
 
     nix = {
+      # Builds only get CPU/IO when the desktop is idle: full parallelism
+      # when unattended, no jank while interactive.
+      daemonCPUSchedPolicy = "idle";
+      daemonIOSchedClass = "idle";
       extraOptions = ''
         extra-platforms = aarch64-linux arm-linux i686-linux riscv64-linux armv6l-linux
       '';
@@ -78,4 +82,8 @@ in
     programs.nix-ld.enable = true;
     services.envfs.enable = true;
   };
+
+  configurations.nixos.pike.module.nix.settings.max-jobs = 6;
+  configurations.nixos.picard.module.nix.settings.max-jobs = 8;
+  configurations.nixos.sisko.module.nix.settings.max-jobs = 2;
 }
