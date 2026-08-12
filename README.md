@@ -42,9 +42,11 @@ Running on my decommissioned Thinkpad Carbon X1 gen 7
 - [cal.sisko.wg.aciceri.dev](https://cal.sisko.wg.aciceri.dev)
 - [calibre.sisko.wg.aciceri.dev](https://calibre.sisko.wg.aciceri.dev)
 - [claude.sisko.wg.aciceri.dev](https://claude.sisko.wg.aciceri.dev)
+- [collab.sisko.wg.aciceri.dev](https://collab.sisko.wg.aciceri.dev)
 - [cups.sisko.wg.aciceri.dev](https://cups.sisko.wg.aciceri.dev)
 - [food.sisko.wg.aciceri.dev](https://food.sisko.wg.aciceri.dev)
 - [lidarr.sisko.wg.aciceri.dev](https://lidarr.sisko.wg.aciceri.dev)
+- [omp.sisko.wg.aciceri.dev](https://omp.sisko.wg.aciceri.dev)
 - [paper.sisko.wg.aciceri.dev](https://paper.sisko.wg.aciceri.dev)
 - [prowlarr.sisko.wg.aciceri.dev](https://prowlarr.sisko.wg.aciceri.dev)
 - [radarr.sisko.wg.aciceri.dev](https://radarr.sisko.wg.aciceri.dev)
@@ -241,6 +243,14 @@ Hyphenation for node and Polyfill for client-side hyphenation
 ### [mirror-checks](packages/mirror-checks/_package.nix) (version 1.0.0)
 
 Utility to synchronize CI checks from Forgejo to GitHub
+
+### [omp-collab-dashboard](packages/omp-collab-dashboard/_package.nix) (version 1.0.0)
+
+Dashboard listing active omp collab sessions
+
+### [omp-collab-relay](packages/omp-collab-relay/_package.nix) (version 1.0.0)
+
+Self-hosted relay for omp collab E2E-encrypted session sharing
 
 ### [reinstall-magisk-on-lineageos](packages/reinstall-magisk-on-lineageos/_package.nix) (version 1ca911e)
 

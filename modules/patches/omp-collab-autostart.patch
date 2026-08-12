@@ -1,0 +1,73 @@
+diff --git a/docs/collab.md b/docs/collab.md
+index 1a32139de..fe2fcdc71 100644
+--- a/docs/collab.md
++++ b/docs/collab.md
+@@ -107,6 +107,7 @@ Set `collab.webUrl` when the browser UI is hosted separately from the websocket
+ | `collab.relayUrl`     | `wss://my.omp.sh`     | Relay used by `/collab` when no relay is passed inline                                                         |
+ | `collab.webUrl`       | empty                 | Browser UI URL for `/collab` links; empty derives from relay; explicit `http://` is allowed only for localhost |
+ | `collab.displayName`  | OS username           | Name shown to other participants                                                                               |
++| `collab.autoStart`    | `false`               | Quietly host a collab session at startup (links via `/collab status`); skipped when launching as a guest      |
+ | `share.serverUrl`     | `https://my.omp.sh/s` | Share viewer/upload base used by `/share` (links are `<base>/<id>#<key>`)                                      |
+ | `share.redactSecrets` | `true`                | Run the secret obfuscator over `/share` snapshots before upload                                                |
+ 
+diff --git a/packages/coding-agent/src/config/settings-schema.ts b/packages/coding-agent/src/config/settings-schema.ts
+index 3083aabd1..3f4583494 100644
+--- a/packages/coding-agent/src/config/settings-schema.ts
++++ b/packages/coding-agent/src/config/settings-schema.ts
+@@ -2031,6 +2031,17 @@ export const SETTINGS_SCHEMA = {
+ 		},
+ 	},
+ 
++	"collab.autoStart": {
++		type: "boolean",
++		default: false,
++		ui: {
++			tab: "interaction",
++			group: "Collab",
++			label: "Auto-Start Hosting",
++			description: "Quietly host a collab session at startup (links via /collab status)",
++		},
++	},
++
+ 	"share.serverUrl": {
+ 		type: "string",
+ 		default: DEFAULT_SHARE_URL,
+diff --git a/packages/coding-agent/src/main.ts b/packages/coding-agent/src/main.ts
+index c9de644e9..16030b538 100644
+--- a/packages/coding-agent/src/main.ts
++++ b/packages/coding-agent/src/main.ts
+@@ -29,6 +29,7 @@ import { processFileArguments } from "./cli/file-processor";
+ import { buildInitialMessage } from "./cli/initial-message";
+ import { selectSession } from "./cli/session-picker";
+ import { applyStartupCwd } from "./cli/startup-cwd";
++import { CollabHost } from "./collab/host";
+ import { findConfigFile } from "./config";
+ import { ModelRegistry } from "./config/model-registry";
+ import {
+@@ -536,6 +537,26 @@ async function runInteractiveMode(
+ 	// `/join` so collab guards and error rendering stay in one place.
+ 	if (joinLink !== undefined) {
+ 		await executeBuiltinSlashCommand(`/join ${joinLink}`, { ctx: mode });
++	} else if (settings.get("collab.autoStart")) {
++		// `collab.autoStart`: quietly host this session at launch. Deliberately
++		// bypasses the /collab command output (link banner + QR code) to keep
++		// startup terse; the links stay recoverable via /collab status, and the
++		// footer segment updates through the normal CollabHost path. Skipped
++		// when launching as a guest via `omp join`.
++		const relayInput = settings.get("collab.relayUrl") || "";
++		if (relayInput) {
++			const relayUrl = relayInput.includes("://") ? relayInput : `wss://${relayInput}`;
++			const host = new CollabHost(mode);
++			try {
++				await host.start(relayUrl, settings.get("collab.webUrl") || "");
++				mode.collabHost = host;
++				mode.showStatus("Collab: hosting this session (/collab status for links)");
++			} catch (error: unknown) {
++				mode.showError(
++					`Collab auto-start failed: ${error instanceof Error ? error.message : String(error)}`,
++				);
++			}
++		}
+ 	}
+ 
+ 	if (initialMessage !== undefined) {

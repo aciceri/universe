@@ -43,6 +43,8 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/nixos-tests-talk",
+        "x86_64-linux/omp-collab-dashboard",
+        "x86_64-linux/omp-collab-relay",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
@@ -101,6 +103,8 @@
         "x86_64-linux/mirror-checks",
         "x86_64-linux/nixos-devops-talk",
         "x86_64-linux/nixos-tests-talk",
+        "x86_64-linux/omp-collab-dashboard",
+        "x86_64-linux/omp-collab-relay",
         "x86_64-linux/pre-commit",
         "x86_64-linux/reinstall-magisk-on-lineageos",
         "x86_64-linux/talks-agenix-shell-shell",
@@ -643,6 +647,32 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"nixos-tests-talk\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/omp-collab-dashboard": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"omp-collab-dashboard\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/omp-collab-relay": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"omp-collab-relay\"' -L"
         }
       ]
     },

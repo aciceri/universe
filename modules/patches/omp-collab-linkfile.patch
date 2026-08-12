@@ -1,0 +1,91 @@
+diff --git a/packages/coding-agent/src/collab/host.ts b/packages/coding-agent/src/collab/host.ts
+index 2ece267dd..36ee42d0d 100644
+--- a/packages/coding-agent/src/collab/host.ts
++++ b/packages/coding-agent/src/collab/host.ts
+@@ -11,8 +11,9 @@
+ 
+ import { timingSafeEqual } from "node:crypto";
+ import * as fs from "node:fs/promises";
++import * as path from "node:path";
+ import type { ImageContent, TextContent } from "@oh-my-pi/pi-ai";
+-import { logger } from "@oh-my-pi/pi-utils";
++import { getConfigRootDir, logger } from "@oh-my-pi/pi-utils";
+ import type {
+ 	BusChannel,
+ 	CollabUiRequest,
+@@ -138,12 +139,54 @@ export class CollabHost {
+ 	#agentsDebounce: Timer | null = null;
+ 	#busUnsubscribers: (() => void)[] = [];
+ 	#registryUnsubscribe?: () => void;
++	#linkFileUnsubscribe?: () => void;
+ 	#stopped = false;
+ 
+ 	constructor(ctx: InteractiveModeContext) {
+ 		this.#ctx = ctx;
+ 	}
+ 
++	/**
++	 * Local-only patch (not upstream): publish the active room's browser links
++	 * to ~/.omp/run/collab-hosts/<pid>.json so an external dashboard can list
++	 * every live session. The file carries the room secret — dir is 0700,
++	 * file 0600, owner-only. Best-effort: failures log and never break hosting.
++	 * Stale files from crashed hosts are pruned by the consumer via PID check.
++	 */
++	#linkFilePath(): string {
++		return path.join(getConfigRootDir(), "run", "collab-hosts", `${process.pid}.json`);
++	}
++
++	async #publishLinkFile(): Promise<void> {
++		try {
++			const file = this.#linkFilePath();
++			await fs.mkdir(path.dirname(file), { recursive: true, mode: 0o700 });
++			const payload = {
++				pid: process.pid,
++				sessionId: this.#sessionId,
++				sessionName: this.#ctx.sessionManager.getSessionName() ?? null,
++				cwd: this.#ctx.sessionManager.getCwd(),
++				startedAt: Date.now(),
++				webLink: this.#webLink,
++				webViewLink: this.#webViewLink,
++			};
++			// Write-then-rename so a concurrent reader never sees a partial file.
++			const tmp = `${file}.tmp`;
++			await fs.writeFile(tmp, JSON.stringify(payload, null, "\t"), { mode: 0o600 });
++			await fs.rename(tmp, file);
++		} catch (err) {
++			logger.warn("Failed to publish collab link file", { error: String(err) });
++		}
++	}
++
++	async #removeLinkFile(): Promise<void> {
++		try {
++			await fs.unlink(this.#linkFilePath());
++		} catch {
++			// Best-effort: never block teardown on the link file.
++		}
++	}
++
+ 	get link(): string {
+ 		return this.#link;
+ 	}
+@@ -285,6 +328,10 @@ export class CollabHost {
+ 			this.#scheduleStateBroadcast();
+ 		};
+ 		this.#updateStatusSegment();
++		this.#linkFileUnsubscribe = this.#ctx.sessionManager.onSessionNameChanged(() => {
++			void this.#publishLinkFile();
++		});
++		void this.#publishLinkFile();
+ 	}
+ 
+ 	/** Broadcast a goodbye, detach all taps, and close the socket. */
+@@ -304,6 +351,9 @@ export class CollabHost {
+ 		this.#busUnsubscribers = [];
+ 		this.#registryUnsubscribe?.();
+ 		this.#registryUnsubscribe = undefined;
++		this.#linkFileUnsubscribe?.();
++		this.#linkFileUnsubscribe = undefined;
++		void this.#removeLinkFile();
+ 		clearTimeout(this.#stateDebounce ?? undefined);
+ 		this.#stateDebounce = null;
+ 		clearTimeout(this.#agentsDebounce ?? undefined);

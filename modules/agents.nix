@@ -46,7 +46,21 @@ let
   llmAgentsOverlay =
     { inputs }:
     {
-      nixpkgs.overlays = [ inputs.llm-agents.overlays.shared-nixpkgs ];
+      nixpkgs.overlays = [
+        inputs.llm-agents.overlays.shared-nixpkgs
+        # collab-autostart: upstream candidate (oh-my-pi#6171);
+        # collab-linkfile: local only, drop once oh-my-pi#6354 lands.
+        (_final: prev: {
+          llm-agents = prev.llm-agents // {
+            omp = prev.llm-agents.omp.overrideAttrs (old: {
+              patches = (old.patches or [ ]) ++ [
+                ./patches/omp-collab-autostart.patch
+                ./patches/omp-collab-linkfile.patch
+              ];
+            });
+          };
+        })
+      ];
     };
 in
 {
