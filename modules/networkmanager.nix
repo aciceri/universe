@@ -2,7 +2,7 @@
 {
   flake.modules.nixos.pc = {
     networking.networkmanager.enable = true;
-    networking.useDHCP = lib.mkForce true;
+    networking.useDHCP = lib.mkForce false;
 
     users.users.ccr.extraGroups = [ "networkmanager" ];
   };

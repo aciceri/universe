@@ -142,41 +142,4 @@
         })
       ];
     };
-
-  flake.modules.nixos.workstation =
-    { config, ... }:
-    {
-      secrets.wireguard_mlabs_private_key = { };
-
-      networking.networkmanager.ensureProfiles = {
-        environmentFiles = [ config.age.secrets.wireguard_mlabs_private_key.path ];
-
-        profiles."wg-mlabs" = {
-          connection = {
-            id = "WireGuard MLabs";
-            type = "wireguard";
-            interface-name = "wg-mlabs";
-            autoconnect = true;
-          };
-
-          ipv4 = {
-            method = "manual";
-            address1 = "10.10.1.1/32";
-          };
-
-          ipv6.method = "disabled";
-
-          wireguard = {
-            private-key = "$WG_MLABS_PRIVATE_KEY";
-            mtu = 1300;
-          };
-
-          "wireguard-peer.A4u2Rt5WEMHOAc6YpDABkqAy2dzzFLH9Gn8xWcKaPQQ=" = {
-            endpoint = "vpn.staging.mlabs.city:51820";
-            allowed-ips = "10.10.0.0/16";
-            persistent-keepalive = 25;
-          };
-        };
-      };
-    };
 }
