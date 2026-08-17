@@ -15,7 +15,6 @@
           # therefore checks are disabled to speed up the build
           doInstallCheck = false;
         });
-        openFirewall = true;
         extraComponents = [
           "met"
           "radio_browser"
@@ -53,9 +52,10 @@
         config = {
           default_config = { };
           http = {
-            # nixpkgs dropped the `http.server_port` option default, but both
-            # `openFirewall` and the nginx proxy below still read it, so pin
-            # Home Assistant's own default explicitly.
+            # nixpkgs dropped the `http.server_port` option default (and the
+            # `openFirewall` option that used to read it), but the wg0 firewall
+            # rule and the nginx proxy below still need it, so pin Home
+            # Assistant's own default explicitly.
             server_port = 8123;
             use_x_forwarded_for = true;
             trusted_proxies = [
