@@ -188,7 +188,7 @@ DMS plugin showing Claude Code billing block usage
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
-### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-09)
+### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-16)
 
 Helix emulation layer for Emacs
 
@@ -256,7 +256,7 @@ Self-hosted relay for omp collab E2E-encrypted session sharing
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.07.04-unstable-2026-08-04)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.07.04-unstable-2026-08-17)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
