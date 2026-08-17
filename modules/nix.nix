@@ -1,4 +1,4 @@
-{ inputs, ... }:
+{ inputs, lib, ... }:
 let
   commonNix =
     { pkgs, ... }:
@@ -6,10 +6,12 @@ let
       nix = {
         package = pkgs.nixVersions.latest;
 
+        # Weekly hardlink dedup of the store. NOT `auto-optimise-store`: that
+        # dedups inline on every store write, which on ZFS means a metadata
+        # storm during every single build for the same end result.
         optimise.automatic = true;
 
         settings = {
-          auto-optimise-store = true;
           trusted-users = [
             "root"
             "@wheel"
@@ -78,6 +80,15 @@ in
         extra-platforms = aarch64-linux arm-linux i686-linux riscv64-linux armv6l-linux
       '';
     };
+
+    # nix-optimise.timer fires at 03:45 with Persistent=true, so on a laptop
+    # that is asleep at night systemd runs it as boot catch-up instead -- i.e.
+    # a full store sweep starting minutes after login. Nice=19 and
+    # IOSchedulingClass=idle do not help: ZFS schedules through its own ZIO
+    # pipeline and ignores CFQ/BFQ ionice, so the sweep saturates the pool and
+    # every task blocks in txg_sync. Skip the missed run instead.
+    # `Persistent = true` comes from the upstream module, hence mkForce.
+    systemd.timers.nix-optimise.timerConfig.Persistent = lib.mkForce false;
 
     programs.nix-ld.enable = true;
     services.envfs.enable = true;

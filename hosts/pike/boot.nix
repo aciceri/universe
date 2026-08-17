@@ -23,6 +23,13 @@ fpArgs: {
         # Explicit new default (26.11); silences the eval warning.
         zfs.forceImportRoot = false;
 
+        # ZFS sizes the ARC at up to ~all of RAM (c_max was 30 GiB of the
+        # 31 GiB installed here). It gives the pages back only under reclaim
+        # pressure, so a nix build ends up fighting kswapd0 and pushing
+        # several GiB of anonymous memory into swap. 8 GiB keeps store
+        # metadata hot without competing with the desktop.
+        extraModprobeConfig = "options zfs zfs_arc_max=8589934592";
+
         initrd.kernelModules = [ "amdgpu" ];
         initrd.availableKernelModules = [
           "nvme"
