@@ -224,7 +224,7 @@ Terraform major mode for Emacs using tree-sitter and eglot
 
 Child-frame display for Vertico completions
 
-### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.15-unstable-2026-08-11)
+### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.16-unstable-2026-08-19)
 
 Home Assistant integration exposing and uploading Garmin Connect data
 
@@ -256,7 +256,7 @@ Self-hosted relay for omp collab E2E-encrypted session sharing
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.07.04-unstable-2026-08-17)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.08.19-unstable-2026-08-19)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 
