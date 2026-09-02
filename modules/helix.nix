@@ -18,7 +18,10 @@
       programs.helix = {
         enable = true;
         package = if pkgs.stdenv.isDarwin then steelixDarwin else pkgs.steelix;
-        defaultEditor = true; # doesn't seem to work with nushell
+        # Sets home.sessionVariables.EDITOR, which nushell never sees: it does
+        # not source hm-session-vars.sh. Hence the explicit nushell claim at the
+        # bottom of this module.
+        defaultEditor = true;
         settings = {
           # Stylix's base16 theme paints "hint" with base03, the same color as
           # comments, so hint-severity virtual text (harper-ls) is unreadable.
@@ -147,6 +150,8 @@
           };
       };
 
-      programs.nushell.environmentVariables.EDITOR = "hx";
+      # A default so that a host importing the emacs module wins over it
+      # (modules/emacs/emacs.nix), while everyone else still gets helix.
+      programs.nushell.environmentVariables.EDITOR = lib.mkDefault "hx";
     };
 }

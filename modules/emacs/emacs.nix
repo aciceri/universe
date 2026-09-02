@@ -21,6 +21,10 @@
         fi
         exec ${lib.getExe pkgs.socat} STDIO "UNIX-CONNECT:$EMACS_MCP_SOCKET"
       '';
+
+      # A daemon is always running (services.emacs below), so a client frame is
+      # the right thing for anything that wants to open a file.
+      editor = "emacsclient -c";
     in
     lib.mkMerge [
       {
@@ -37,6 +41,19 @@
         # Emacs than stylix's generated base16 theme, which would load later
         # and shadow it. Font is set in init.el too.
         stylix.targets.emacs.enable = false;
+
+        # Wherever this module is imported, Emacs is the editor. Three claims
+        # are needed because nothing covers everyone:
+        #   - helix's defaultEditor would otherwise also write EDITOR, and two
+        #     definitions of home.sessionVariables.EDITOR is a conflict;
+        #   - nushell reads only its own `load-env` in config.nu, and beats the
+        #     inherited environment (modules/helix.nix sets it as mkDefault);
+        #   - everything else — lazygit from a launcher, a systemd user unit, a
+        #     subprocess of Emacs — reads the session environment.
+        programs.helix.defaultEditor = lib.mkForce false;
+        programs.nushell.environmentVariables.EDITOR = editor;
+        home.sessionVariables.EDITOR = editor;
+        systemd.user.sessionVariables = lib.mkIf pkgs.stdenv.isLinux { EDITOR = editor; };
 
         home.file.".config/emacs/init.el".source =
           config.lib.file.mkOutOfStoreSymlink "${config.universePath}/modules/emacs/init.el";
