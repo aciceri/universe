@@ -152,6 +152,14 @@
         systems.follows = "nix-systems_";
       };
     };
+    nixos-mailserver = {
+      url = "gitlab:simple-nixos-mailserver/nixos-mailserver";
+      inputs = {
+        nixpkgs.follows = "nixpkgs";
+        git-hooks.follows = "git-hooks";
+        flake-compat.follows = "";
+      };
+    };
   };
 
   # Grab SSH keys from GitHub
