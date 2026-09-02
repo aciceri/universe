@@ -29,6 +29,14 @@
           type = lib.types.bool;
           default = hostName != "sisko";
         };
+        # Desktops let NetworkManager own the tunnel so it can be toggled from
+        # the applet; headless servers have no NetworkManager, so they get a
+        # plain kernel interface instead. The two paths read the private key
+        # from differently shaped files, see the client branches below.
+        useNetworkManager = lib.mkOption {
+          type = lib.types.bool;
+          default = true;
+        };
         interfaceName = lib.mkOption {
           type = lib.types.str;
           default = "wg0";
@@ -69,12 +77,18 @@
               ip = "10.100.0.5";
               publicKey = "u3wOVwQjmRLRCrNSJ4fmJveTTWOf+KK+jan2D6H85iI=";
             };
+            janeway = {
+              ip = "10.100.0.9";
+              publicKey = "jVNhGT1+XiwMjiu7I+D+NzU28Lc/e/bukD5V0Z5n52M=";
+            };
           };
 
           networking.firewall.trustedInterfaces = [ cfg.interfaceName ];
         }
         (lib.mkIf cfg.isClient {
           secrets."wireguard_private_key_${hostName}" = { };
+        })
+        (lib.mkIf (cfg.isClient && cfg.useNetworkManager) {
 
           networking.networkmanager.ensureProfiles = {
             environmentFiles = [ config.age.secrets."wireguard_private_key_${hostName}".path ];
@@ -116,6 +130,24 @@
                 "wireguard-peer.${cfg.hosts.sisko.publicKey}".allowed-ips = "0.0.0.0/0;";
               };
             };
+          };
+        })
+        # Headless clients: no applet to toggle, so a single always-up kernel
+        # interface. The secret is the bare private key here, not the
+        # `WG_UNIVERSE_PRIVATE_KEY=...` environment file NetworkManager wants.
+        (lib.mkIf (cfg.isClient && !cfg.useNetworkManager) {
+          networking.wireguard.interfaces.wg-universe = {
+            mtu = 1200;
+            ips = [ "${cfg.hosts.${hostName}.ip}/24" ];
+            privateKeyFile = config.age.secrets."wireguard_private_key_${hostName}".path;
+            peers = [
+              {
+                publicKey = cfg.hosts.sisko.publicKey;
+                endpoint = "vpn.aciceri.dev:51820";
+                allowedIPs = [ "10.100.0.0/24" ];
+                persistentKeepalive = 25;
+              }
+            ];
           };
         })
         (lib.mkIf (!cfg.isClient) {
