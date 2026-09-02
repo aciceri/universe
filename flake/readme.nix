@@ -44,6 +44,7 @@ in
         "intro"
         "nixos"
         "darwin"
+        "infra"
         "projects"
         "packages"
         "files"
