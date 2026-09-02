@@ -82,6 +82,7 @@
                   "picard"
                   "kirk"
                   "pike"
+                  "janeway"
                 ];
               }
             ];
@@ -176,7 +177,10 @@
       mkFor = hosts: lib.mkIf (lib.elem hostname hosts);
     in
     {
-      secrets.sisko_restic_password = { };
+      # Only the exporter below reads it, and that one only runs on sisko:
+      # declaring it everywhere hands the backup passphrase to machines with
+      # no business decrypting it, the internet-facing janeway included.
+      secrets.sisko_restic_password = mkFor [ "sisko" ] { };
 
       services.prometheus.exporters = {
         node =
@@ -186,6 +190,7 @@
               "picard"
               "kirk"
               "pike"
+              "janeway"
             ]
             {
               enable = true;
