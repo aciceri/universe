@@ -1,5 +1,13 @@
 .direnv
 .pre-commit-config.yaml
+infra/*.tfplan
+infra/*.tfstate.*.backup
+infra/*.tfstate.backup
+infra/.terraform
+infra/.terraform.tfstate.lock.info
+infra/crash.*.log
+infra/crash.log
+janeway.qcow2
 kirk.qcow2
 picard.qcow2
 pike.qcow2
