@@ -11,6 +11,7 @@ on:
           - picard
           - pike
           - kirk
+          - janeway
 jobs:
   deploy:
     runs-on: native
