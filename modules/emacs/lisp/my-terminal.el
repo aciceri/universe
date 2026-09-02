@@ -17,5 +17,21 @@
   :after (hel ghostel)
   :demand t)
 
+;; A TUI running inside a ghostel buffer — lazygit, mostly — asks to edit a
+;; file by running the `emacs-edit-here' wrapper from
+;; modules/emacs/emacs.nix, which calls this. Replacing the buffer in the
+;; selected window means the file takes over the very window the terminal was
+;; in, instead of emacsclient popping a separate frame somewhere else.
+;;
+;; emacsclient's own frameless mode is not usable for this: it prints
+;; "Waiting for Emacs..." and never visits the file at all.
+(defun my/edit-here (file &optional line)
+  "Visit FILE in the selected window, at LINE when given."
+  (switch-to-buffer (find-file-noselect file))
+  (when (and (numberp line) (> line 1))
+    (goto-char (point-min))
+    (forward-line (1- line)))
+  (buffer-name))
+
 (provide 'my-terminal)
 ;;; my-terminal.el ends here

@@ -22,9 +22,30 @@
         exec ${lib.getExe pkgs.socat} STDIO "UNIX-CONNECT:$EMACS_MCP_SOCKET"
       '';
 
-      # A daemon is always running (services.emacs below), so a client frame is
-      # the right thing for anything that wants to open a file.
+      # A daemon is always running (services.emacs below), so everything opens
+      # a client frame: `-c` makes a new GUI frame, which is what a launcher or
+      # a GUI application wants. It blocks until the frame is closed, so it
+      # also satisfies an "edit and wait" contract.
       editor = "emacsclient -c";
+
+      # For a TUI already running inside Emacs, a new frame is the wrong
+      # answer: the file should take over the window the terminal is in. That
+      # is `my/edit-here` (modules/emacs/lisp/my-terminal.el), reached through
+      # this wrapper so the quoting of the file name into an elisp string
+      # literal lives in one place.
+      editHere = pkgs.writeShellApplication {
+        name = "emacs-edit-here";
+        runtimeInputs = [
+          config.programs.emacs.finalPackage
+          pkgs.coreutils
+        ];
+        text = ''
+          file=$(realpath -- "$1")
+          file=''${file//\\/\\\\}
+          file=''${file//\"/\\\"}
+          emacsclient --eval "(my/edit-here \"$file\" ''${2:-1})" > /dev/null
+        '';
+      };
     in
     lib.mkMerge [
       {
@@ -54,6 +75,27 @@
         programs.nushell.environmentVariables.EDITOR = editor;
         home.sessionVariables.EDITOR = editor;
         systemd.user.sessionVariables = lib.mkIf pkgs.stdenv.isLinux { EDITOR = editor; };
+
+        # lazygit does not just run $EDITOR: it matches it against a table of
+        # known presets and falls back to *vim* when it recognises nothing
+        # (pkg/config/editor_presets.go). Neither "emacsclient" nor a wrapper
+        # name is in that table, so the templates have to be spelled out.
+        #
+        # `editInTerminal = false`: nothing takes over the tty here. The file
+        # replaces the terminal's own buffer in Emacs, and lazygit keeps
+        # running underneath — switching back to its buffer resumes it.
+        #
+        # Caveat: `editAtLineAndWait` does not actually wait, because the
+        # wrapper returns as soon as Emacs has the file on screen. Only flows
+        # that must see the edit finished before continuing care, and making it
+        # block needs a round trip from Emacs back to the shell.
+        programs.lazygit.settings.os = {
+          edit = "${lib.getExe editHere} {{filename}}";
+          editAtLine = "${lib.getExe editHere} {{filename}} {{line}}";
+          editAtLineAndWait = "${lib.getExe editHere} {{filename}} {{line}}";
+          openDirInEditor = "${lib.getExe editHere} {{dir}}";
+          editInTerminal = false;
+        };
 
         home.file.".config/emacs/init.el".source =
           config.lib.file.mkOutOfStoreSymlink "${config.universePath}/modules/emacs/init.el";
