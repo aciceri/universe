@@ -184,11 +184,11 @@ Soothing pastel theme for Gitea and Forgejo
 
 DMS plugin showing Claude Code billing block usage
 
-### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-09-01)
+### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-09-02)
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
-### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-09-01)
+### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-09-02)
 
 Helix emulation layer for Emacs
 
