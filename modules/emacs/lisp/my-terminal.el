@@ -38,7 +38,16 @@
   (setq ghostel-timer-delay 0.05)
   ;; - Batch plain-URL linkification harder under sustained output
   ;;   (was 10% of CPU at the default 0.1s debounce).
-  (setq ghostel-plain-link-detection-delay 0.5))
+  (setq ghostel-plain-link-detection-delay 0.5)
+
+  ;; Terminal workloads (omp agents, builds, rg) run as *children of the
+  ;; daemon* — same emacs.service cgroup — so no systemd CPUWeight can
+  ;; separate them from the Lisp thread; inside one cgroup only nice
+  ;; decides. Spawn terminal shells at nice 10: Emacs (nice 0) preempts
+  ;; agent load whenever it has redraw/input work, and the shells get the
+  ;; full machine the moment Emacs is idle. nix builds are already
+  ;; SCHED_IDLE via nix.daemonCPUSchedPolicy in modules/nix.nix.
+  (setq ghostel-shell (list "nice" "-n10" (or (getenv "SHELL") "/bin/sh"))))
 
 ;; Helix editing model inside ghostel buffers; without this hel-local-mode
 ;; has no terminal state and swallows all self-inserting keys.
