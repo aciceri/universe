@@ -285,6 +285,12 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
+### [blender-mcp](packages/blender-mcp/_package.nix) (version 1.9.1)
+
+Third-party MCP server that lets any MCP client inspect and edit a running
+Blender scene. It talks JSON over TCP (default port 9876) to the companion
+Blender add-on, shipped here as `share/blender-mcp/addon.py`.
+
 ### [catppuccin-gitea](packages/catppuccin-gitea/_package.nix) (version 1.0.2)
 
 Soothing pastel theme for Gitea and Forgejo

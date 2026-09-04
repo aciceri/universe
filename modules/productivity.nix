@@ -12,7 +12,6 @@
         freecad-wayland
         openscad
         cura-appimage
-        blender
 
         # Office
         libreoffice
