@@ -36,10 +36,10 @@ diff --git a/packages/coding-agent/src/main.ts b/packages/coding-agent/src/main.
 index c9de644e9..16030b538 100644
 --- a/packages/coding-agent/src/main.ts
 +++ b/packages/coding-agent/src/main.ts
-@@ -29,6 +29,7 @@ import { processFileArguments } from "./cli/file-processor";
- import { buildInitialMessage } from "./cli/initial-message";
+@@ -30,6 +30,7 @@ import { buildInitialMessage } from "./cli/initial-message";
  import { selectSession } from "./cli/session-picker";
  import { applyStartupCwd } from "./cli/startup-cwd";
+ import { getLatestRelease } from "./cli/update-cli";
 +import { CollabHost } from "./collab/host";
  import { findConfigFile } from "./config";
  import { ModelRegistry } from "./config/model-registry";
