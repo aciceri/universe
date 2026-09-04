@@ -39,7 +39,7 @@
           enable = true;
           settings = {
             user = {
-              email = "andrea.ciceri@autistici.org";
+              email = "andrea@ciceri.me";
               name = "Andrea Ciceri";
             };
           };
@@ -63,7 +63,7 @@
         programs.git.settings = {
           user = {
             name = "Andrea Ciceri";
-            email = "andrea.ciceri@autistici.org";
+            email = "andrea@ciceri.me";
           };
           github.user = "aciceri";
         };
