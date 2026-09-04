@@ -58,6 +58,23 @@ let
                 ./patches/omp-collab-linkfile.patch
               ];
             });
+            # Upstream's Cargo `default` feature set excludes `embedded-web`
+            # (see zeroclaw-labs/zeroclaw Cargo.toml), so the packaged binary
+            # ships the gateway API but no compiled-in dashboard — it only
+            # falls back to a filesystem `web/dist` lookup that never exists
+            # in a Nix closure. The package's own preBuild already runs
+            # `xtask web gen-api` + `npm run build`, producing `web/dist`
+            # before the main cargo build phase, so this feature flag alone
+            # is enough to satisfy zeroclaw-gateway's build.rs assertion and
+            # get `include_dir!`-embedded static assets in the built binary.
+            # `buildFeatures` itself is a no-op via `overrideAttrs`: buildRustPackage
+            # bakes it into `cargoBuildFeatures` (what cargo-build-hook.sh actually
+            # reads) at the *original* call site, before this override runs, and
+            # overrideAttrs only shallow-merges the final derivation attrset — so
+            # the derivation's `cargoBuildFeatures` must be set directly.
+            zeroclaw = prev.llm-agents.zeroclaw.overrideAttrs (old: {
+              cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [ "embedded-web" ];
+            });
           };
         })
       ];
@@ -194,6 +211,19 @@ in
           MERIDIAN_HOST = "127.0.0.1";
           MERIDIAN_PORT = "3456";
           MERIDIAN_CLAUDE_PATH = lib.getExe pkgs.claude-code;
+          # zeroclaw isn't a Meridian-recognized client (no claude-cli/*
+          # User-Agent), so unrecognized /v1/messages traffic would default
+          # to the "opencode" adapter with tools executed *inside* Meridian's
+          # own SDK session (mode: "internal" — real bash/file access as
+          # claude-heartbeat, on sisko, bypassing zeroclaw's own sandbox
+          # entirely). Pin it to the "claudecode" adapter instead: passthrough
+          # by default (tool_use blocks are forwarded back to zeroclaw, which
+          # executes them locally under its own risk_profile), and it parses
+          # a "Primary working directory:" system-prompt line to answer path
+          # questions with the caller's real cwd instead of the proxy host's.
+          # claude.aciceri.dev (Open WebUI) is unaffected — it talks to the
+          # separate /v1/chat/completions handler, not this adapter chain.
+          MERIDIAN_DEFAULT_AGENT = "claudecode";
         };
         serviceConfig = {
           # Long-lived OAuth token from `claude setup-token`, stored manually:
