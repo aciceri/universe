@@ -55,6 +55,7 @@ Running on my decommissioned Thinkpad Carbon X1 gen 7
 - [torrent.sisko.wg.aciceri.dev](https://torrent.sisko.wg.aciceri.dev)
 - [trilium.sisko.wg.aciceri.dev](https://trilium.sisko.wg.aciceri.dev)
 - [vault.sisko.wg.aciceri.dev](https://vault.sisko.wg.aciceri.dev)
+- [zeroclaw.sisko.wg.aciceri.dev](https://zeroclaw.sisko.wg.aciceri.dev)
 
 ### Pike
 
