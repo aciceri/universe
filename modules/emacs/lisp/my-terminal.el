@@ -11,6 +11,35 @@
   ;; painting it with show-paren-mismatch until the cursor moves.
   (add-hook 'ghostel-mode-hook (lambda () (show-paren-local-mode -1))))
 
+;; Workaround for https://github.com/dakra/ghostel/issues/673: once a
+;; buffer has shown a kitty-graphics image, `ghostel--kitty-display-virtual'
+;; rescans the WHOLE buffer for U+10EEEE placeholders on every redraw
+;; (~30fps while output flows). Profiled 2026-09-04 on this daemon: ~82%
+;; of CPU in that scan, starving the single Lisp thread — every buffer,
+;; scratch included, lagged whenever a terminal was printing. Disable
+;; kitty graphics entirely until upstream limits the scan to the viewport;
+;; drop both lines to get inline images (yazi/timg previews) back.
+(with-eval-after-load 'ghostel
+  (setq ghostel-kitty-graphics-storage-limit 0)  ; new terminals: module ignores transmissions
+  (advice-add 'ghostel--kitty-display-virtual :override #'ignore) ; live buffers: skip the scan
+
+  ;; Redraw-cost tuning, profiled 2026-09-04 with several terminals
+  ;; streaming agent output (the daemon is one Lisp thread; every ms a
+  ;; redraw eats is a ms every other buffer's keystroke waits):
+  ;;
+  ;; - `window-text-pixel-size' in `ghostel--pixel-anchor' was 48% of
+  ;;   daemon CPU (a simulated redisplay layout per anchored window per
+  ;;   redraw). Its line-count fallback is exact while row heights are
+  ;;   uniform, and they are: kitty images are disabled above. Internal
+  ;;   variable, so re-check when bumping ghostel.
+  (setq ghostel--pixel-anchor-supported-p nil)
+  ;; - Cap redraws at 20fps instead of 30; adaptive-fps still gives
+  ;;   interactive typing its immediate-echo fast path.
+  (setq ghostel-timer-delay 0.05)
+  ;; - Batch plain-URL linkification harder under sustained output
+  ;;   (was 10% of CPU at the default 0.1s debounce).
+  (setq ghostel-plain-link-detection-delay 0.5))
+
 ;; Helix editing model inside ghostel buffers; without this hel-local-mode
 ;; has no terminal state and swallows all self-inserting keys.
 (use-package hel-ghostel
