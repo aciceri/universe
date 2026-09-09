@@ -299,15 +299,15 @@ Soothing pastel theme for Gitea and Forgejo
 
 DMS plugin showing Claude Code billing block usage
 
-### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-08-09)
+### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-09-08)
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
-### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-08-09)
+### [emacs-hel](packages/emacs-hel/_package.nix) (version new_undo_system-unstable-2026-09-02)
 
 Helix emulation layer for Emacs
 
-### [emacs-hel-collection](packages/emacs-hel-collection/_package.nix) (version 0-unstable-2026-08-07)
+### [emacs-hel-collection](packages/emacs-hel-collection/_package.nix) (version 0-unstable-2026-08-31)
 
 Collection of Hel keybindings for built-in and third-party Emacs packages
 
@@ -339,7 +339,7 @@ Terraform major mode for Emacs using tree-sitter and eglot
 
 Child-frame display for Vertico completions
 
-### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.15-unstable-2026-08-11)
+### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.16-unstable-2026-08-19)
 
 Home Assistant integration exposing and uploading Garmin Connect data
 
