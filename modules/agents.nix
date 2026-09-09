@@ -121,12 +121,7 @@ in
           };
       };
 
-      home.packages = with pkgs; [
-        llm-agents.omp
-        llm-agents.hermes-agent
-        llm-agents.hermes-desktop
-        llm-agents.zeroclaw
-      ];
+      home.packages = [ pkgs.llm-agents.omp ];
     };
 
   # OTEL telemetry endpoints — point to sisko inside WireGuard. Useful only
@@ -200,18 +195,16 @@ in
           MERIDIAN_HOST = "127.0.0.1";
           MERIDIAN_PORT = "3456";
           MERIDIAN_CLAUDE_PATH = lib.getExe pkgs.claude-code;
-          # zeroclaw isn't a Meridian-recognized client (no claude-cli/*
-          # User-Agent), so unrecognized /v1/messages traffic would default
-          # to the "opencode" adapter with tools executed *inside* Meridian's
-          # own SDK session (mode: "internal" — real bash/file access as
-          # claude-heartbeat, on sisko, bypassing zeroclaw's own sandbox
-          # entirely). Pin it to the "claudecode" adapter instead: passthrough
-          # by default (tool_use blocks are forwarded back to zeroclaw, which
-          # executes them locally under its own risk_profile), and it parses
-          # a "Primary working directory:" system-prompt line to answer path
-          # questions with the caller's real cwd instead of the proxy host's.
-          # claude.aciceri.dev (Open WebUI) is unaffected — it talks to the
-          # separate /v1/chat/completions handler, not this adapter chain.
+          # A client Meridian doesn't recognize (no claude-cli/* User-Agent)
+          # would land on the "opencode" adapter, whose tools run *inside*
+          # Meridian's own SDK session (mode: "internal" — real bash/file
+          # access as claude-heartbeat, on sisko). Pin the "claudecode"
+          # adapter instead: passthrough by default, so tool_use blocks go
+          # back to the caller, and it parses a "Primary working directory:"
+          # system-prompt line to answer path questions with the caller's real
+          # cwd instead of the proxy host's. claude.aciceri.dev (Open WebUI)
+          # is unaffected — it talks to the separate /v1/chat/completions
+          # handler, not this adapter chain.
           MERIDIAN_DEFAULT_AGENT = "claudecode";
         };
         serviceConfig = {
