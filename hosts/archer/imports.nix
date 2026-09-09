@@ -14,7 +14,7 @@
       claude-code
       daily-brief
       development
-      emacs
+      # emacs  # off, see modules/emacs/emacs.nix
       ghostty
       zed
       zellij

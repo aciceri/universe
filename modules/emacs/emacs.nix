@@ -1,6 +1,13 @@
-{ config, ... }:
+{ config, lib, ... }:
+let
+  # Emacs temporarily off everywhere; also commented out in
+  # hosts/archer/imports.nix, which imports this module by name.
+  enable = false;
+in
 {
-  flake.modules.homeManager.workstation.imports = [ config.flake.modules.homeManager.emacs ];
+  flake.modules.homeManager.workstation.imports = lib.optionals enable [
+    config.flake.modules.homeManager.emacs
+  ];
 
   flake.modules.homeManager.emacs =
     {

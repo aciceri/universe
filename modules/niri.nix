@@ -283,7 +283,8 @@
               spotify = if config.programs ? spicetify then lib.getExe config.programs.spicetify.spicedSpotify else "spotify";
               trilium = lib.getExe pkgs.trilium-desktop;
               claude-desktop = lib.getExe pkgs.claude-desktop;
-              emacsclient = "emacsclient";
+              # Parked with emacs (modules/emacs/emacs.nix):
+              # emacsclient = "emacsclient";
               run-floating-btop =
                 pkgs.writeScriptBin "run-floating-btop" ''
                   ${alacritty'} --title='bTop' -e btop
@@ -295,10 +296,8 @@
               "Mod+Shift+Slash".action = show-hotkey-overlay;
 
               # Application launchers
-              # Primary terminal: ghostel frame off the emacs daemon
-              # (-a '': autostart the daemon if it is down). Alacritty stays
-              # on Shift as the escape hatch that survives emacs.
-              "Mod+T".action = spawn emacsclient "-c" "-n" "-a" "" "-e" "(ghostel t)";
+              # "Mod+T".action = spawn emacsclient "-c" "-n" "-a" "" "-e" "(ghostel t)";
+              "Mod+T".action = spawn alacritty;
               "Mod+Shift+T".action = spawn alacritty;
               "Mod+D".action = spawn rofi "-show" "drun";
               "Mod+W".action = spawn rofi "-show" "window";
@@ -308,8 +307,7 @@
               "Mod+M".action = spawn spotify;
               "Mod+Shift+M".action = focus-workspace "mail";
               "Mod+N".action = spawn trilium;
-              # -a '': if the emacs.service daemon is down, autostart one.
-              "Mod+X".action = spawn emacsclient "-c" "-n" "-a" "";
+              # "Mod+X".action = spawn emacsclient "-c" "-n" "-a" "";
               # "Mod+Alt+L".action = spawn "swaylock";
               "Mod+Space".action = spawn rofi "-show" "menu" "-modi" "menu:rofi-power-menu";
               "Mod+Ctrl+B".action = spawn run-floating-btop;
