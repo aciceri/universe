@@ -32,6 +32,8 @@
           WEB_SEARCH_ENGINE = "duckduckgo";
           WEB_SEARCH_RESULT_COUNT = "5";
 
+          ENABLE_PIP_INSTALL_FRONTMATTER_REQUIREMENTS = "False";
+
           # No need to phone home.
           ENABLE_VERSION_UPDATE_CHECK = "False";
           SCARF_NO_ANALYTICS = "True";
