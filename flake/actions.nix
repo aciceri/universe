@@ -83,7 +83,7 @@ in
           drv = pkgs.writers.writeJSON "forgejo-workflow-build-checks.yaml" {
             name = "Build flake checks";
             on = {
-              push = { };
+              # push = { };
               workflow_dispatch = { };
             };
             jobs = buildJobs // {

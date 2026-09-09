@@ -1,7 +1,7 @@
 name: Bump flake inputs
 on:
-  schedule:
-    - cron: "0 15 * * *" # daily at 15:00
+  # schedule:
+  #   - cron: "0 15 * * *" # daily at 15:00
   workflow_dispatch:
 
 jobs:
