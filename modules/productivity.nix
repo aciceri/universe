@@ -6,7 +6,7 @@
       home.packages = with pkgs; [
         # 2d stuff
         gimp
-        inkscape
+        # inkscape # FIXME doesn't hit the cache
 
         # 3d stuff
         freecad-wayland
