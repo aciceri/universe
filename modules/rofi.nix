@@ -21,7 +21,6 @@
           inputbar.spacing = mkLiteral "1ch";
         };
         terminal = lib.getExe config.programs.alacritty.package;
-        pass.enable = true;
         plugins = [ pkgs.rofi-calc ];
       };
     };
