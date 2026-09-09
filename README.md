@@ -360,19 +360,19 @@ Hyphenation for node and Polyfill for client-side hyphenation
 
 Utility to synchronize CI checks from Forgejo to GitHub
 
-### [omp-collab-dashboard](packages/omp-collab-dashboard/_package.nix) (version 1.0.0)
-
-Dashboard listing active omp collab sessions
-
 ### [omp-collab-relay](packages/omp-collab-relay/_package.nix) (version 1.0.0)
 
 Self-hosted relay for omp collab E2E-encrypted session sharing
+
+### [omp-session-gateway](packages/omp-session-gateway/_package.nix) (version 0.3.0-unstable-2026-09-09)
+
+Private mobile directory and capability broker for live omp collab sessions
 
 ### [reinstall-magisk-on-lineageos](packages/reinstall-magisk-on-lineageos/_package.nix) (version 1ca911e)
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.07.04-unstable-2026-08-04)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.08.19-unstable-2026-08-30)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 

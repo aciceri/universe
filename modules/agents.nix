@@ -48,32 +48,21 @@ let
     {
       nixpkgs.overlays = [
         inputs.llm-agents.overlays.shared-nixpkgs
-        # collab-autostart: upstream candidate (oh-my-pi#6171);
-        # collab-linkfile: local only, drop once oh-my-pi#6354 lands.
-        (_final: prev: {
+        # omp-session-gateway needs an omp that auto-hosts a collab room and
+        # publishes it (plus its view/control capabilities and attention state)
+        # to the daemon's registry socket; stock omp does neither. The upstream
+        # artifact is a four-commit mbox that GNU patch — nix's `patches` —
+        # mis-applies, so it goes through `git apply` before the package's own
+        # postPatch. Both must move together: the mbox is cut against an exact
+        # omp tag, so a version bump that rejects it means waiting for the
+        # gateway to reroll (patches/oh-my-pi/README.md).
+        (final: prev: {
           llm-agents = prev.llm-agents // {
             omp = prev.llm-agents.omp.overrideAttrs (old: {
-              patches = (old.patches or [ ]) ++ [
-                ./patches/omp-collab-autostart.patch
-                ./patches/omp-collab-linkfile.patch
-              ];
-            });
-            # Upstream's Cargo `default` feature set excludes `embedded-web`
-            # (see zeroclaw-labs/zeroclaw Cargo.toml), so the packaged binary
-            # ships the gateway API but no compiled-in dashboard — it only
-            # falls back to a filesystem `web/dist` lookup that never exists
-            # in a Nix closure. The package's own preBuild already runs
-            # `xtask web gen-api` + `npm run build`, producing `web/dist`
-            # before the main cargo build phase, so this feature flag alone
-            # is enough to satisfy zeroclaw-gateway's build.rs assertion and
-            # get `include_dir!`-embedded static assets in the built binary.
-            # `buildFeatures` itself is a no-op via `overrideAttrs`: buildRustPackage
-            # bakes it into `cargoBuildFeatures` (what cargo-build-hook.sh actually
-            # reads) at the *original* call site, before this override runs, and
-            # overrideAttrs only shallow-merges the final derivation attrset — so
-            # the derivation's `cargoBuildFeatures` must be set directly.
-            zeroclaw = prev.llm-agents.zeroclaw.overrideAttrs (old: {
-              cargoBuildFeatures = (old.cargoBuildFeatures or [ ]) ++ [ "embedded-web" ];
+              nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.git ];
+              prePatch = (old.prePatch or "") + ''
+                git apply --whitespace=nowarn -p1 ${final.omp-session-gateway.ompPatch}
+              '';
             });
           };
         })
@@ -86,12 +75,12 @@ in
   ...
 }:
 {
-  # Provide the llm-agents overlay (and `omp`) on every host that wants
-  # claude-code/opencode.
+  # Provide the llm-agents overlay (and the patched `omp`) on every host that
+  # wants claude-code.
   flake.modules.nixos.claude-code-overlay = llmAgentsOverlay { inherit inputs; };
   flake.modules.darwin.claude-code-overlay = llmAgentsOverlay { inherit inputs; };
 
-  # Cross-platform claude-code config + opencode (omp).
+  # Cross-platform claude-code config + omp.
   flake.modules.homeManager.claude-code =
     { pkgs, lib, ... }:
     {
