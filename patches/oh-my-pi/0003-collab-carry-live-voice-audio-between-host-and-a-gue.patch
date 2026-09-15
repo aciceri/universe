@@ -1,0 +1,436 @@
+From 09cb7f1f649d5f2325f45d07e87b32ca6537df34 Mon Sep 17 00:00:00 2001
+From: ccr <ccr@aciceri.dev>
+Date: Sun, 13 Sep 2026 12:15:45 +0200
+Subject: [PATCH 3/8] collab: carry live voice audio between host and a guest
+
+A live call could only run on the machine holding the audio devices, so a
+collab guest could read and steer a session but never talk to it.
+
+Add four additive frames: live-ctl and live-audio guest-to-host, live-state
+and live-out host-to-guest. COLLAB_PROTO stays 3 because both sides already
+ignore unknown frame types, so a stock guest or host is unaffected.
+
+CollabHost routes them through a CollabLiveAudioBridge that the interactive
+/live controller registers, keeping collab free of live internals and the
+live controller free of collab internals. One peer owns live audio at a
+time; ownership is released when that peer leaves.
+
+Output frames whose peak is silence are dropped. The remote track runs for
+the whole call and is almost entirely silence, so relaying it verbatim cost
+2.9 MB where a gated stream costs 51 KB for the same reply.
+
+(cherry picked from commit 8f3786f27a38c3600d3b820ccabd4c14f0740fab)
+---
+ .../coding-agent/src/collab/controller.ts     |   7 +-
+ packages/coding-agent/src/collab/host.ts      | 135 ++++++++++++++++++
+ packages/coding-agent/src/collab/protocol.ts  |   7 +
+ packages/coding-agent/src/live/controller.ts  |   9 +-
+ .../controllers/live-command-controller.ts    |  30 +++-
+ .../src/modes/interactive-mode.ts             |   6 +
+ packages/coding-agent/src/modes/types.ts      |   7 +
+ .../slash-commands/builtin-collaboration.ts   |   1 +
+ packages/wire/src/index.ts                    |  22 ++-
+ 9 files changed, 218 insertions(+), 6 deletions(-)
+
+diff --git a/packages/coding-agent/src/collab/controller.ts b/packages/coding-agent/src/collab/controller.ts
+index 0926a37..2776b58 100644
+--- a/packages/coding-agent/src/collab/controller.ts
++++ b/packages/coding-agent/src/collab/controller.ts
+@@ -1,7 +1,7 @@
+ import { randomUUID } from "node:crypto";
+ import { basename } from "node:path";
+ import type { InteractiveModeContext } from "../modes/types";
+-import { CollabHost } from "./host";
++import { CollabHost, type CollabLiveAudioBridge } from "./host";
+ import {
+ 	type CollabPublicationState,
+ 	type CollabPublisherRecord,
+@@ -37,6 +37,8 @@ interface HostLike {
+ 	onFatal?: (reason: string) => void;
+ 	start(relayUrl: string, webUrl?: string): Promise<void>;
+ 	stop(reason: string): Promise<void>;
++	/** Absent on test doubles that do not model live voice. */
++	setLiveAudioBridge?(bridge: CollabLiveAudioBridge | undefined): void;
+ }
+ 
+ interface PublisherLike {
+@@ -253,6 +255,9 @@ export class CollabController {
+ 		this.#generation += 1;
+ 		const generation = this.#generation;
+ 		const host = this.#hostFactory(this.#context);
++		// Registered before start: a guest can claim live audio as soon as it
++		// joins, which may be before this call returns.
++		host.setLiveAudioBridge?.(this.#context.liveAudioBridge?.());
+ 		host.onFatal = reason => void this.#handleFatal(host, generation, reason);
+ 		try {
+ 			await host.start(relayUrl, options.webUrl ?? this.#context.settings.get("collab.webUrl") ?? "");
+diff --git a/packages/coding-agent/src/collab/host.ts b/packages/coding-agent/src/collab/host.ts
+index a81abd4..a1d985f 100644
+--- a/packages/coding-agent/src/collab/host.ts
++++ b/packages/coding-agent/src/collab/host.ts
+@@ -62,6 +62,43 @@ const STATE_DEBOUNCE_MS = 100;
+ const AGENTS_DEBOUNCE_MS = 100;
+ const STREAMING_STATE_INTERVAL_MS = 2000;
+ const WELCOME_IMAGE_STRIP_THRESHOLD = 24 * 1024 * 1024;
++/** Sample rate of the decoded live output stream forwarded to guests. */
++const LIVE_OUTPUT_RATE = 48_000;
++/** Frames whose peak stays at or below this are treated as silence. */
++const LIVE_SILENCE_PEAK = 0.002;
++
++/**
++ * Surface that owns live voice sessions on this host. The interactive `/live`
++ * controller registers one through {@link CollabHost.setLiveAudioBridge};
++ * without it, guests cannot start remote live audio.
++ */
++export interface CollabLiveAudioBridge {
++	/** Starts a live session with no local microphone or speaker. */
++	start(onOutput: (samples: Float32Array) => void): Promise<void>;
++	/** Feeds guest microphone audio as mono 16 kHz PCM. */
++	pushInput(samples: Float32Array): void;
++	setMuted(muted: boolean): void;
++	stop(): Promise<void>;
++}
++
++function decodePcm16(base64: string): Float32Array {
++	const bytes = Buffer.from(base64, "base64");
++	const count = bytes.byteLength >> 1;
++	const samples = new Float32Array(count);
++	for (let index = 0; index < count; index += 1) {
++		samples[index] = bytes.readInt16LE(index * 2) / 32_768;
++	}
++	return samples;
++}
++
++function encodePcm16(samples: Float32Array): string {
++	const bytes = Buffer.allocUnsafe(samples.length * 2);
++	for (let index = 0; index < samples.length; index += 1) {
++		const clamped = Math.max(-1, Math.min(1, samples[index] ?? 0));
++		bytes.writeInt16LE(Math.round(clamped * 32_767), index * 2);
++	}
++	return bytes.toString("base64");
++}
+ const WIRE_AGENT_EVENT_TYPES: Record<WireAgentEvent["type"], true> = {
+ 	agent_start: true,
+ 	agent_end: true,
+@@ -137,6 +174,9 @@ export class CollabHost {
+ 	#peers = new Map<number, { name: string; canWrite: boolean }>();
+ 	#uiReqSeq = 0;
+ 	#pendingUi = new Map<number, { request: CollabUiRequest; settle(result: CollabGuestUiResult): void }>();
++	#liveAudio: CollabLiveAudioBridge | undefined;
++	#liveOwner: number | undefined;
++	#liveSilent = true;
+ 	#lastStateJson = "";
+ 	#stateDebounce: Timer | null = null;
+ 	#streamingInterval: Timer | null = null;
+@@ -357,6 +397,12 @@ export class CollabHost {
+ 			case "fetch-transcript":
+ 				void this.#handleFetchTranscript(frame.reqId, frame.agentId, frame.fromByte, fromPeer);
+ 				break;
++			case "live-ctl":
++				void this.#handleLiveCtl(frame.op, fromPeer);
++				break;
++			case "live-audio":
++				this.#handleLiveAudio(frame.pcm, fromPeer);
++				break;
+ 			default:
+ 				logger.debug("collab host ignoring unexpected frame", { type: frame.t, fromPeer });
+ 		}
+@@ -526,9 +572,98 @@ export class CollabHost {
+ 			.catch(err => logger.warn("collab guest abort failed", { error: String(err) }));
+ 	}
+ 
++	/**
++	 * Registers the surface that owns live sessions on this host, normally the
++	 * interactive `/live` controller. Absent, `live-ctl` is refused.
++	 */
++	setLiveAudioBridge(bridge: CollabLiveAudioBridge | undefined): void {
++		this.#liveAudio = bridge;
++	}
++
++	async #handleLiveCtl(op: "claim" | "release" | "mute" | "unmute", fromPeer: number): Promise<void> {
++		const peer = this.#peers.get(fromPeer);
++		if (!peer?.canWrite) {
++			this.#rejectReadOnly("live audio", fromPeer);
++			return;
++		}
++		const bridge = this.#liveAudio;
++		if (!bridge) {
++			this.#socket?.send({ t: "live-state", active: false, error: "This host does not accept remote live audio." }, fromPeer);
++			return;
++		}
++		if (op === "claim") {
++			if (this.#liveOwner !== undefined && this.#liveOwner !== fromPeer) {
++				const holder = this.#peers.get(this.#liveOwner)?.name ?? "another participant";
++				this.#socket?.send(
++					{ t: "live-state", active: true, owner: this.#liveOwner, error: `${holder} is already holding live audio.` },
++					fromPeer,
++				);
++				return;
++			}
++			this.#liveOwner = fromPeer;
++			try {
++				await bridge.start(samples => this.#sendLiveAudio(samples));
++			} catch (error) {
++				this.#liveOwner = undefined;
++				this.#socket?.send({ t: "live-state", active: false, error: String(error) }, fromPeer);
++				return;
++			}
++			this.#ctx.session.emitNotice("info", `${peer.name} started live voice`, "collab");
++			this.#broadcast({ t: "live-state", active: true, owner: fromPeer, muted: false });
++			return;
++		}
++		if (this.#liveOwner !== fromPeer) return;
++		if (op === "release") {
++			this.#liveOwner = undefined;
++			await bridge.stop().catch(error => logger.warn("collab live stop failed", { error: String(error) }));
++			this.#ctx.session.emitNotice("info", `${peer.name} stopped live voice`, "collab");
++			this.#broadcast({ t: "live-state", active: false });
++			return;
++		}
++		const muted = op === "mute";
++		bridge.setMuted(muted);
++		this.#broadcast({ t: "live-state", active: true, owner: fromPeer, muted });
++	}
++
++	#handleLiveAudio(pcm: string, fromPeer: number): void {
++		if (this.#liveOwner !== fromPeer || !this.#liveAudio) return;
++		const samples = decodePcm16(pcm);
++		if (samples.length > 0) this.#liveAudio.pushInput(samples);
++	}
++
++	/**
++	 * Forwards one decoded output frame to the owning guest. Silent frames are
++	 * dropped: the remote track runs for the whole call, and in practice almost
++	 * all of it is silence, so relaying it verbatim would waste bandwidth for
++	 * nothing.
++	 */
++	#sendLiveAudio(samples: Float32Array): void {
++		const owner = this.#liveOwner;
++		if (owner === undefined || !this.#socket) return;
++		let peak = 0;
++		for (const sample of samples) {
++			const magnitude = Math.abs(sample);
++			if (magnitude > peak) peak = magnitude;
++		}
++		if (peak <= LIVE_SILENCE_PEAK) {
++			// One frame of hangover keeps word-final consonants from clipping.
++			if (this.#liveSilent) return;
++			this.#liveSilent = true;
++		} else {
++			this.#liveSilent = false;
++		}
++		this.#socket.send({ t: "live-out", pcm: encodePcm16(samples), rate: LIVE_OUTPUT_RATE }, owner);
++	}
++
+ 	#handlePeerLeft(peer: number): void {
+ 		const name = this.#peers.get(peer)?.name;
+ 		this.#peers.delete(peer);
++		if (this.#liveOwner === peer) {
++			this.#liveOwner = undefined;
++			const bridge = this.#liveAudio;
++			void bridge?.stop().catch(error => logger.warn("collab live stop failed", { error: String(error) }));
++			this.#broadcast({ t: "live-state", active: false });
++		}
+ 		if (name) this.#ctx.session.emitNotice("info", `${name} left the collab session`, "collab");
+ 		this.#updateStatusSegment();
+ 		this.#scheduleStateBroadcast();
+diff --git a/packages/coding-agent/src/collab/protocol.ts b/packages/coding-agent/src/collab/protocol.ts
+index 92e904f..0cb8bce 100644
+--- a/packages/coding-agent/src/collab/protocol.ts
++++ b/packages/coding-agent/src/collab/protocol.ts
+@@ -103,6 +103,13 @@ export type CollabFrame =
+ 	/** Targeted reply to fetch-transcript; `error` marks a terminal read failure that guests must surface without hot retrying. */
+ 	| { t: "transcript"; reqId: number; text: string; newSize: number; error?: string }
+ 	| { t: "bye"; reason: string }
++	/**
++	 * Decoded live speaker audio for the owning guest: base64 PCM16, mono, at
++	 * `rate`. Silent frames are dropped host-side, so this is not continuous.
++	 */
++	| { t: "live-out"; pcm: string; rate: number }
++	/** Live-audio ownership state; `owner` is the peer id holding it. */
++	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
+ 	| { t: "error"; message: string };
+ 
+ // ═══════════════════════════════════════════════════════════════════════════
+diff --git a/packages/coding-agent/src/live/controller.ts b/packages/coding-agent/src/live/controller.ts
+index d25ac5c..cb3ffd6 100644
+--- a/packages/coding-agent/src/live/controller.ts
++++ b/packages/coding-agent/src/live/controller.ts
+@@ -226,8 +226,13 @@ export class LiveSessionController {
+ 
+ 	/** Toggles microphone capture while leaving output and the session connected. */
+ 	toggleMute(): void {
+-		if (this.#stopped) return;
+-		this.#muted = !this.#muted;
++		this.setMuted(!this.#muted);
++	}
++
++	/** Sets microphone capture state; output and the session stay connected. */
++	setMuted(muted: boolean): void {
++		if (this.#stopped || muted === this.#muted) return;
++		this.#muted = muted;
+ 		if (this.#muted) {
+ 			this.#inputLevel = 0;
+ 			this.#emitLevels();
+diff --git a/packages/coding-agent/src/modes/controllers/live-command-controller.ts b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
+index 422a8d0..b39c037 100644
+--- a/packages/coding-agent/src/modes/controllers/live-command-controller.ts
++++ b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
+@@ -1,6 +1,12 @@
+ import type { AssistantMessage } from "@oh-my-pi/pi-ai";
+ import { logger } from "@oh-my-pi/pi-utils";
+-import { LiveSessionController, type LiveSessionControllerOptions, type LiveTranscript } from "../../live/controller";
++import type { CollabLiveAudioBridge } from "../../collab/host";
++import {
++	type LiveAudioEndpoint,
++	LiveSessionController,
++	type LiveSessionControllerOptions,
++	type LiveTranscript,
++} from "../../live/controller";
+ import { LIVE_MODEL } from "../../live/protocol";
+ import { LiveVisualizer } from "../../live/visualizer";
+ import { vocalizer } from "../../tts/vocalizer";
+@@ -62,6 +68,25 @@ export class LiveCommandController {
+ 		await this.#start();
+ 	}
+ 
++	/**
++	 * Live-audio bridge for a collab guest: the same session surface and
++	 * visualizer, but captured and rendered on the guest's device instead of
++	 * this machine's. Registered on {@link CollabHost.setLiveAudioBridge}.
++	 */
++	collabBridge(): CollabLiveAudioBridge {
++		return {
++			start: async onOutput => {
++				if (this.active) throw new Error("A live session is already running on the host.");
++				if (this.#settling) await this.#settling;
++				await this.#start({ localCapture: false, localPlayback: false, onOutput });
++				if (!this.#session) throw new Error("The live session stopped while starting.");
++			},
++			pushInput: samples => this.#session?.pushInput(samples),
++			setMuted: muted => this.#session?.setMuted(muted),
++			stop: () => this.stop(),
++		};
++	}
++
+ 	/** Stop the active live session and restore the editor. */
+ 	async stop(): Promise<void> {
+ 		const session = this.#session;
+@@ -91,7 +116,7 @@ export class LiveCommandController {
+ 		}
+ 	}
+ 
+-	async #start(): Promise<void> {
++	async #start(audio?: LiveAudioEndpoint): Promise<void> {
+ 		this.#assistantTranscriptTurn = 0;
+ 		this.#assistantTranscriptStartedAt = 0;
+ 		const visualizer = new LiveVisualizer({
+@@ -107,6 +132,7 @@ export class LiveCommandController {
+ 			session: this.#ctx.session,
+ 			extractAssistantText: message => this.#ctx.extractAssistantText(message),
+ 			voice: this.#ctx.settings.get("live.voice"),
++			audio,
+ 			callbacks: {
+ 				onPhase: phase => {
+ 					if (this.#visualizer !== visualizer) return;
+diff --git a/packages/coding-agent/src/modes/interactive-mode.ts b/packages/coding-agent/src/modes/interactive-mode.ts
+index eb506d7..e7aa4a0 100644
+--- a/packages/coding-agent/src/modes/interactive-mode.ts
++++ b/packages/coding-agent/src/modes/interactive-mode.ts
+@@ -58,6 +58,7 @@ import { reset as resetCapabilities } from "../capability";
+ import { restartArgv } from "../cli/flag-tables";
+ import { CollabController } from "../collab/controller";
+ import type { CollabGuestLink } from "../collab/guest";
++import type { CollabLiveAudioBridge } from "../collab/host";
+ import { formatKeyHint, KeybindingsManager } from "../config/keybindings";
+ import { formatModelString, type ResolvedModelRoleValue } from "../config/model-resolver";
+ import { applyProviderGlobalsFromSettings } from "../config/provider-globals";
+@@ -747,6 +748,11 @@ export class InteractiveMode implements InteractiveModeContext {
+ 	readonly collabController: CollabController;
+ 	collabGuest?: CollabGuestLink;
+ 
++	/** Live-audio bridge the collab controller hands to a starting host. */
++	liveAudioBridge(): CollabLiveAudioBridge {
++		return this.#liveCommandController.collabBridge();
++	}
++
+ 	#pendingCommandOutput: Component[] = [];
+ 	#pendingCommandOutputSessionId: string | undefined;
+ 	/** Commands (not components) queued while streaming, for the deferral hint. */
+diff --git a/packages/coding-agent/src/modes/types.ts b/packages/coding-agent/src/modes/types.ts
+index bb49168..fe91f09 100644
+--- a/packages/coding-agent/src/modes/types.ts
++++ b/packages/coding-agent/src/modes/types.ts
+@@ -5,6 +5,7 @@ import type { Component, Container, EditorTheme, Loader, Spacer, Text, TUI } fro
+ import type { CollabUiRequest } from "@oh-my-pi/pi-wire";
+ import type { CollabController } from "../collab/controller";
+ import type { CollabGuestLink } from "../collab/guest";
++import type { CollabLiveAudioBridge } from "../collab/host";
+ import type { KeybindingsManager } from "../config/keybindings";
+ import type { Settings } from "../config/settings";
+ import type {
+@@ -161,6 +162,12 @@ export interface InteractiveModeContext {
+ 	lspServers?: LspStartupServerInfo[];
+ 	collabController: CollabController;
+ 	collabGuest?: CollabGuestLink;
++	/**
++	 * Live-audio bridge handed to a starting collab host so guests can
++	 * hold a live voice call against this session. Absent outside interactive
++	 * mode, where no `/live` surface exists.
++	 */
++	liveAudioBridge?(): CollabLiveAudioBridge;
+ 	eventController: EventController;
+ 	eventBus?: EventBus;
+ 	/** Root-scoped bus carrying this session tree's `task:subagent:*` frames. */
+diff --git a/packages/coding-agent/src/slash-commands/builtin-collaboration.ts b/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
+index 294c30f..825e574 100644
+--- a/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
++++ b/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
+@@ -380,6 +380,7 @@ export const BUILTIN_COLLABORATION_SLASH_COMMANDS: ReadonlyArray<SlashCommandSpe
+ 			// Scheme-less relay args default to wss (ws:// must be spelled out for localhost).
+ 			const relayUrl = relayInput.includes("://") ? relayInput : `wss://${relayInput}`;
+ 			const webUrl = ctx.settings.get("collab.webUrl") || "";
++
+ 			try {
+ 				await ctx.collabController.start({
+ 					relayUrl,
+diff --git a/packages/wire/src/index.ts b/packages/wire/src/index.ts
+index 57d5497..bc603b9 100644
+--- a/packages/wire/src/index.ts
++++ b/packages/wire/src/index.ts
+@@ -337,7 +337,19 @@ export type GuestFrame =
+ 	| { t: "ui-response"; reqId: number; value?: CollabUiResponseValue }
+ 	| { t: "abort" }
+ 	| { t: "agent-cmd"; cmd: "chat" | "kill" | "revive"; agentId: string; text?: string }
+-	| { t: "fetch-transcript"; reqId: number; agentId: string; fromByte: number };
++	| { t: "fetch-transcript"; reqId: number; agentId: string; fromByte: number }
++	/**
++	 * Microphone audio for the host's live session: base64 PCM16, mono, 16 kHz,
++	 * whole 20 ms frames. Accepted only from the peer that currently owns live
++	 * audio through `live-ctl`.
++	 */
++	| { t: "live-audio"; pcm: string }
++	/**
++	 * Live-audio ownership and mute. `claim` starts a live session whose
++	 * endpoint is this guest (no host microphone or speaker) and fails when
++	 * another peer already owns it; `release` stops it.
++	 */
++	| { t: "live-ctl"; op: "claim" | "release" | "mute" | "unmute" };
+ 
+ /** EventBus channels mirrored to guests (task subagent traffic only). */
+ export type BusChannel = "task:subagent:progress" | "task:subagent:lifecycle";
+@@ -377,6 +389,14 @@ export type HostFrame =
+ 	/** Targeted reply to fetch-transcript; `text` is decoded JSONL from `fromByte`, `newSize` the next offset base. */
+ 	| { t: "transcript"; reqId: number; text: string; newSize: number; error?: string }
+ 	| { t: "bye"; reason: string }
++	/**
++	 * Decoded live speaker audio for the owning guest: base64 PCM16, mono, at
++	 * `rate`. Silent frames are dropped by the host, so this stream is not
++	 * continuous.
++	 */
++	| { t: "live-out"; pcm: string; rate: number }
++	/** Live-audio ownership state; `owner` is the peer id holding it. */
++	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
+ 	| { t: "error"; message: string };
+ 
+ export type WireFrame = GuestFrame | HostFrame;

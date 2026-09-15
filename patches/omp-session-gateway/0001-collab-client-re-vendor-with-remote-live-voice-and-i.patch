@@ -1,0 +1,1448 @@
+From 6e87684b52f59d1fb45cfa47d4115845a20bdaad Mon Sep 17 00:00:00 2001
+From: ccr <ccr@aciceri.dev>
+Date: Sun, 13 Sep 2026 13:03:53 +0200
+Subject: [PATCH] collab-client: re-vendor with remote live voice and interface
+ scale
+
+Re-vendors packages/collab-web from oh-my-pi v18.1.15 plus the remote
+live-voice series, merged three-way against the previous pin so every local
+gateway patch is preserved: in-memory capability bootstrap, embedded mode,
+browser connection recovery, markdown link scheme validation, transcript
+windowing, photo action.
+
+collab-web is byte-identical between v18.1.14 and v18.1.15, so the previous
+pin is an exact merge base.
+
+The pinned @oh-my-pi/pi-wire 18.1.14 predates the live frames and a union
+cannot be extended by declaration merging, so lib/live-frames.ts declares
+the four host frames and two guest frames the client consumes and narrows
+them before the pinned union switch. GatewayGuestFrame gains them the same
+way it already gains gateway-health-ping.
+
+Embedded gateway mode suppresses the client header, which is where the
+microphone control lives, so LivePanel takes an optional onStart and becomes
+the sole entry point there instead of duplicating a header button.
+---
+ apps/gateway/src/http.ts                      |   6 +-
+ packages/collab-client/README.md              |  35 +-
+ packages/collab-client/test/composer.test.ts  |   1 +
+ .../collab-client/test/transcript.test.ts     |   1 +
+ packages/collab-client/upstream/UPSTREAM.json |  23 +-
+ packages/collab-client/upstream/src/app.tsx   | 163 +++++++++
+ .../src/components/shell/HeaderBar.tsx        |  39 ++-
+ .../src/components/shell/LivePanel.tsx        | 156 +++++++++
+ .../src/components/shell/ScaleToggle.tsx      |  20 ++
+ .../upstream/src/components/shell/shell.css   | 158 ++++++++-
+ .../collab-client/upstream/src/lib/client.ts  | 106 ++++++
+ .../upstream/src/lib/live-audio.ts            | 311 ++++++++++++++++++
+ .../upstream/src/lib/live-frames.ts           |  30 ++
+ .../collab-client/upstream/src/lib/socket.ts  |   7 +-
+ .../upstream/src/lib/ui-scale.ts              |  62 ++++
+ 15 files changed, 1103 insertions(+), 15 deletions(-)
+ create mode 100644 packages/collab-client/upstream/src/components/shell/LivePanel.tsx
+ create mode 100644 packages/collab-client/upstream/src/components/shell/ScaleToggle.tsx
+ create mode 100644 packages/collab-client/upstream/src/lib/live-audio.ts
+ create mode 100644 packages/collab-client/upstream/src/lib/live-frames.ts
+ create mode 100644 packages/collab-client/upstream/src/lib/ui-scale.ts
+
+diff --git a/apps/gateway/src/http.ts b/apps/gateway/src/http.ts
+index 1f4a974..5872b8e 100644
+--- a/apps/gateway/src/http.ts
++++ b/apps/gateway/src/http.ts
+@@ -35,7 +35,11 @@ const SECURITY_HEADERS: Record<string, string> = {
+   "Referrer-Policy": "no-referrer",
+   "X-Content-Type-Options": "nosniff",
+   "X-Frame-Options": "DENY",
+-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()",
++  // `microphone=(self)`: remote live voice captures the guest's microphone in
++  // this origin. Everything else stays denied — and `()` would deny self too,
++  // so getUserMedia failed immediately without ever prompting.
++  "Permissions-Policy":
++    "camera=(), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), bluetooth=()",
+ };
+ 
+ interface RateBucket {
+diff --git a/packages/collab-client/README.md b/packages/collab-client/README.md
+index 8611e06..c76ede1 100644
+--- a/packages/collab-client/README.md
++++ b/packages/collab-client/README.md
+@@ -1,9 +1,40 @@
+ # `packages/collab-client`
+ 
+-Pinned integration of OMP's existing `packages/collab-web` source at tag `v18.1.14`, commit
+-`daf07999c2fee9b22edc7bf8fea1fb6272e0df5e`. The upstream collab package remains version
++Pinned integration of OMP's existing `packages/collab-web` source at tag `v18.1.15`, commit
++`a33cc26824e3c91edd9fa42d681f10dceb4ac2f0`. The upstream collab package remains version
+ `16.3.6`; `@oh-my-pi/pi-wire` is pinned exactly to `18.1.14`. Wire protocol source is unchanged
+ from `v17.4.1`; the wire package delta is release metadata and toolchain scripts only.
++`packages/collab-web` is byte-identical between `v18.1.14` and `v18.1.15`, so the previous pin was
++an exact merge base for the re-vendor.
++
++## Remote live voice
++
++A guest holds OMP's `/live` realtime call from its own microphone and speaker. The host keeps the
++Codex WebRTC peer, its credentials and its device attestation; only the audio endpoint moves here.
++The host half is a six-patch series applied downstream (`universe/patches/oh-my-pi`), cut against
++`v18.1.15` plus this package's own `patches/oh-my-pi` mbox.
++
++`lib/live-frames.ts` declares the four host frames (`live-state`, `live-transcript`, `live-phase`,
++`live-out`) and two guest frames (`live-ctl`, `live-audio`) the client consumes: the pinned
++`@oh-my-pi/pi-wire` `18.1.14` union predates them and a TypeScript union cannot be extended by
++declaration merging, so the client narrows them itself before the pinned union's `switch`.
++`GatewayGuestFrame` gains them the same way it already gains `gateway-health-ping`.
++
++`lib/live-audio.ts` captures the microphone, resamples to the 16 kHz mono PCM16 the host peer
++expects, and renders the host's 48 kHz output through a jitter buffer. Echo cancellation is left to
++`getUserMedia`, matching the host's decision to skip its software echo gate for remote input — that
++gate exists because a local microphone hears the local speaker, which is not the case here.
++
++Ownership is tracked from local intent: a guest never learns its own relay peer id, so the client
++records that it claimed and the host confirms. Embedded gateway mode suppresses the client header,
++which is where the microphone control lives, so `LivePanel` takes an optional `onStart` and is the
++sole entry point there rather than a duplicate of a header button. The live transcript renders in
++that panel and never in the session transcript: the lines are volatile speech recognition, they
++rewrite while a turn streams, and the host never persists them.
++
++The interface scale control takes `zoom` on the app frame, because every shell size is a hardcoded
++px value that a root font size cannot reach; the frame divides its height by the scale so it stays
++exactly one viewport tall.
+ 
+ The local patch passes the capability directly into the root `App` component. The installed PWA
+ mounts that component in its current document so Android standalone navigation does not depend on
+diff --git a/packages/collab-client/test/composer.test.ts b/packages/collab-client/test/composer.test.ts
+index a0b7eac..d182243 100644
+--- a/packages/collab-client/test/composer.test.ts
++++ b/packages/collab-client/test/composer.test.ts
+@@ -104,6 +104,7 @@ function snapshot(overrides: Partial<GuestSnapshot> = {}): GuestSnapshot {
+ 	uiResponsePending: false,
+ 	gatewayHealth: { state: "healthy", rttMs: 20, lastSuccessAt: 0, failureSince: null, retryAt: null },
+ 	relayHealth: { state: "healthy", rttMs: 30, lastSuccessAt: 0, failureSince: null, retryAt: null },
++    live: { active: false, owned: false, muted: false, error: null, phase: null, transcript: { user: null, assistant: null } },
+     notices: [],
+     ...overrides,
+   };
+diff --git a/packages/collab-client/test/transcript.test.ts b/packages/collab-client/test/transcript.test.ts
+index 469bf99..c33a3fd 100644
+--- a/packages/collab-client/test/transcript.test.ts
++++ b/packages/collab-client/test/transcript.test.ts
+@@ -257,6 +257,7 @@ function guestSnapshot(overrides: Partial<GuestSnapshot> = {}): GuestSnapshot {
+     uiResponsePending: false,
+     gatewayHealth: { state: "healthy", rttMs: 20, lastSuccessAt: 0, failureSince: null, retryAt: null },
+     relayHealth: { state: "healthy", rttMs: 30, lastSuccessAt: 0, failureSince: null, retryAt: null },
++    live: { active: false, owned: false, muted: false, error: null, phase: null, transcript: { user: null, assistant: null } },
+     notices: [],
+     ...overrides,
+   };
+diff --git a/packages/collab-client/upstream/UPSTREAM.json b/packages/collab-client/upstream/UPSTREAM.json
+index 000e9af..9718819 100644
+--- a/packages/collab-client/upstream/UPSTREAM.json
++++ b/packages/collab-client/upstream/UPSTREAM.json
+@@ -1,18 +1,18 @@
+ {
+   "repository": "https://github.com/can1357/oh-my-pi",
+-  "commit": "daf07999c2fee9b22edc7bf8fea1fb6272e0df5e",
+-  "tag": "v18.1.14",
++  "commit": "a33cc26824e3c91edd9fa42d681f10dceb4ac2f0",
++  "tag": "v18.1.15",
+   "package": "@oh-my-pi/collab-web",
+-  "packageVersion": "16.3.6",
++  "packageVersion": "18.1.15",
+   "sourcePath": "packages/collab-web",
+   "additionalSources": [
+     {
+       "package": "@oh-my-pi/pi-utils",
+-      "packageVersion": "18.1.14",
++      "packageVersion": "18.1.15",
+       "sourcePath": "packages/utils/src/math-delimiters.ts"
+     }
+   ],
+-  "observedAt": "2026-09-08",
++  "observedAt": "2026-09-13",
+   "bunVersion": "1.4.0",
+   "localPatches": [
+     "Validate Markdown link schemes through the browser URL parser, including control-character normalization",
+@@ -39,6 +39,15 @@
+     "Preserve upstream rejected-currency and half-streamed delimiter semantics across the retained npm marked parser",
+     "Force the transcript to its tail when an initial or recovered connection becomes live without discarding transcript windowing",
+     "Window a long transcript to its tail behind a Show earlier control that reveals older entries without moving the reader",
+-    "Defer the first transcript render until the guest snapshot completes and keep it mounted across reconnects (Session exported for coverage)"
+-  ]
++    "Defer the first transcript render until the guest snapshot completes and keep it mounted across reconnects (Session exported for coverage)",
++    "Declare the remote live-voice host and guest frames locally: the pinned pi-wire union predates them and a union cannot be extended by declaration merging",
++    "Live voice from the guest device: microphone captured at 16 kHz, host output played back with a jitter buffer, ownership tracked from local intent",
++    "LivePanel starts the call itself in embedded gateway mode, where the suppressed header cannot hold the microphone control",
++    "Interface scale control: the app frame takes zoom and divides its height by the scale, since every shell size is a hardcoded px value"
++  ],
++  "downstreamSeries": {
++    "description": "Remote live voice for omp collab, applied to the host through universe/patches/oh-my-pi",
++    "patches": 6,
++    "base": "v18.1.15 plus patches/oh-my-pi/0001-collab-controller-autostart-registry.patch"
++  }
+ }
+diff --git a/packages/collab-client/upstream/src/app.tsx b/packages/collab-client/upstream/src/app.tsx
+index 451cae7..3ba02c7 100644
+--- a/packages/collab-client/upstream/src/app.tsx
++++ b/packages/collab-client/upstream/src/app.tsx
+@@ -5,16 +5,21 @@ import { AgentsPanel } from "./components/agents/AgentsPanel";
+ import { Banners } from "./components/shell/Banners";
+ import { Composer } from "./components/shell/Composer";
+ import { HeaderBar } from "./components/shell/HeaderBar";
++import { LivePanel } from "./components/shell/LivePanel";
+ import { Toasts } from "./components/shell/Toasts";
+ import { Transcript } from "./components/transcript/Transcript";
+ import { GuestClient } from "./lib/client";
+ import { installBrowserConnectionRecovery } from "./lib/browser-recovery";
+ import type { CollabEmbedOptions, CollabEmbedState, PathHealth } from "./embed-contract";
++import { type AudioInput, LiveAudioDevice, listAudioInputs } from "./lib/live-audio";
+ import { useGuestSnapshot } from "./lib/use-guest";
+ import type { ToolRenderHost } from "./tool-render";
+ import "./components/shell/shell.css";
+ 
+ const NAME_KEY = "omp.collab.name";
++const MIC_KEY = "omp.collab.mic";
++const GAIN_KEY = "omp.collab.live-gain";
++const SPEAKER_KEY = "omp.collab.live-speaker";
+ 
+ interface Creds {
+ 	link: string;
+@@ -28,6 +33,33 @@ function storedName(): string {
+ 		return "guest";
+ 	}
+ }
++
++function storedMic(): string | undefined {
++	try {
++		return localStorage.getItem(MIC_KEY) || undefined;
++	} catch {
++		return undefined;
++	}
++}
++
++function storedGain(): number {
++	try {
++		const raw = Number(localStorage.getItem(GAIN_KEY));
++		return Number.isFinite(raw) && raw >= 1 && raw <= 8 ? raw : 1;
++	} catch {
++		return 1;
++	}
++}
++
++function storeMic(deviceId: string | undefined): void {
++	try {
++		if (deviceId) localStorage.setItem(MIC_KEY, deviceId);
++		else localStorage.removeItem(MIC_KEY);
++	} catch {
++		// Persistence is best-effort; the in-memory choice still applies.
++	}
++}
++
+ const UNKNOWN_PATH_HEALTH: PathHealth = {
+ 	state: "checking",
+ 	rttMs: null,
+@@ -282,6 +314,121 @@ export function Session({ client, onLeave, onRejoin, embedOptions }: SessionProp
+ 		document.title = `${title} · omp collab`;
+ 	}, [title]);
+ 
++	// Live voice: the host runs the realtime call, this device is its
++	// microphone and speaker. Playback is wired before any claim so the first
++	// frame after `live-state` is not dropped.
++	const audioRef = useRef<LiveAudioDevice | null>(null);
++	const [liveError, setLiveError] = useState<string | null>(null);
++	const [gain, setGain] = useState<number>(() => storedGain());
++	useEffect(() => {
++		const device = new LiveAudioDevice(pcm => client.sendLiveAudio(pcm));
++		// Read from storage, not from state: this effect is keyed on `client`
++		// only, and later changes go through `pickGain` directly.
++		device.setPlaybackGain(storedGain());
++		audioRef.current = device;
++		client.onLiveAudio = (pcm, rate) => device.play(pcm, rate);
++		return () => {
++			client.onLiveAudio = undefined;
++			audioRef.current = null;
++			void device.stop();
++		};
++	}, [client]);
++
++	// Pinned input, remembered across calls. An empty stored value means
++	// "follow the system default", which is also what an unknown device falls
++	// back to once `start` rejects it.
++	const [inputId, setInputId] = useState<string | undefined>(() => storedMic());
++	const [inputs, setInputs] = useState<readonly AudioInput[]>([]);
++	const [speaker, setSpeaker] = useState<boolean>(() => {
++		try {
++			return localStorage.getItem(SPEAKER_KEY) === "1";
++		} catch {
++			return false;
++		}
++	});
++
++	const owned = snap.live.owned;
++	useEffect(() => {
++		const device = audioRef.current;
++		if (!device) return;
++		if (owned && !device.active) {
++			device
++				.start({ deviceId: inputId, speaker })
++				// The host defaults the gate off, so a persisted speaker mode has to
++				// re-assert it on every claim.
++				.then(() => client.setLiveEchoGate(speaker))
++				// Labels are blank until permission is granted, so the list is
++				// only worth reading once capture is actually running.
++				.then(() => listAudioInputs().then(setInputs))
++				.catch((err: unknown) => {
++					setLiveError(err instanceof Error ? err.message : String(err));
++					client.stopLiveAudio();
++				});
++		} else if (!owned && device.active) {
++			void device.stop();
++			setInputs([]);
++		}
++		// `inputId` intentionally absent: switching device while running is
++		// handled by `pickInput`, not by tearing down and restarting the call.
++		// eslint-disable-next-line react-hooks/exhaustive-deps
++	}, [owned, client]);
++	useEffect(() => {
++		audioRef.current?.setMuted(snap.live.muted);
++	}, [snap.live.muted]);
++
++	const pickInput = useCallback(
++		(deviceId: string | undefined) => {
++			setInputId(deviceId);
++			storeMic(deviceId);
++			setLiveError(null);
++			const device = audioRef.current;
++			if (!device?.active) return;
++			device.use({ deviceId, speaker }).catch((err: unknown) => {
++				setLiveError(err instanceof Error ? err.message : String(err));
++				client.stopLiveAudio();
++			});
++		},
++		[client],
++	);
++
++	const toggleSpeaker = useCallback(
++		(next: boolean) => {
++			setSpeaker(next);
++			try {
++				localStorage.setItem(SPEAKER_KEY, next ? "1" : "0");
++			} catch {
++				// Persistence is best-effort; the in-memory choice still applies.
++			}
++			// Without local cancellation the host has to gate the echo, so tell
++			// it before the microphone is reopened on the louder route.
++			client.setLiveEchoGate(next);
++			setLiveError(null);
++			const device = audioRef.current;
++			if (!device?.active) return;
++			device.use({ deviceId: inputId, speaker: next }).catch((err: unknown) => {
++				setLiveError(err instanceof Error ? err.message : String(err));
++				client.stopLiveAudio();
++			});
++		},
++		[client, inputId],
++	);
++
++	const pickGain = useCallback((next: number) => {
++		setGain(next);
++		try {
++			localStorage.setItem(GAIN_KEY, String(next));
++		} catch {
++			// Persistence is best-effort; the in-memory boost still applies.
++		}
++		audioRef.current?.setPlaybackGain(next);
++	}, []);
++
++	const toggleLive = useCallback(() => {
++		setLiveError(null);
++		if (snap.live.owned) client.stopLiveAudio();
++		else if (!snap.live.active) client.startLiveAudio();
++	}, [client, snap.live.owned, snap.live.active]);
++
+ 	const drawerAgent = selectedId != null ? snap.agents.find(a => a.id === selectedId) : undefined;
+ 
+ 	return (
+@@ -293,6 +440,8 @@ export function Session({ client, onLeave, onRejoin, embedOptions }: SessionProp
+ 					railOpen={railOpen}
+ 					onToggleRail={() => setRailOpen(open => !open)}
+ 					onLeave={onLeave}
++					onToggleLive={snap.readOnly ? undefined : toggleLive}
++					liveError={liveError}
+ 				/>
+ 			)}
+ 			<main className="sh-main">
+@@ -354,6 +503,20 @@ export function Session({ client, onLeave, onRejoin, embedOptions }: SessionProp
+ 					</>
+ 				)}
+ 			</main>
++			<LivePanel
++				live={snap.live}
++				error={liveError}
++				onToggleMute={() => client.setLiveMuted(!snap.live.muted)}
++				onStop={() => client.stopLiveAudio()}
++				onStart={embedded && !snap.readOnly ? toggleLive : undefined}
++				inputs={inputs}
++				inputId={inputId}
++				onPickInput={pickInput}
++				gain={gain}
++				onPickGain={pickGain}
++				speaker={speaker}
++				onToggleSpeaker={toggleSpeaker}
++			/>
+ 			{(!embedded || snap.uiRequest === null) && (
+ 				<Composer client={client} snapshot={snap} embedded={embedded} />
+ 			)}
+diff --git a/packages/collab-client/upstream/src/components/shell/HeaderBar.tsx b/packages/collab-client/upstream/src/components/shell/HeaderBar.tsx
+index c1c9d51..0387343 100644
+--- a/packages/collab-client/upstream/src/components/shell/HeaderBar.tsx
++++ b/packages/collab-client/upstream/src/components/shell/HeaderBar.tsx
+@@ -1,7 +1,8 @@
+-import { LogOut, PanelRight } from "lucide-react";
++import { LogOut, Mic, MicOff, PanelRight } from "lucide-react";
+ import type { ReactNode } from "react";
+ import type { GuestSnapshot } from "../../lib/client";
+ import { fmtPercent, shortenPath } from "../../lib/format";
++import { ScaleToggle } from "./ScaleToggle";
+ import { ThemeToggle } from "./ThemeToggle";
+ 
+ export interface HeaderBarProps {
+@@ -10,10 +11,22 @@ export interface HeaderBarProps {
+ 	railOpen: boolean;
+ 	onToggleRail(): void;
+ 	onLeave(): void;
++	/** Absent for a read-only guest, which cannot hold live audio. */
++	onToggleLive?(): void;
++	/** Local microphone failure (permission denied, no device). */
++	liveError?: string | null;
+ }
+ 
+-export function HeaderBar({ snapshot, subCount, railOpen, onToggleRail, onLeave }: HeaderBarProps): ReactNode {
+-	const { header, state, phase, readOnly } = snapshot;
++export function HeaderBar({
++	snapshot,
++	subCount,
++	railOpen,
++	onToggleRail,
++	onLeave,
++	onToggleLive,
++	liveError,
++}: HeaderBarProps): ReactNode {
++	const { header, state, phase, readOnly, live } = snapshot;
+ 	const title = header?.title ?? state?.sessionName ?? "session";
+ 	const usage = state?.contextUsage;
+ 	let pct: number | null = null;
+@@ -70,7 +83,27 @@ export function HeaderBar({ snapshot, subCount, railOpen, onToggleRail, onLeave
+ 					</span>
+ 				)}
+ 				<span className={`sh-dot sh-dot-${phase}`} title={phase} />
++				<ScaleToggle />
+ 				<ThemeToggle />
++				{onToggleLive && (
++					<button
++						type="button"
++						className={live.owned ? "sh-btn sh-btn-icon sh-btn-on" : "sh-btn sh-btn-icon"}
++						onClick={onToggleLive}
++						disabled={live.active && !live.owned}
++						title={
++							liveError ??
++							live.error ??
++							(live.owned
++								? "stop live voice"
++								: live.active
++									? "another participant is holding live voice"
++									: "start live voice on this device")
++						}
++					>
++						{live.owned ? <Mic size={14} /> : <MicOff size={14} />}
++					</button>
++				)}
+ 				<button
+ 					type="button"
+ 					className={railOpen ? "sh-btn sh-btn-icon sh-btn-on" : "sh-btn sh-btn-icon"}
+diff --git a/packages/collab-client/upstream/src/components/shell/LivePanel.tsx b/packages/collab-client/upstream/src/components/shell/LivePanel.tsx
+new file mode 100644
+index 0000000..9aa289e
+--- /dev/null
++++ b/packages/collab-client/upstream/src/components/shell/LivePanel.tsx
+@@ -0,0 +1,156 @@
++import { Mic, MicOff, Radio, Volume1, Volume2 } from "lucide-react";
++import type { ReactNode } from "react";
++import type { GuestSnapshot } from "../../lib/client";
++import type { AudioInput } from "../../lib/live-audio";
++
++export interface LivePanelProps {
++	live: GuestSnapshot["live"];
++	onToggleMute(): void;
++	onStop(): void;
++	/**
++	 * Starts a call from the panel itself. Set only when no header is mounted
++	 * to hold the control — embedded gateway mode suppresses it — so the panel
++	 * is then the sole entry point rather than a duplicate of the header one.
++	 */
++	onStart?(): void;
++	/** Local microphone failure (permission denied, no device). */
++	error?: string | null;
++	/** Available audio inputs; rendered as a picker only when there are two or more. */
++	inputs?: readonly AudioInput[];
++	/** Pinned input, or undefined while following the system default. */
++	inputId?: string;
++	onPickInput?(deviceId: string | undefined): void;
++	/**
++	 * Playback boost, 1 to 8. Needed because an active capture forces output
++	 * onto the platform's communication stream, whose ceiling is lower.
++	 */
++	gain?: number;
++	onPickGain?(gain: number): void;
++	/**
++	 * Speaker mode: capture without echo cancellation so output leaves the
++	 * platform's quiet communication stream. The host gates the echo instead.
++	 */
++	speaker?: boolean;
++	onToggleSpeaker?(enabled: boolean): void;
++}
++
++/**
++ * Realtime voice overlay.
++ *
++ * Deliberately not part of the session transcript: these lines are speech
++ * recognition of the live call, they rewrite themselves while a turn streams,
++ * and they are never persisted in the session. Rendering them inline would
++ * mix volatile recognition with the durable transcript.
++ */
++export function LivePanel({
++	live,
++	onToggleMute,
++	onStop,
++	onStart,
++	error,
++	inputs,
++	inputId,
++	onPickInput,
++	gain = 1,
++	onPickGain,
++	speaker = false,
++	onToggleSpeaker,
++}: LivePanelProps): ReactNode {
++	if (!live.owned) {
++		if (!onStart) return null;
++		const held = live.active;
++		// A failed start releases the call, so `owned` goes false and this idle
++		// row is where the reason has to be readable. It cannot live in a title
++		// attribute: on a phone there is nothing to hover.
++		const failure = error ?? live.error;
++		return (
++			<aside className="sh-live sh-live-idle" aria-label="live voice">
++				<button type="button" className="sh-live-start" onClick={onStart} disabled={held}>
++					<MicOff size={12} />
++					<span>{held ? "live voice held by another participant" : "start live voice"}</span>
++				</button>
++				{failure && <p className="sh-live-failure">{failure}</p>}
++			</aside>
++		);
++	}
++	const phase = live.error ?? error ?? live.phase ?? "connecting";
++	return (
++		<aside className="sh-live" aria-label="live voice">
++			<header className="sh-live-head">
++				<Radio size={12} className={live.phase === "speaking" ? "sh-live-on" : undefined} />
++				<span className="sh-live-title">live voice</span>
++				<span className={`sh-live-phase sh-live-phase-${live.phase ?? "connecting"}`}>{phase}</span>
++				{onPickInput && inputs && inputs.length > 1 && (
++					<select
++						className="sh-live-input"
++						value={inputId ?? ""}
++						onChange={event => onPickInput(event.target.value || undefined)}
++						title="microphone"
++					>
++						<option value="">system default</option>
++						{inputs.map(input => (
++							<option key={input.deviceId} value={input.deviceId}>
++								{input.label}
++							</option>
++						))}
++					</select>
++				)}
++				{onToggleSpeaker && (
++					<button
++						type="button"
++						className={speaker ? "sh-btn sh-btn-icon sh-btn-on" : "sh-btn sh-btn-icon"}
++						onClick={() => onToggleSpeaker(!speaker)}
++						title={
++							speaker
++								? "loud output, host-side echo gating — tap for echo cancellation"
++								: "quiet call-stream output with echo cancellation — tap for loud output"
++						}
++					>
++						{speaker ? <Volume2 size={12} /> : <Volume1 size={12} />}
++					</button>
++				)}
++				{onPickGain && (
++					<select
++						className="sh-live-input"
++						value={String(gain)}
++						onChange={event => onPickGain(Number(event.target.value))}
++						title="playback boost — an active microphone forces output onto the call stream, which is quieter"
++					>
++						{[1, 2, 4, 8, 16, 32].map(step => (
++							<option key={step} value={step}>
++								{step}×
++							</option>
++						))}
++					</select>
++				)}
++				<button
++					type="button"
++					className="sh-btn sh-btn-icon"
++					onClick={onToggleMute}
++					title={live.muted ? "unmute microphone" : "mute microphone"}
++				>
++					{live.muted ? <MicOff size={12} /> : <Mic size={12} />}
++				</button>
++				<button type="button" className="sh-btn sh-btn-icon" onClick={onStop} title="end live voice">
++					end
++				</button>
++			</header>
++			<div className="sh-live-lines">
++				<p className="sh-live-line sh-live-you">
++					<span className="sh-live-who">you</span>
++					<span className={live.transcript.user?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}>
++						{live.transcript.user?.text || (live.muted ? "microphone muted" : "listening…")}
++					</span>
++				</p>
++				<p className="sh-live-line sh-live-agent">
++					<span className="sh-live-who">omp</span>
++					<span
++						className={live.transcript.assistant?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}
++					>
++						{live.transcript.assistant?.text || "—"}
++					</span>
++				</p>
++			</div>
++		</aside>
++	);
++}
+diff --git a/packages/collab-client/upstream/src/components/shell/ScaleToggle.tsx b/packages/collab-client/upstream/src/components/shell/ScaleToggle.tsx
+new file mode 100644
+index 0000000..999c422
+--- /dev/null
++++ b/packages/collab-client/upstream/src/components/shell/ScaleToggle.tsx
+@@ -0,0 +1,20 @@
++import { Type } from "lucide-react";
++import { UI_SCALES, useUiScale } from "../../lib/ui-scale";
++
++export function ScaleToggle() {
++	const { scale, setScale } = useUiScale();
++	const percent = Math.round(scale * 100);
++
++	return (
++		<button
++			type="button"
++			className="sh-theme-toggle sh-scale-toggle"
++			onClick={() => setScale(UI_SCALES[(UI_SCALES.indexOf(scale) + 1) % UI_SCALES.length]!)}
++			aria-label={`Interface scale ${percent}% (click to change)`}
++			title={`Interface scale ${percent}% — click to change`}
++		>
++			<Type size={14} />
++			<span className="sh-scale-value">{percent}</span>
++		</button>
++	);
++}
+diff --git a/packages/collab-client/upstream/src/components/shell/shell.css b/packages/collab-client/upstream/src/components/shell/shell.css
+index c563cbe..20e4824 100644
+--- a/packages/collab-client/upstream/src/components/shell/shell.css
++++ b/packages/collab-client/upstream/src/components/shell/shell.css
+@@ -10,7 +10,10 @@
+ 	 * viewport and clip the right edge. `minmax(0, 1fr)` caps the track so rows
+ 	 * shrink and ellipsize instead of overflowing. */
+ 	grid-template-columns: minmax(0, 1fr);
+-	height: var(--viewport-height, 100%);
++	/* `height` is in the pre-zoom coordinate space, so dividing by the scale
++	 * keeps the rendered frame exactly one viewport tall at any scale. */
++	height: calc(var(--viewport-height, 100%) / var(--ui-scale, 1));
++	zoom: var(--ui-scale, 1);
+ }
+ 
+ .sh-app[data-embedded="true"] {
+@@ -191,6 +194,18 @@
+ 	border-color: var(--border-strong);
+ }
+ 
++.sh-scale-toggle {
++	gap: 3px;
++	width: auto;
++	padding: 0 5px;
++}
++
++.sh-scale-value {
++	font-family: var(--font-mono);
++	font-size: 10px;
++	font-variant-numeric: tabular-nums;
++}
++
+ @media (prefers-reduced-motion: reduce) {
+ 	.sh-theme-toggle {
+ 		transition: none;
+@@ -345,6 +360,99 @@
+ 	background: var(--err);
+ }
+ 
++/* ---- live voice ----
++   Sits above the composer as its own surface: volatile speech recognition,
++   visually not part of the durable session transcript. */
++.sh-live {
++	max-width: 880px;
++	width: calc(100% - 24px);
++	margin: 0 auto 8px;
++	border: 1px solid var(--accent-muted);
++	border-left: 2px solid var(--accent);
++	border-radius: var(--radius-sm);
++	background: var(--bg-inset);
++	font-family: var(--font-mono);
++	font-size: 12px;
++}
++
++.sh-live-head {
++	display: flex;
++	align-items: center;
++	gap: 6px;
++	padding: 4px 8px;
++	border-bottom: 1px solid var(--border);
++	color: var(--fg-faint);
++}
++
++.sh-live-title {
++	text-transform: uppercase;
++	letter-spacing: 0.08em;
++	font-size: 10px;
++}
++
++.sh-live-phase {
++	margin-right: auto;
++	color: var(--fg-muted);
++}
++
++.sh-live-phase-listening {
++	color: var(--ok);
++}
++
++.sh-live-phase-speaking {
++	color: var(--accent);
++}
++
++.sh-live-phase-working {
++	color: var(--warn);
++}
++
++.sh-live-phase-error {
++	color: var(--err);
++}
++
++.sh-live-on {
++	color: var(--accent);
++}
++
++.sh-live-lines {
++	display: flex;
++	flex-direction: column;
++	gap: 2px;
++	padding: 6px 8px;
++}
++
++.sh-live-line {
++	display: flex;
++	gap: 8px;
++	margin: 0;
++	line-height: 1.45;
++}
++
++.sh-live-who {
++	flex: 0 0 28px;
++	color: var(--fg-faint);
++	text-align: right;
++}
++
++.sh-live-text {
++	min-width: 0;
++	overflow-wrap: anywhere;
++}
++
++.sh-live-you .sh-live-text {
++	color: var(--fg);
++}
++
++.sh-live-agent .sh-live-text {
++	color: var(--fg-muted);
++}
++
++.sh-live-partial {
++	opacity: 0.65;
++	font-style: italic;
++}
++
+ /* ---- composer ---- */
+ .sh-composer {
+ 	padding: 10px 12px;
+@@ -1097,3 +1205,51 @@
+ 		animation: none;
+ 	}
+ }
++
++.sh-live-idle {
++	border-left-color: var(--border-strong);
++}
++
++.sh-live-start {
++	display: flex;
++	align-items: center;
++	justify-content: center;
++	gap: 6px;
++	width: 100%;
++	padding: 6px 8px;
++	font: inherit;
++	font-size: 11px;
++	color: var(--fg-muted);
++	background: none;
++	border: 0;
++	cursor: pointer;
++}
++
++.sh-live-start:disabled {
++	color: var(--fg-faint);
++	cursor: default;
++}
++
++.sh-live-start:not(:disabled):hover {
++	color: var(--fg);
++}
++
++.sh-live-failure {
++	margin: 0;
++	padding: 0 8px 6px;
++	font-size: 11px;
++	line-height: 1.4;
++	color: var(--err);
++	overflow-wrap: anywhere;
++}
++
++.sh-live-input {
++	max-width: 40%;
++	padding: 1px 3px;
++	font: inherit;
++	font-size: 10px;
++	color: var(--fg-muted);
++	background: var(--bg-raised);
++	border: 1px solid var(--border);
++	border-radius: var(--radius-sm);
++}
+diff --git a/packages/collab-client/upstream/src/lib/client.ts b/packages/collab-client/upstream/src/lib/client.ts
+index 1dd94bf..e8efc17 100644
+--- a/packages/collab-client/upstream/src/lib/client.ts
++++ b/packages/collab-client/upstream/src/lib/client.ts
+@@ -24,6 +24,7 @@ import type {
+ import type { ConnectionPhase, PathHealth } from "../embed-contract";
+ import { importRoomKey } from "./codec";
+ import { COLLAB_PROTO, encodeBase64Url, parseCollabLink } from "./link";
++import { asLiveFrame, type LiveHostFrame } from "./live-frames";
+ import { CollabSocket, type GatewayHostFrame } from "./socket";
+ 
+ export type { ConnectionPhase, PathHealth, PathHealthState } from "../embed-contract";
+@@ -45,6 +46,13 @@ export interface Notice {
+ 	at: number;
+ }
+ 
++/** One realtime transcript line, replaced in place while its turn streams. */
++export interface LiveLine {
++	text: string;
++	turn: number;
++	final: boolean;
++}
++
+ export interface GuestSnapshot {
+ 	phase: ConnectionPhase;
+ 	endedReason: string | null;
+@@ -72,6 +80,18 @@ export interface GuestSnapshot {
+ 	gatewayHealth: PathHealth;
+ 	/** Browser-to-host encrypted relay path health. */
+ 	relayHealth: PathHealth;
++	/**
++	 * Live voice state. `transcript` holds the last update per role, coalesced
++	 * by turn, so it renders as a conversation rather than an append log.
++	 */
++	live: {
++		active: boolean;
++		owned: boolean;
++		muted: boolean;
++		error: string | null;
++		phase: string | null;
++		transcript: { user: LiveLine | null; assistant: LiveLine | null };
++	};
+ 	/** Capped at 50, newest last. */
+ 	notices: readonly Notice[];
+ }
+@@ -156,7 +176,18 @@ export class GuestClient {
+ 	#readOnly = false;
+ 	#uiRequest: CollabUiRequest | null = null;
+ 	#uiRequestQueue: CollabUiRequest[] = [];
++	#live: GuestSnapshot["live"] = {
++		active: false,
++		owned: false,
++		muted: false,
++		error: null,
++		phase: null,
++		transcript: { user: null, assistant: null },
++	};
++	#liveClaimed = false;
+ 	#notices: readonly Notice[] = [];
++	/** Receives decoded host audio (base64 PCM16) for playback on this device. */
++	onLiveAudio: ((pcm: string, rate: number) => void) | undefined;
+ 	#snapshot: GuestSnapshot;
+ 
+ 	/** @throws Error when the link does not parse. */
+@@ -280,6 +311,39 @@ export class GuestClient {
+ 		this.#socket.send({ t: "agent-cmd", cmd, agentId, ...(text === undefined ? {} : { text }) });
+ 	}
+ 
++	/**
++	 * Claims live voice for this guest: the host starts a live session with no
++	 * microphone or speaker of its own and streams audio here instead.
++	 */
++	startLiveAudio(): void {
++		this.#liveClaimed = true;
++		this.#socket.send({ t: "live-ctl", op: "claim" });
++	}
++
++	stopLiveAudio(): void {
++		this.#liveClaimed = false;
++		this.#socket.send({ t: "live-ctl", op: "release" });
++	}
++
++	setLiveMuted(muted: boolean): void {
++		this.#socket.send({ t: "live-ctl", op: muted ? "mute" : "unmute" });
++	}
++
++	/**
++	 * Asks the host to echo-gate this guest's input. Needed when capturing
++	 * without echo cancellation, which is the only way off the platform's
++	 * communication output stream.
++	 */
++	setLiveEchoGate(enabled: boolean): void {
++		this.#socket.send({ t: "live-ctl", op: enabled ? "gate-on" : "gate-off" });
++	}
++
++	/** Sends one or more 20 ms frames of mono 16 kHz PCM16, base64 encoded. */
++	sendLiveAudio(pcm: string): void {
++		if (!this.#live.owned) return;
++		this.#socket.send({ t: "live-audio", pcm });
++	}
++
+ 	/**
+ 	 * Incremental subagent-transcript read. Resolves a {@link TranscriptResult}
+ 	 * (`rows` or terminal `error`), or `null` on transient failure (10s timeout,
+@@ -412,6 +476,14 @@ export class GuestClient {
+ 	}
+ 
+ 	#applyFrame(frame: HostFrame): void {
++		const live = asLiveFrame(frame);
++		if (live) {
++			// `live-out` carries audio, not snapshot state: no render commit.
++			if (!this.#applyLiveFrame(live)) return;
++			this.#commit();
++			this.#scheduleRelayProbe();
++			return;
++		}
+ 		switch (frame.t) {
+ 			case "welcome":
+ 				// Reset accumulator: a fresh welcome arriving mid-load (reconnect)
+@@ -544,6 +616,39 @@ export class GuestClient {
+ 		this.#scheduleRelayProbe();
+ 	}
+ 
++	/** Applies one live frame; returns whether the snapshot changed. */
++	#applyLiveFrame(frame: LiveHostFrame): boolean {
++		switch (frame.t) {
++			case "live-state": {
++				// A guest never learns its own relay peer id, so ownership is
++				// tracked from local intent: we claimed, the host confirmed.
++				if (frame.error) this.#liveClaimed = false;
++				const owned = frame.active && this.#liveClaimed;
++				this.#live = {
++					active: frame.active,
++					owned,
++					muted: frame.muted === true,
++					error: frame.error ?? null,
++					phase: frame.active ? this.#live.phase : null,
++					// A finished call keeps no transcript: the next one starts clean.
++					transcript: owned ? this.#live.transcript : { user: null, assistant: null },
++				};
++				return true;
++			}
++			case "live-phase":
++				this.#live = { ...this.#live, phase: frame.phase };
++				return true;
++			case "live-transcript": {
++				const line: LiveLine = { text: frame.text, turn: frame.turn, final: frame.final };
++				this.#live = { ...this.#live, transcript: { ...this.#live.transcript, [frame.role]: line } };
++				return true;
++			}
++			case "live-out":
++				this.onLiveAudio?.(frame.pcm, frame.rate);
++				return false;
++		}
++	}
++
+ 	#applyEvent(event: Extract<HostFrame, { t: "event" }>["event"]): void {
+ 		switch (event.type) {
+ 			case "message_start":
+@@ -783,6 +888,7 @@ export class GuestClient {
+ 			gatewayHealth: this.#gatewayHealth,
+ 			relayHealth: this.#relayHealth,
+ 			notices: this.#notices,
++			live: this.#live,
+ 		};
+ 	}
+ 
+diff --git a/packages/collab-client/upstream/src/lib/live-audio.ts b/packages/collab-client/upstream/src/lib/live-audio.ts
+new file mode 100644
+index 0000000..959dffe
+--- /dev/null
++++ b/packages/collab-client/upstream/src/lib/live-audio.ts
+@@ -0,0 +1,311 @@
++/**
++ * Browser side of a remote live voice call.
++ *
++ * Captures the microphone, resamples to the 16 kHz mono PCM16 the host's
++ * realtime peer expects, and renders the host's 48 kHz output stream. Echo
++ * cancellation is left to the browser: the host deliberately skips its own
++ * echo gate for remote input, since the speaker is here, not there.
++ */
++
++const INPUT_RATE = 16_000;
++/** 20 ms at 16 kHz, matching the native peer's input framing. */
++const INPUT_FRAME = 320;
++/** Keep the playback queue this far ahead of the clock to absorb jitter. */
++const PLAYBACK_LEAD_S = 0.08;
++
++function encodePcm16(samples: Float32Array): string {
++	const bytes = new Uint8Array(samples.length * 2);
++	const view = new DataView(bytes.buffer);
++	for (let index = 0; index < samples.length; index += 1) {
++		const clamped = Math.max(-1, Math.min(1, samples[index] ?? 0));
++		view.setInt16(index * 2, Math.round(clamped * 32_767), true);
++	}
++	let binary = "";
++	for (const byte of bytes) binary += String.fromCharCode(byte);
++	return btoa(binary);
++}
++
++function decodePcm16(base64: string): Float32Array {
++	const binary = atob(base64);
++	const count = binary.length >> 1;
++	const samples = new Float32Array(count);
++	for (let index = 0; index < count; index += 1) {
++		const low = binary.charCodeAt(index * 2);
++		const high = binary.charCodeAt(index * 2 + 1);
++		const value = (high << 8) | low;
++		samples[index] = (value >= 0x8000 ? value - 0x10000 : value) / 32_768;
++	}
++	return samples;
++}
++
++/** Highest boost offered; past full saturation there is nothing left to gain. */
++export const MAX_GAIN = 32;
++
++/** Below this the curve is the identity, so a 1x setting is bit-transparent. */
++const SATURATION_KNEE = 0.7;
++
++/**
++ * Soft-clip transfer curve: identity up to {@link SATURATION_KNEE}, then a
++ * `tanh` shoulder that rounds peaks toward full scale instead of clipping
++ * into a square edge.
++ *
++ * A plain `tanh` over the whole range was wrong: it lifted and reshaped even
++ * a quiet signal, so the 1x setting already distorted instead of passing
++ * audio through. Only material driven past the knee is shaped now, which is
++ * exactly the material a boost creates.
++ */
++function saturationCurve(points: number): Float32Array {
++	const curve = new Float32Array(points);
++	const headroom = 1 - SATURATION_KNEE;
++	for (let index = 0; index < points; index += 1) {
++		const x = (index / (points - 1)) * 2 - 1;
++		const magnitude = Math.abs(x);
++		const shaped =
++			magnitude <= SATURATION_KNEE
++				? magnitude
++				: SATURATION_KNEE + headroom * Math.tanh((magnitude - SATURATION_KNEE) / headroom);
++		curve[index] = Math.sign(x) * shaped;
++	}
++	return curve;
++}
++
++/**
++ * Builds `gain → saturation → destination` and returns the input node.
++ *
++ * Exported so the chain can be rendered in an `OfflineAudioContext` and its
++ * output measured, which is the only way to check that a boost setting
++ * actually raises level rather than being swallowed downstream.
++ */
++export function createPlaybackChain(context: BaseAudioContext, gain: number): GainNode {
++	const gainNode = context.createGain();
++	gainNode.gain.value = gain;
++	const shaper = context.createWaveShaper();
++	const points = 4096;
++	const curve = new Float32Array(new ArrayBuffer(points * 4));
++	curve.set(saturationCurve(points));
++	shaper.curve = curve;
++	shaper.oversample = "4x";
++	gainNode.connect(shaper);
++	shaper.connect(context.destination);
++	return gainNode;
++}
++
++/** Capture options. `speaker` trades echo cancellation for output volume. */
++export interface CaptureOptions {
++	/** Pins an input; omitted, the browser follows the system default. */
++	deviceId?: string;
++	/** Drop echo cancellation so output leaves the communication stream. */
++	speaker?: boolean;
++}
++
++/** An audio input the browser is willing to open. */
++export interface AudioInput {
++	deviceId: string;
++	label: string;
++}
++
++/**
++ * Audio inputs, with human labels.
++ *
++ * Labels are empty until microphone permission has been granted at least once,
++ * so a device list built before the first successful `start()` is unnamed. That
++ * is why the picker only appears while a call is running.
++ */
++export async function listAudioInputs(): Promise<AudioInput[]> {
++	if (!navigator.mediaDevices?.enumerateDevices) return [];
++	const devices = await navigator.mediaDevices.enumerateDevices();
++	return devices
++		.filter(device => device.kind === "audioinput")
++		.map((device, index) => ({
++			deviceId: device.deviceId,
++			label: device.label || `microphone ${index + 1}`,
++		}));
++}
++
++/** One live call's microphone capture and speaker playback. */
++export class LiveAudioDevice {
++	readonly #onFrame: (pcm: string) => void;
++	#stream: MediaStream | undefined;
++	#context: AudioContext | undefined;
++	#node: ScriptProcessorNode | undefined;
++	#source: MediaStreamAudioSourceNode | undefined;
++	#pending: number[] = [];
++	#playbackContext: AudioContext | undefined;
++	#playbackCursor = 0;
++	#muted = false;
++	#deviceId: string | undefined;
++	#gainNode: GainNode | undefined;
++	#gain = 1;
++	#speaker = false;
++
++	constructor(onFrame: (pcm: string) => void) {
++		this.#onFrame = onFrame;
++	}
++
++	get active(): boolean {
++		return this.#stream !== undefined;
++	}
++
++	/** Whether the running capture dropped echo cancellation. */
++	get speaker(): boolean {
++		return this.#speaker;
++	}
++
++	/** Device the running capture was opened with, if it was pinned. */
++	get deviceId(): string | undefined {
++		return this.#deviceId;
++	}
++
++	/**
++	 * Reopens capture with new options; the call itself is untouched.
++	 *
++	 * Toggling `speaker` also rebuilds playback. Chrome decides an
++	 * AudioContext's output stream type when the context is constructed and
++	 * never revisits it, so a context created while an echo-cancelling capture
++	 * was live stays pinned to the platform's communication stream — reopening
++	 * only the microphone would leave output exactly as quiet as before. The
++	 * new context is therefore created lazily by the next `play()`, after the
++	 * cancellation-free capture is already running.
++	 *
++	 * A device that has disappeared makes `start` throw, so the caller
++	 * surfaces that the same way as a denied permission.
++	 */
++	async use(options: CaptureOptions): Promise<void> {
++		const speakerChanged = (options.speaker ?? false) !== this.#speaker;
++		this.#stopCapture();
++		if (speakerChanged) {
++			this.#gainNode = undefined;
++			this.#playbackCursor = 0;
++			const previous = this.#playbackContext;
++			this.#playbackContext = undefined;
++			await previous?.close().catch(() => {});
++		}
++		await this.start(options);
++	}
++
++	/**
++	 * @throws when the user denies microphone access or the device is gone.
++	 */
++	async start(options: CaptureOptions = {}): Promise<void> {
++		if (this.#stream) return;
++		const { deviceId, speaker = false } = options;
++		// `speaker`: an echo-cancelling capture makes Chrome pin output to the
++		// platform's communication stream, whose volume ceiling is low and not
++		// reachable from the page. Dropping cancellation returns output to the
++		// media stream — the host then applies its own software echo gate, so
++		// the assistant does not answer itself.
++		const stream = await navigator.mediaDevices.getUserMedia({
++			audio: {
++				...(deviceId ? { deviceId: { exact: deviceId } } : {}),
++				echoCancellation: !speaker,
++				noiseSuppression: !speaker,
++				autoGainControl: !speaker,
++				channelCount: 1,
++			},
++		});
++		this.#speaker = speaker;
++		this.#deviceId = deviceId;
++		this.#stream = stream;
++		const context = new AudioContext();
++		this.#context = context;
++		const source = context.createMediaStreamSource(stream);
++		this.#source = source;
++		// ScriptProcessor rather than an AudioWorklet: the worklet needs a
++		// separate module URL, and this path carries 20 ms frames of one mono
++		// channel, well inside its budget.
++		const node = context.createScriptProcessor(4096, 1, 1);
++		this.#node = node;
++		const ratio = context.sampleRate / INPUT_RATE;
++		node.onaudioprocess = event => {
++			if (this.#muted) return;
++			const input = event.inputBuffer.getChannelData(0);
++			for (let index = 0; index < Math.floor(input.length / ratio); index += 1) {
++				const position = index * ratio;
++				const low = Math.floor(position);
++				const high = Math.min(low + 1, input.length - 1);
++				const fraction = position - low;
++				this.#pending.push((input[low] ?? 0) * (1 - fraction) + (input[high] ?? 0) * fraction);
++			}
++			while (this.#pending.length >= INPUT_FRAME) {
++				this.#onFrame(encodePcm16(Float32Array.from(this.#pending.splice(0, INPUT_FRAME))));
++			}
++		};
++		source.connect(node);
++		// Chrome only pulls a ScriptProcessor that reaches the destination; a
++		// zero-gain sink keeps it running without echoing the microphone.
++		const sink = context.createGain();
++		sink.gain.value = 0;
++		node.connect(sink);
++		sink.connect(context.destination);
++	}
++
++	setMuted(muted: boolean): void {
++		this.#muted = muted;
++		for (const track of this.#stream?.getAudioTracks() ?? []) track.enabled = !muted;
++	}
++
++	/**
++	 * Playback boost.
++	 *
++	 * While an echo-cancelling capture is live, Chrome pins output to the
++	 * platform's communication stream so the hardware canceller gets its
++	 * reference signal. On Android that stream's ceiling is well below the
++	 * media one and the page cannot raise it — `speaker` mode escapes it by
++	 * dropping cancellation, and this gain is the lever that remains when you
++	 * stay on it.
++	 *
++	 * A previous version put a hard limiter after the gain, which capped the
++	 * output at roughly its threshold and made every setting above 2x sound
++	 * identical. The saturating curve below raises loudness instead: peaks
++	 * round off toward full scale rather than being flattened, so higher
++	 * settings keep getting louder until the signal is fully saturated.
++	 */
++	setPlaybackGain(gain: number): void {
++		this.#gain = Math.max(1, Math.min(MAX_GAIN, gain));
++		if (this.#gainNode) this.#gainNode.gain.value = this.#gain;
++	}
++
++	/** Queues one decoded host frame for playback in arrival order. */
++	play(pcm: string, rate: number): void {
++		const samples = decodePcm16(pcm);
++		if (samples.length === 0) return;
++		const context = (this.#playbackContext ??= new AudioContext());
++		void context.resume();
++		this.#gainNode ??= createPlaybackChain(context, this.#gain);
++		const buffer = context.createBuffer(1, samples.length, rate);
++		buffer.getChannelData(0).set(samples);
++		const source = context.createBufferSource();
++		source.buffer = buffer;
++		source.connect(this.#gainNode);
++		const earliest = context.currentTime + PLAYBACK_LEAD_S;
++		const startAt = Math.max(this.#playbackCursor, earliest);
++		source.start(startAt);
++		this.#playbackCursor = startAt + buffer.duration;
++	}
++
++	/**
++	 * Tears down capture only. The capture AudioContext is closed without
++	 * awaiting: `use()` opens the replacement immediately, and a pending close
++	 * on the old context does not block the new one.
++	 */
++	#stopCapture(): void {
++		this.#node?.disconnect();
++		this.#source?.disconnect();
++		for (const track of this.#stream?.getAudioTracks() ?? []) track.stop();
++		void this.#context?.close().catch(() => {});
++		this.#stream = undefined;
++		this.#node = undefined;
++		this.#source = undefined;
++		this.#context = undefined;
++		this.#pending = [];
++	}
++
++	async stop(): Promise<void> {
++		this.#stopCapture();
++		this.#deviceId = undefined;
++		this.#playbackCursor = 0;
++		await this.#playbackContext?.close().catch(() => {});
++		this.#playbackContext = undefined;
++		this.#gainNode = undefined;
++	}
++}
+diff --git a/packages/collab-client/upstream/src/lib/live-frames.ts b/packages/collab-client/upstream/src/lib/live-frames.ts
+new file mode 100644
+index 0000000..0f7b792
+--- /dev/null
++++ b/packages/collab-client/upstream/src/lib/live-frames.ts
+@@ -0,0 +1,30 @@
++/**
++ * Host frames for remote live voice, declared locally.
++ *
++ * The vendored client pins `@oh-my-pi/pi-wire` at `18.1.14`, whose `HostFrame`
++ * union predates these frames, and a union cannot be extended by declaration
++ * merging. The client therefore narrows them itself from the raw frame before
++ * the pinned union's `switch` sees it; the shapes mirror the host exactly.
++ */
++export type LiveHostFrame =
++	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
++	| { t: "live-transcript"; role: "user" | "assistant"; text: string; turn: number; final: boolean }
++	| { t: "live-phase"; phase: string }
++	| { t: "live-out"; pcm: string; rate: number };
++
++/** Guest frames for remote live voice, absent from the pinned wire union. */
++export type LiveGuestFrame =
++	| { t: "live-audio"; pcm: string }
++	| { t: "live-ctl"; op: "claim" | "release" | "mute" | "unmute" | "gate-on" | "gate-off" };
++
++const LIVE_FRAME_TAGS: Record<string, true> = {
++	"live-state": true,
++	"live-transcript": true,
++	"live-phase": true,
++	"live-out": true,
++};
++
++/** Narrows a raw host frame to a live frame, or returns undefined. */
++export function asLiveFrame(frame: { t: string }): LiveHostFrame | undefined {
++	return LIVE_FRAME_TAGS[frame.t] === true ? (frame as LiveHostFrame) : undefined;
++}
+diff --git a/packages/collab-client/upstream/src/lib/socket.ts b/packages/collab-client/upstream/src/lib/socket.ts
+index c6bd4f2..2354712 100644
+--- a/packages/collab-client/upstream/src/lib/socket.ts
++++ b/packages/collab-client/upstream/src/lib/socket.ts
+@@ -9,6 +9,7 @@
+  */
+ 
+ import type { GuestFrame, HostFrame, RelayControlMessage } from "@oh-my-pi/pi-wire";
++import type { LiveGuestFrame } from "./live-frames";
+ import { open, seal } from "./codec";
+ import { packEnvelope, unpackEnvelope } from "./link";
+ 
+@@ -37,7 +38,11 @@ export interface CollabSocketOptions {
+ 	key: CryptoKey | PromiseLike<CryptoKey>;
+ }
+ 
+-export type GatewayGuestFrame = GuestFrame | { t: "gateway-health-ping"; seq: number };
++export type GatewayGuestFrame =
++	| GuestFrame
++	| { t: "gateway-health-ping"; seq: number }
++	/** Remote live voice; the pinned wire union predates these frames. */
++	| LiveGuestFrame;
+ export type GatewayHostFrame = HostFrame | { t: "gateway-health-pong"; seq: number };
+ 
+ export class CollabSocket {
+diff --git a/packages/collab-client/upstream/src/lib/ui-scale.ts b/packages/collab-client/upstream/src/lib/ui-scale.ts
+new file mode 100644
+index 0000000..ffdcacf
+--- /dev/null
++++ b/packages/collab-client/upstream/src/lib/ui-scale.ts
+@@ -0,0 +1,62 @@
++import { useSyncExternalStore } from "react";
++
++/**
++ * UI scale preference.
++ *
++ * Every shell size is a hardcoded px value, so a text-size preference cannot
++ * come from a root font size. `zoom` on the app frame scales the whole
++ * interface instead, and unlike `transform: scale` it participates in layout,
++ * so rows still shrink and ellipsize at the scaled width.
++ */
++const STORAGE_KEY = "omp-collab-ui-scale";
++export const UI_SCALES = [0.85, 1, 1.15, 1.3, 1.5] as const;
++export type UiScale = (typeof UI_SCALES)[number];
++const DEFAULT_SCALE: UiScale = 1;
++
++function readStoredScale(): UiScale {
++	try {
++		const stored = Number(globalThis.localStorage.getItem(STORAGE_KEY));
++		return UI_SCALES.find(scale => scale === stored) ?? DEFAULT_SCALE;
++	} catch {
++		// Private-mode or blocked storage: fall back to unscaled.
++		return DEFAULT_SCALE;
++	}
++}
++
++let scale: UiScale = readStoredScale();
++const listeners = new Set<() => void>();
++
++function applyScale(): void {
++	// A document without CSSOM (test stubs, non-browser hosts) cannot take a
++	// custom property; the preference still holds in memory and persists.
++	const root = typeof document === "undefined" ? undefined : document.documentElement;
++	root?.style?.setProperty?.("--ui-scale", String(scale));
++}
++
++if (typeof window !== "undefined") applyScale();
++
++export function setUiScale(next: UiScale): void {
++	scale = next;
++	try {
++		globalThis.localStorage.setItem(STORAGE_KEY, String(next));
++	} catch {
++		// Persistence is best-effort; still apply the in-memory preference.
++	}
++	applyScale();
++	for (const listener of listeners) listener();
++}
++
++function subscribe(callback: () => void): () => void {
++	listeners.add(callback);
++	return () => listeners.delete(callback);
++}
++
++/** Reader + writer for the UI scale (powers the toggle). */
++export function useUiScale(): { scale: UiScale; setScale: (next: UiScale) => void } {
++	const current = useSyncExternalStore(
++		subscribe,
++		() => scale,
++		() => DEFAULT_SCALE,
++	);
++	return { scale: current, setScale: setUiScale };
++}

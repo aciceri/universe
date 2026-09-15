@@ -56,12 +56,19 @@ let
         # postPatch. Both must move together: the mbox is cut against an exact
         # omp tag, so a version bump that rejects it means waiting for the
         # gateway to reroll (patches/oh-my-pi/README.md).
+        #
+        # Our own series follows it, letting a collab guest hold the `/live`
+        # realtime voice call from its own microphone and speaker. It is cut
+        # against the gateway-patched tree, not pristine upstream — the mbox
+        # moves `CollabHost` ownership into a shared controller, which is where
+        # the live bridge registers — so the order here is load-bearing.
         (final: prev: {
           llm-agents = prev.llm-agents // {
             omp = prev.llm-agents.omp.overrideAttrs (old: {
               nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.git ];
               prePatch = (old.prePatch or "") + ''
                 git apply --whitespace=nowarn -p1 ${final.omp-session-gateway.ompPatch}
+                git apply --whitespace=nowarn -p1 ${../patches/oh-my-pi}/*.patch
               '';
             });
           };

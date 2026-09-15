@@ -1,0 +1,541 @@
+From b8fb472e681863fb42fe2343abda09bd11192015 Mon Sep 17 00:00:00 2001
+From: ccr <ccr@aciceri.dev>
+Date: Sun, 13 Sep 2026 12:36:07 +0200
+Subject: [PATCH 5/8] collab: mirror the live transcript and phase to the
+ owning guest
+
+A remote guest heard the call but saw none of it: the speech recognition of
+its own microphone and of the agent reply stayed on the host visualizer.
+
+Forward both through the live bridge as live-transcript and live-phase
+frames, targeted at the owner. The guest coalesces updates by role-local
+turn, so a streaming turn rewrites its line instead of appending.
+
+LivePanel renders them above the composer as its own surface rather than
+inside the session transcript: these lines are volatile recognition, they
+rewrite while a turn streams, and they are never persisted. Partial text
+is dimmed and italic until the frame is final.
+
+(cherry picked from commit c7ef9b6ef67e2d4b18fae9183d1f94a172bd552a)
+---
+ packages/coding-agent/src/collab/host.ts      |  23 +++-
+ packages/coding-agent/src/collab/protocol.ts  |   5 +
+ .../controllers/live-command-controller.ts    |  29 ++++-
+ packages/collab-web/src/app.tsx               |   7 ++
+ .../src/components/shell/LivePanel.tsx        |  60 ++++++++++
+ .../collab-web/src/components/shell/shell.css | 110 +++++++++++++++++-
+ packages/collab-web/src/lib/client.ts         |  50 +++++++-
+ packages/collab-web/test/composer.test.tsx    |   9 +-
+ packages/wire/src/index.ts                    |   8 ++
+ 9 files changed, 287 insertions(+), 14 deletions(-)
+ create mode 100644 packages/collab-web/src/components/shell/LivePanel.tsx
+
+diff --git a/packages/coding-agent/src/collab/host.ts b/packages/coding-agent/src/collab/host.ts
+index a1d985f..a9af700 100644
+--- a/packages/coding-agent/src/collab/host.ts
++++ b/packages/coding-agent/src/collab/host.ts
+@@ -27,6 +27,7 @@ import { type AgentRef, AgentRegistry } from "../registry/agent-registry";
+ import type { AgentSessionEvent } from "../session/agent-session";
+ import { stripImagesFromMessage, USER_INTERRUPT_LABEL } from "../session/messages";
+ import type { SessionEntry as StoredSessionEntry } from "../session/session-entries";
++import type { LivePhase } from "../live/visualizer";
+ import { TASK_SUBAGENT_LIFECYCLE_CHANNEL, TASK_SUBAGENT_PROGRESS_CHANNEL } from "../task/types";
+ import { generateRoomKey, generateWriteToken, importRoomKey } from "./crypto";
+ import { collabDisplayName } from "./display-name";
+@@ -73,14 +74,25 @@ const LIVE_SILENCE_PEAK = 0.002;
+  * without it, guests cannot start remote live audio.
+  */
+ export interface CollabLiveAudioBridge {
+-	/** Starts a live session with no local microphone or speaker. */
+-	start(onOutput: (samples: Float32Array) => void): Promise<void>;
++	/**
++	 * Starts a live session with no local microphone or speaker. The sinks are
++	 * everything the remote endpoint needs to render the call itself: decoded
++	 * audio, the conversational transcript, and the phase the host visualizer
++	 * shows.
++	 */
++	start(sinks: CollabLiveSinks): Promise<void>;
+ 	/** Feeds guest microphone audio as mono 16 kHz PCM. */
+ 	pushInput(samples: Float32Array): void;
+ 	setMuted(muted: boolean): void;
+ 	stop(): Promise<void>;
+ }
+ 
++export interface CollabLiveSinks {
++	onOutput(samples: Float32Array): void;
++	onTranscript(role: "user" | "assistant", text: string, turn: number, final: boolean): void;
++	onPhase(phase: LivePhase): void;
++}
++
+ function decodePcm16(base64: string): Float32Array {
+ 	const bytes = Buffer.from(base64, "base64");
+ 	const count = bytes.byteLength >> 1;
+@@ -602,7 +614,12 @@ export class CollabHost {
+ 			}
+ 			this.#liveOwner = fromPeer;
+ 			try {
+-				await bridge.start(samples => this.#sendLiveAudio(samples));
++				await bridge.start({
++					onOutput: samples => this.#sendLiveAudio(samples),
++					onTranscript: (role, text, turn, final) =>
++						this.#socket?.send({ t: "live-transcript", role, text, turn, final }, fromPeer),
++					onPhase: phase => this.#socket?.send({ t: "live-phase", phase }, fromPeer),
++				});
+ 			} catch (error) {
+ 				this.#liveOwner = undefined;
+ 				this.#socket?.send({ t: "live-state", active: false, error: String(error) }, fromPeer);
+diff --git a/packages/coding-agent/src/collab/protocol.ts b/packages/coding-agent/src/collab/protocol.ts
+index 0cb8bce..fe3f09a 100644
+--- a/packages/coding-agent/src/collab/protocol.ts
++++ b/packages/coding-agent/src/collab/protocol.ts
+@@ -25,6 +25,7 @@ import {
+ 	WRITE_TOKEN_BYTES,
+ } from "@oh-my-pi/pi-wire";
+ import type { ContextUsage } from "../extensibility/extensions/types";
++import type { LivePhase } from "../live/visualizer";
+ import type { AgentSessionEvent } from "../session/agent-session";
+ import type { SessionEntry, SessionHeader } from "../session/session-entries";
+ 
+@@ -110,6 +111,10 @@ export type CollabFrame =
+ 	| { t: "live-out"; pcm: string; rate: number }
+ 	/** Live-audio ownership state; `owner` is the peer id holding it. */
+ 	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
++	/** Realtime transcript update for the owning guest; `turn` is role-local. */
++	| { t: "live-transcript"; role: "user" | "assistant"; text: string; turn: number; final: boolean }
++	/** Realtime call phase, mirroring the host visualizer's own states. */
++	| { t: "live-phase"; phase: LivePhase }
+ 	| { t: "error"; message: string };
+ 
+ // ═══════════════════════════════════════════════════════════════════════════
+diff --git a/packages/coding-agent/src/modes/controllers/live-command-controller.ts b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
+index b39c037..0f2b945 100644
+--- a/packages/coding-agent/src/modes/controllers/live-command-controller.ts
++++ b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
+@@ -1,6 +1,6 @@
+ import type { AssistantMessage } from "@oh-my-pi/pi-ai";
+ import { logger } from "@oh-my-pi/pi-utils";
+-import type { CollabLiveAudioBridge } from "../../collab/host";
++import type { CollabLiveAudioBridge, CollabLiveSinks } from "../../collab/host";
+ import {
+ 	type LiveAudioEndpoint,
+ 	LiveSessionController,
+@@ -47,6 +47,8 @@ export class LiveCommandController {
+ 	#assistantTranscriptComponent: AssistantMessageComponent | undefined;
+ 	#assistantTranscriptTurn = 0;
+ 	#assistantTranscriptStartedAt = 0;
++	/** Set while a collab guest owns the call; mirrors UI state to that guest. */
++	#remoteSinks: CollabLiveSinks | undefined;
+ 
+ 	constructor(ctx: InteractiveModeContext, createSession?: LiveSessionFactory) {
+ 		this.#ctx = ctx;
+@@ -75,11 +77,20 @@ export class LiveCommandController {
+ 	 */
+ 	collabBridge(): CollabLiveAudioBridge {
+ 		return {
+-			start: async onOutput => {
++			start: async sinks => {
+ 				if (this.active) throw new Error("A live session is already running on the host.");
+ 				if (this.#settling) await this.#settling;
+-				await this.#start({ localCapture: false, localPlayback: false, onOutput });
+-				if (!this.#session) throw new Error("The live session stopped while starting.");
++				this.#remoteSinks = sinks;
++				try {
++					await this.#start({ localCapture: false, localPlayback: false, onOutput: sinks.onOutput });
++				} catch (cause) {
++					this.#remoteSinks = undefined;
++					throw cause;
++				}
++				if (!this.#session) {
++					this.#remoteSinks = undefined;
++					throw new Error("The live session stopped while starting.");
++				}
+ 			},
+ 			pushInput: samples => this.#session?.pushInput(samples),
+ 			setMuted: muted => this.#session?.setMuted(muted),
+@@ -135,6 +146,7 @@ export class LiveCommandController {
+ 			audio,
+ 			callbacks: {
+ 				onPhase: phase => {
++					this.#remoteSinks?.onPhase(phase);
+ 					if (this.#visualizer !== visualizer) return;
+ 					visualizer.setPhase(phase);
+ 					this.#ctx.ui.requestComponentRender(visualizer);
+@@ -145,6 +157,14 @@ export class LiveCommandController {
+ 					this.#ctx.ui.requestComponentRender(visualizer);
+ 				},
+ 				onTranscript: transcript => {
++					if (transcript) {
++						this.#remoteSinks?.onTranscript(
++							transcript.role,
++							transcript.text,
++							transcript.turn,
++							transcript.final,
++						);
++					}
+ 					if (this.#visualizer !== visualizer) return;
+ 					if (!transcript) {
+ 						visualizer.clearTranscript();
+@@ -247,6 +267,7 @@ export class LiveCommandController {
+ 	#finish(session: LiveSessionController, error?: Error): void {
+ 		if (this.#session !== session) return;
+ 		this.#session = undefined;
++		this.#remoteSinks = undefined;
+ 		this.#restoreEditor();
+ 		if (error) this.#ctx.showError(error.message);
+ 		const settling = session.stop().catch(cause => {
+diff --git a/packages/collab-web/src/app.tsx b/packages/collab-web/src/app.tsx
+index 720efb1..01be6ac 100644
+--- a/packages/collab-web/src/app.tsx
++++ b/packages/collab-web/src/app.tsx
+@@ -6,6 +6,7 @@ import { Banners } from "./components/shell/Banners";
+ import { Composer } from "./components/shell/Composer";
+ import { ConnectScreen } from "./components/shell/ConnectScreen";
+ import { HeaderBar } from "./components/shell/HeaderBar";
++import { LivePanel } from "./components/shell/LivePanel";
+ import { Toasts } from "./components/shell/Toasts";
+ import { Transcript } from "./components/transcript/Transcript";
+ import { GuestClient } from "./lib/client";
+@@ -234,6 +235,12 @@ function Session({ client, onLeave, onRejoin }: SessionProps): ReactNode {
+ 					</>
+ 				)}
+ 			</main>
++			<LivePanel
++				live={snap.live}
++				error={liveError}
++				onToggleMute={() => client.setLiveMuted(!snap.live.muted)}
++				onStop={() => client.stopLiveAudio()}
++			/>
+ 			<Composer client={client} snapshot={snap} />
+ 			{drawerAgent && (
+ 				<>
+diff --git a/packages/collab-web/src/components/shell/LivePanel.tsx b/packages/collab-web/src/components/shell/LivePanel.tsx
+new file mode 100644
+index 0000000..c1e7a60
+--- /dev/null
++++ b/packages/collab-web/src/components/shell/LivePanel.tsx
+@@ -0,0 +1,60 @@
++import { Mic, MicOff, Radio } from "lucide-react";
++import type { ReactNode } from "react";
++import type { GuestSnapshot } from "../../lib/client";
++
++export interface LivePanelProps {
++	live: GuestSnapshot["live"];
++	onToggleMute(): void;
++	onStop(): void;
++	/** Local microphone failure (permission denied, no device). */
++	error?: string | null;
++}
++
++/**
++ * Realtime voice overlay.
++ *
++ * Deliberately not part of the session transcript: these lines are speech
++ * recognition of the live call, they rewrite themselves while a turn streams,
++ * and they are never persisted in the session. Rendering them inline would
++ * mix volatile recognition with the durable transcript.
++ */
++export function LivePanel({ live, onToggleMute, onStop, error }: LivePanelProps): ReactNode {
++	if (!live.owned) return null;
++	const phase = live.error ?? error ?? live.phase ?? "connecting";
++	return (
++		<aside className="sh-live" aria-label="live voice">
++			<header className="sh-live-head">
++				<Radio size={12} className={live.phase === "speaking" ? "sh-live-on" : undefined} />
++				<span className="sh-live-title">live voice</span>
++				<span className={`sh-live-phase sh-live-phase-${live.phase ?? "connecting"}`}>{phase}</span>
++				<button
++					type="button"
++					className="sh-btn sh-btn-icon"
++					onClick={onToggleMute}
++					title={live.muted ? "unmute microphone" : "mute microphone"}
++				>
++					{live.muted ? <MicOff size={12} /> : <Mic size={12} />}
++				</button>
++				<button type="button" className="sh-btn sh-btn-icon" onClick={onStop} title="end live voice">
++					end
++				</button>
++			</header>
++			<div className="sh-live-lines">
++				<p className="sh-live-line sh-live-you">
++					<span className="sh-live-who">you</span>
++					<span className={live.transcript.user?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}>
++						{live.transcript.user?.text || (live.muted ? "microphone muted" : "listening…")}
++					</span>
++				</p>
++				<p className="sh-live-line sh-live-agent">
++					<span className="sh-live-who">omp</span>
++					<span
++						className={live.transcript.assistant?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}
++					>
++						{live.transcript.assistant?.text || "—"}
++					</span>
++				</p>
++			</div>
++		</aside>
++	);
++}
+diff --git a/packages/collab-web/src/components/shell/shell.css b/packages/collab-web/src/components/shell/shell.css
+index 0eaf8e3..07c4f8a 100644
+--- a/packages/collab-web/src/components/shell/shell.css
++++ b/packages/collab-web/src/components/shell/shell.css
+@@ -10,7 +10,10 @@
+ 	 * viewport and clip the right edge. `minmax(0, 1fr)` caps the track so rows
+ 	 * shrink and ellipsize instead of overflowing. */
+ 	grid-template-columns: minmax(0, 1fr);
+-	height: var(--viewport-height, 100%);
++	/* `height` is in the pre-zoom coordinate space, so dividing by the scale
++	 * keeps the rendered frame exactly one viewport tall at any scale. */
++	height: calc(var(--viewport-height, 100%) / var(--ui-scale, 1));
++	zoom: var(--ui-scale, 1);
+ }
+ 
+ .sh-main {
+@@ -140,6 +143,18 @@
+ 	border-color: var(--border-strong);
+ }
+ 
++.sh-scale-toggle {
++	gap: 3px;
++	width: auto;
++	padding: 0 5px;
++}
++
++.sh-scale-value {
++	font-family: var(--font-mono);
++	font-size: 10px;
++	font-variant-numeric: tabular-nums;
++}
++
+ @media (prefers-reduced-motion: reduce) {
+ 	.sh-theme-toggle {
+ 		transition: none;
+@@ -294,6 +309,99 @@
+ 	background: var(--err);
+ }
+ 
++/* ---- live voice ----
++   Sits above the composer as its own surface: volatile speech recognition,
++   visually not part of the durable session transcript. */
++.sh-live {
++	max-width: 880px;
++	width: calc(100% - 24px);
++	margin: 0 auto 8px;
++	border: 1px solid var(--accent-muted);
++	border-left: 2px solid var(--accent);
++	border-radius: var(--radius-sm);
++	background: var(--bg-inset);
++	font-family: var(--font-mono);
++	font-size: 12px;
++}
++
++.sh-live-head {
++	display: flex;
++	align-items: center;
++	gap: 6px;
++	padding: 4px 8px;
++	border-bottom: 1px solid var(--border);
++	color: var(--fg-faint);
++}
++
++.sh-live-title {
++	text-transform: uppercase;
++	letter-spacing: 0.08em;
++	font-size: 10px;
++}
++
++.sh-live-phase {
++	margin-right: auto;
++	color: var(--fg-muted);
++}
++
++.sh-live-phase-listening {
++	color: var(--ok);
++}
++
++.sh-live-phase-speaking {
++	color: var(--accent);
++}
++
++.sh-live-phase-working {
++	color: var(--warn);
++}
++
++.sh-live-phase-error {
++	color: var(--err);
++}
++
++.sh-live-on {
++	color: var(--accent);
++}
++
++.sh-live-lines {
++	display: flex;
++	flex-direction: column;
++	gap: 2px;
++	padding: 6px 8px;
++}
++
++.sh-live-line {
++	display: flex;
++	gap: 8px;
++	margin: 0;
++	line-height: 1.45;
++}
++
++.sh-live-who {
++	flex: 0 0 28px;
++	color: var(--fg-faint);
++	text-align: right;
++}
++
++.sh-live-text {
++	min-width: 0;
++	overflow-wrap: anywhere;
++}
++
++.sh-live-you .sh-live-text {
++	color: var(--fg);
++}
++
++.sh-live-agent .sh-live-text {
++	color: var(--fg-muted);
++}
++
++.sh-live-partial {
++	opacity: 0.65;
++	font-style: italic;
++}
++
+ /* ---- composer ---- */
+ .sh-composer {
+ 	padding: 10px 12px;
+diff --git a/packages/collab-web/src/lib/client.ts b/packages/collab-web/src/lib/client.ts
+index e2e3733..168bc13 100644
+--- a/packages/collab-web/src/lib/client.ts
++++ b/packages/collab-web/src/lib/client.ts
+@@ -42,6 +42,13 @@ export interface Notice {
+ 	at: number;
+ }
+ 
++/** One realtime transcript line, replaced in place while its turn streams. */
++export interface LiveLine {
++	text: string;
++	turn: number;
++	final: boolean;
++}
++
+ export interface GuestSnapshot {
+ 	phase: ConnectionPhase;
+ 	endedReason: string | null;
+@@ -63,8 +70,18 @@ export interface GuestSnapshot {
+ 	readOnly: boolean;
+ 	/** Pending host-side UI request (`ask` select/editor) this guest can answer. */
+ 	uiRequest: CollabUiRequest | null;
+-	/** Live voice state: whether a call is running and whether we own it. */
+-	live: { active: boolean; owned: boolean; muted: boolean; error: string | null };
++	/**
++	 * Live voice state. `transcript` holds the last update per role, coalesced
++	 * by turn, so it renders as a conversation rather than an append log.
++	 */
++	live: {
++		active: boolean;
++		owned: boolean;
++		muted: boolean;
++		error: string | null;
++		phase: string | null;
++		transcript: { user: LiveLine | null; assistant: LiveLine | null };
++	};
+ 	/** Capped at 50, newest last. */
+ 	notices: readonly Notice[];
+ }
+@@ -119,7 +136,14 @@ export class GuestClient {
+ 	#readOnly = false;
+ 	#uiRequest: CollabUiRequest | null = null;
+ 	#uiRequestQueue: CollabUiRequest[] = [];
+-	#live = { active: false, owned: false, muted: false, error: null as string | null };
++	#live: GuestSnapshot["live"] = {
++		active: false,
++		owned: false,
++		muted: false,
++		error: null,
++		phase: null,
++		transcript: { user: null, assistant: null },
++	};
+ 	#liveClaimed = false;
+ 	#notices: readonly Notice[] = [];
+ 	/** Receives decoded host audio (base64 PCM16) for playback on this device. */
+@@ -426,17 +450,33 @@ export class GuestClient {
+ 				}
+ 				this.#pushNotice("error", frame.message);
+ 				break;
+-			case "live-state":
++			case "live-state": {
+ 				// A guest never learns its own relay peer id, so ownership is
+ 				// tracked from local intent: we claimed, the host confirmed.
+ 				if (frame.error) this.#liveClaimed = false;
++				const owned = frame.active && this.#liveClaimed;
+ 				this.#live = {
+ 					active: frame.active,
+-					owned: frame.active && this.#liveClaimed,
++					owned,
+ 					muted: frame.muted === true,
+ 					error: frame.error ?? null,
++					phase: frame.active ? this.#live.phase : null,
++					// A finished call keeps no transcript: the next one starts clean.
++					transcript: owned ? this.#live.transcript : { user: null, assistant: null },
++				};
++				break;
++			}
++			case "live-phase":
++				this.#live = { ...this.#live, phase: frame.phase };
++				break;
++			case "live-transcript": {
++				const line: LiveLine = { text: frame.text, turn: frame.turn, final: frame.final };
++				this.#live = {
++					...this.#live,
++					transcript: { ...this.#live.transcript, [frame.role]: line },
+ 				};
+ 				break;
++			}
+ 			case "live-out":
+ 				this.onLiveAudio?.(frame.pcm, frame.rate);
+ 				return; // audio is not snapshot state; skip the render commit
+diff --git a/packages/collab-web/test/composer.test.tsx b/packages/collab-web/test/composer.test.tsx
+index 6ca8eee..8bf9fe7 100644
+--- a/packages/collab-web/test/composer.test.tsx
++++ b/packages/collab-web/test/composer.test.tsx
+@@ -25,7 +25,14 @@ function snapshot(uiRequest: GuestSnapshot["uiRequest"]): GuestSnapshot {
+ 		working: true,
+ 		readOnly: false,
+ 		uiRequest,
+-		live: { active: false, owned: false, muted: false, error: null },
++		live: {
++			active: false,
++			owned: false,
++			muted: false,
++			error: null,
++			phase: null,
++			transcript: { user: null, assistant: null },
++		},
+ 		notices: [],
+ 	};
+ }
+diff --git a/packages/wire/src/index.ts b/packages/wire/src/index.ts
+index bc603b9..861da12 100644
+--- a/packages/wire/src/index.ts
++++ b/packages/wire/src/index.ts
+@@ -397,6 +397,14 @@ export type HostFrame =
+ 	| { t: "live-out"; pcm: string; rate: number }
+ 	/** Live-audio ownership state; `owner` is the peer id holding it. */
+ 	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
++	/**
++	 * One realtime conversational transcript update for the owning guest.
++	 * `turn` is role-local and monotonic, so a guest coalesces streaming
++	 * updates of the same turn instead of appending them.
++	 */
++	| { t: "live-transcript"; role: "user" | "assistant"; text: string; turn: number; final: boolean }
++	/** Realtime call phase, mirroring the host visualizer's own states. */
++	| { t: "live-phase"; phase: "connecting" | "listening" | "working" | "speaking" | "muted" | "error" }
+ 	| { t: "error"; message: string };
+ 
+ export type WireFrame = GuestFrame | HostFrame;

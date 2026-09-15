@@ -1,0 +1,130 @@
+From 2b4b01a43f6864c5256db9f5fa16632e77906101 Mon Sep 17 00:00:00 2001
+From: ccr <ccr@aciceri.dev>
+Date: Sun, 13 Sep 2026 16:13:20 +0200
+Subject: [PATCH 8/8] live: seed the session state into the realtime
+ instructions
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+A realtime session starts with no history: the transcript lives in the
+AgentSession, which the voice surface only reaches through delegations. So
+"where were we" was unanswerable even though the backend knew — that
+question never becomes a delegation.
+
+Seed a bounded recap into the instructions at call setup: session name, open
+todos (capped, closed ones dropped), and the last visible assistant answer
+clipped to 600 characters. The block is omitted entirely for a session with
+nothing to report, and the prompt frames it as a snapshot so anything about
+the present still goes through a delegation.
+
+`{{#if recap}}` rather than `{{#recap}}`: a handlebars section rebinds the
+context to the string, and `{{recap}}` inside it then resolves to nothing.
+
+(cherry picked from commit d428a26f726e6d8249b21c7dec5ecc5a095edd51)
+---
+ packages/coding-agent/src/live/controller.ts  | 57 ++++++++++++++++++-
+ .../src/live/prompts/live-instructions.md     | 11 ++++
+ 2 files changed, 67 insertions(+), 1 deletion(-)
+
+diff --git a/packages/coding-agent/src/live/controller.ts b/packages/coding-agent/src/live/controller.ts
+index 8d1ea2c..4c2e0e4 100644
+--- a/packages/coding-agent/src/live/controller.ts
++++ b/packages/coding-agent/src/live/controller.ts
+@@ -22,6 +22,10 @@ import { DEFAULT_LIVE_VOICE } from "./voices";
+ const OUTPUT_ACTIVE_LEVEL = 0.015;
+ const MIN_BARGE_IN_LEVEL = 0.04;
+ const OUTPUT_ECHO_RATIO = 0.65;
++/** Open todos listed in the recap before it starts counting the rest. */
++const RECAP_TODO_LIMIT = 5;
++/** Characters of the last assistant answer kept in the recap. */
++const RECAP_ANSWER_CHARS = 600;
+ 
+ /** Incremental or final transcript for one realtime conversational turn. */
+ export interface LiveTranscript {
+@@ -106,6 +110,54 @@ function currentUser(): { username: string; firstName: string } {
+ 	return { username, firstName: firstPart ?? "there" };
+ }
+ 
++/**
++ * Compact snapshot of the session a call is opening on, seeded into the
++ * realtime instructions.
++ *
++ * A realtime session starts with no history: the transcript lives in the
++ * AgentSession, which the voice surface only ever reaches through delegations.
++ * Without this, "where were we" is unanswerable even though the backend knows,
++ * because that question never becomes a delegation. Kept short on purpose —
++ * these tokens are paid on every call, and anything more current has to be
++ * fetched by delegating anyway.
++ */
++function sessionRecap(session: AgentSession, extractAssistantText: (message: AssistantMessage) => string): string {
++	const lines: string[] = [];
++	const name = session.sessionName?.trim();
++	if (name) lines.push(`Session: ${name}`);
++
++	const open = session
++		.getTodoPhases()
++		.flatMap(phase => phase.tasks.map(task => ({ phase: phase.name, task })))
++		.filter(entry => entry.task.status === "in_progress" || entry.task.status === "pending");
++	if (open.length > 0) {
++		lines.push(
++			`Open todos: ${open
++				.slice(0, RECAP_TODO_LIMIT)
++				.map(entry => `${entry.task.content}${entry.task.status === "in_progress" ? " (in progress)" : ""}`)
++				.join("; ")}${open.length > RECAP_TODO_LIMIT ? `; +${open.length - RECAP_TODO_LIMIT} more` : ""}`,
++		);
++	}
++
++	// Last visible assistant answer: the single most useful anchor for "what
++	// were we doing", and the one thing a user is most likely to refer back to.
++	for (let index = session.messages.length - 1; index >= 0; index -= 1) {
++		const message = session.messages[index];
++		if (message?.role !== "assistant") continue;
++		const text = extractAssistantText(message).trim();
++		if (!text) continue;
++		lines.push(`Last answer: ${clip(text, RECAP_ANSWER_CHARS)}`);
++		break;
++	}
++
++	return lines.join("\n");
++}
++
++function clip(text: string, limit: number): string {
++	const collapsed = text.replaceAll(/\s+/g, " ").trim();
++	return collapsed.length <= limit ? collapsed : `${collapsed.slice(0, limit)}…`;
++}
++
+ /** Coordinates the realtime conversational surface with normal AgentSession turns. */
+ export class LiveSessionController {
+ 	readonly #session: AgentSession;
+@@ -172,7 +224,10 @@ export class LiveSessionController {
+ 
+ 		try {
+ 			const user = currentUser();
+-			const instructions = prompt.render(liveInstructionsTemplate, user);
++			const instructions = prompt.render(liveInstructionsTemplate, {
++				...user,
++				recap: sessionRecap(this.#session, this.#extractAssistantText),
++			});
+ 			const onOutput = this.#audio.onOutput;
+ 			const transport = new CodexLiveTransport({
+ 				authStorage: this.#session.modelRegistry.authStorage,
+diff --git a/packages/coding-agent/src/live/prompts/live-instructions.md b/packages/coding-agent/src/live/prompts/live-instructions.md
+index d10b120..8c63784 100644
+--- a/packages/coding-agent/src/live/prompts/live-instructions.md
++++ b/packages/coding-agent/src/live/prompts/live-instructions.md
+@@ -21,3 +21,14 @@ Greetings, clarification, ordinary conversation needing no repository/tools: MUS
+ <critical>
+ MUST preserve one-assistant continuity: converse here, delegate execution, communicate returned result as own.
+ </critical>
++
++{{#if recap}}
++<session-state>
++Where the client backend stood when this call opened. Shared history, not a
++separate agent's notes: MUST treat it as own recent memory, so "what were we
++doing" is answerable directly. It is a snapshot, never authoritative about the
++present — anything needing current state MUST go through a delegation.
++
++{{recap}}
++</session-state>
++{{/if}}

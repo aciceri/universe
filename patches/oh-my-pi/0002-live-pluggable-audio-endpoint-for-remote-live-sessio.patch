@@ -1,0 +1,241 @@
+From e02f9aa9a727ae2dc5ff0a05a2d5628a982c24bd Mon Sep 17 00:00:00 2001
+From: ccr <ccr@aciceri.dev>
+Date: Sun, 13 Sep 2026 11:51:30 +0200
+Subject: [PATCH 2/8] live: pluggable audio endpoint for remote live sessions
+
+LiveSessionController hardcoded AudioCapture on the default input device
+and relied on the native peer for output, so /live was bound to the host
+machine.
+
+Add LiveAudioEndpoint: localCapture and localPlayback default to true and
+keep the current behaviour, onOutput receives decoded remote PCM, and
+pushInput() feeds externally captured 16 kHz frames.
+
+pushInput deliberately skips the echo gate that local capture applies. A
+remote endpoint renders playback on its own device and cancels echo
+there, so gating on this host output level would only suppress genuine
+barge-in. Mute is still honoured.
+
+(cherry picked from commit ef080537a3132dd382e77116e2902e3a40367d1c)
+---
+ packages/coding-agent/src/live/controller.ts | 78 ++++++++++++++++----
+ packages/coding-agent/src/live/transport.ts  | 33 +++++++++
+ 2 files changed, 96 insertions(+), 15 deletions(-)
+
+diff --git a/packages/coding-agent/src/live/controller.ts b/packages/coding-agent/src/live/controller.ts
+index 61699bc..d25ac5c 100644
+--- a/packages/coding-agent/src/live/controller.ts
++++ b/packages/coding-agent/src/live/controller.ts
+@@ -44,6 +44,23 @@ export interface LiveSessionCallbacks {
+ 	onTerminal(error?: Error): void;
+ }
+ 
++/**
++ * Where live audio is captured and rendered. Omitted entirely, a live session
++ * uses the default microphone and speaker of the machine running the agent.
++ *
++ * A remote endpoint (a phone, a collab guest) sets `localCapture` and
++ * `localPlayback` to `false`, installs `onOutput`, and feeds microphone frames
++ * back through {@link LiveSessionController.pushInput}.
++ */
++export interface LiveAudioEndpoint {
++	/** Capture from the default input device. Defaults to `true`. */
++	localCapture?: boolean;
++	/** Render on the default output device. Defaults to `true`. */
++	localPlayback?: boolean;
++	/** Receives decoded remote audio as mono 48 kHz PCM in decode order. */
++	onOutput?(samples: Float32Array): void;
++}
++
+ /** Dependencies and presentation callbacks for a live session. */
+ export interface LiveSessionControllerOptions {
+ 	/** Agent session that performs all delegated coding work. */
+@@ -54,6 +71,8 @@ export interface LiveSessionControllerOptions {
+ 	extractAssistantText(message: AssistantMessage): string;
+ 	/** Realtime output voice, defaulting to sol. */
+ 	voice?: string;
++	/** Audio capture and rendering endpoint; defaults to local devices. */
++	audio?: LiveAudioEndpoint;
+ }
+ 
+ function errorFrom(cause: unknown): Error {
+@@ -93,6 +112,7 @@ export class LiveSessionController {
+ 	readonly #callbacks: LiveSessionCallbacks;
+ 	readonly #extractAssistantText: (message: AssistantMessage) => string;
+ 	readonly #voice: string;
++	readonly #audio: LiveAudioEndpoint;
+ 
+ 	#transport: CodexLiveTransport | undefined;
+ 	#recorder: AudioCapture | undefined;
+@@ -121,6 +141,7 @@ export class LiveSessionController {
+ 		this.#callbacks = options.callbacks;
+ 		this.#extractAssistantText = options.extractAssistantText;
+ 		this.#voice = options.voice?.trim() || DEFAULT_LIVE_VOICE;
++		this.#audio = options.audio ?? {};
+ 	}
+ 
+ 	/** Current realtime call phase. */
+@@ -151,14 +172,17 @@ export class LiveSessionController {
+ 		try {
+ 			const user = currentUser();
+ 			const instructions = prompt.render(liveInstructionsTemplate, user);
++			const onOutput = this.#audio.onOutput;
+ 			const transport = new CodexLiveTransport({
+ 				authStorage: this.#session.modelRegistry.authStorage,
+ 				sessionId: this.#session.sessionId,
+ 				instructions,
+ 				voice: this.#voice,
++				localPlayback: this.#audio.localPlayback ?? true,
+ 				callbacks: {
+ 					onEvent: event => this.#guardEvent(() => this.#handleLiveEvent(event)),
+ 					onOutputLevel: level => this.#guardEvent(() => this.#handleOutputLevel(level)),
++					onOutputAudio: onOutput ? samples => this.#guardEvent(() => onOutput(samples)) : undefined,
+ 				},
+ 			});
+ 			this.#transport = transport;
+@@ -173,22 +197,24 @@ export class LiveSessionController {
+ 			if (this.#stopped) {
+ 				throw this.#failure ?? new Error("The live session stopped before recording began.");
+ 			}
+-			const recorder = new AudioCapture(16_000, (error, samples) => {
+-				if (error) {
+-					this.#reportFailure(error);
+-					return;
+-				}
+-				this.#handleMicrophoneAudio(samples);
+-			});
+-			if (this.#stopped) {
+-				try {
+-					recorder.stop();
+-				} catch {
+-					// Preserve the failure that stopped startup.
++			if (this.#audio.localCapture ?? true) {
++				const recorder = new AudioCapture(16_000, (error, samples) => {
++					if (error) {
++						this.#reportFailure(error);
++						return;
++					}
++					this.#handleMicrophoneAudio(samples);
++				});
++				if (this.#stopped) {
++					try {
++						recorder.stop();
++					} catch {
++						// Preserve the failure that stopped startup.
++					}
++					throw this.#failure ?? new Error("The live session stopped while recording began.");
+ 				}
+-				throw this.#failure ?? new Error("The live session stopped while recording began.");
++				this.#recorder = recorder;
+ 			}
+-			this.#recorder = recorder;
+ 			this.#refreshAudioPhase();
+ 		} catch (cause) {
+ 			const error = errorFrom(cause);
+@@ -362,11 +388,33 @@ export class LiveSessionController {
+ 		if (this.#muted) return;
+ 		this.#inputLevel = microphoneLevel(samples);
+ 		this.#emitLevels();
++		// Software half-duplex gate: the local microphone hears the local
++		// speaker, so quiet input during playback is echo rather than speech.
+ 		const outputActive = this.#outputLevel > OUTPUT_ACTIVE_LEVEL;
+ 		const echoThreshold = Math.max(MIN_BARGE_IN_LEVEL, this.#outputLevel * OUTPUT_ECHO_RATIO);
+ 		if (outputActive && this.#inputLevel < echoThreshold) return;
++		this.#sendInput(samples);
++	}
++
++	/**
++	 * Feeds externally captured microphone audio as mono 16 kHz PCM, for a
++	 * session whose endpoint is not the local machine.
++	 *
++	 * Unlike local capture this does not apply the echo gate: a remote endpoint
++	 * renders playback on its own device and cancels echo there, so gating on
++	 * this host's output level would only suppress genuine barge-in. Mute is
++	 * still honored.
++	 */
++	pushInput(samples: Float32Array): void {
++		if (this.#stopped || !this.#transport || this.#muted || samples.length === 0) return;
++		this.#inputLevel = microphoneLevel(samples);
++		this.#emitLevels();
++		this.#sendInput(samples);
++	}
++
++	#sendInput(samples: Float32Array): void {
+ 		try {
+-			this.#transport.pushAudio(samples);
++			this.#transport?.pushAudio(samples);
+ 		} catch (cause) {
+ 			this.#reportFailure(errorFrom(cause));
+ 		}
+diff --git a/packages/coding-agent/src/live/transport.ts b/packages/coding-agent/src/live/transport.ts
+index 8234a97..0fee789 100644
+--- a/packages/coding-agent/src/live/transport.ts
++++ b/packages/coding-agent/src/live/transport.ts
+@@ -48,6 +48,12 @@ class LiveSignalingError extends Error {
+ export interface LiveTransportCallbacks {
+ 	onEvent(event: LiveServerEvent): void;
+ 	onOutputLevel(level: number): void;
++	/**
++	 * Decoded remote speaker audio, mono 48 kHz PCM in decode order. Installed
++	 * only when the host renders playback itself; omitting it keeps the native
++	 * peer's speaker path as the sole consumer.
++	 */
++	onOutputAudio?(samples: Float32Array): void;
+ }
+ 
+ /** Configuration required to establish a Codex live call. */
+@@ -57,6 +63,12 @@ export interface LiveTransportOptions {
+ 	instructions: string;
+ 	voice: string;
+ 	callbacks: LiveTransportCallbacks;
++	/**
++	 * Render remote audio on the default speaker. Defaults to `true`; pass
++	 * `false` to leave every output device untouched, which requires
++	 * {@link LiveTransportCallbacks.onOutputAudio} to hear anything.
++	 */
++	localPlayback?: boolean;
+ 	signal?: AbortSignal;
+ }
+ 
+@@ -153,6 +165,7 @@ export class CodexLiveTransport {
+ 	}
+ 
+ 	async #connect(): Promise<void> {
++		const onOutputAudio = this.#options.callbacks.onOutputAudio;
+ 		const peer = new LiveWebRtcPeer(
+ 			(error, payload) => {
+ 				if (error) {
+@@ -169,6 +182,16 @@ export class CodexLiveTransport {
+ 				}
+ 			},
+ 			(error, message) => this.#handlePeerFailure(error?.message ?? message),
++			onOutputAudio
++				? (error, samples) => {
++						if (error) {
++							this.#handlePeerFailure(error.message);
++						} else {
++							this.#handleOutputAudio(samples);
++						}
++					}
++				: undefined,
++			this.#options.localPlayback ?? true,
+ 		);
+ 		this.#peer = peer;
+ 		const offer = await peer.createOffer();
+@@ -354,6 +377,16 @@ export class CodexLiveTransport {
+ 		} catch {}
+ 	}
+ 
++	#handleOutputAudio(samples: Float32Array): void {
++		// Deliberately looser than the level gate above: remote audio can start
++		// arriving between `acceptAnswer` and the sideband handshake, and
++		// dropping those frames would clip the first words of a turn.
++		if (this.#state === "closing" || this.#state === "closed" || samples.length === 0) return;
++		try {
++			this.#options.callbacks.onOutputAudio?.(samples);
++		} catch {}
++	}
++
+ 	#handlePeerFailure(message: string): void {
+ 		this.#reportFailure(message);
+ 	}

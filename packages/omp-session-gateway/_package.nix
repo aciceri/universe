@@ -80,6 +80,15 @@ stdenvNoCC.mkDerivation {
     makeBinaryWrapper
   ];
 
+  # Re-vendors the pinned collab client so a guest can hold omp's `/live`
+  # realtime call from its own microphone and speaker. The host half of that
+  # work is `patches/oh-my-pi`, applied to omp itself in modules/agents.nix;
+  # both move together. Upstream carries no such series, so this stays a
+  # downstream patch rather than a `rev` bump.
+  patches = [
+    ../../patches/omp-session-gateway/0001-collab-client-re-vendor-with-remote-live-voice-and-i.patch
+  ];
+
   postPatch = lib.optionalString (extraRelayOrigins != [ ]) ''
     substituteInPlace apps/gateway/src/http.ts \
       --replace-fail "connect-src 'self' wss://my.omp.sh;" \
