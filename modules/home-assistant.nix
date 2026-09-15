@@ -15,7 +15,6 @@
           # therefore checks are disabled to speed up the build
           doInstallCheck = false;
         });
-        openFirewall = true;
         extraComponents = [
           "met"
           "radio_browser"
@@ -53,9 +52,9 @@
         config = {
           default_config = { };
           http = {
-            # nixpkgs dropped the `http.server_port` option default, but both
-            # `openFirewall` and the nginx proxy below still read it, so pin
-            # Home Assistant's own default explicitly.
+            # nixpkgs dropped the `http.server_port` option default; the firewall
+            # rules and the nginx proxy below read it, so pin Home Assistant's
+            # own default explicitly.
             server_port = 8123;
             use_x_forwarded_for = true;
             trusted_proxies = [
@@ -98,6 +97,13 @@
         "d ${config.services.home-assistant.configDir}/www 770 hass hass"
         "C ${config.services.home-assistant.configDir}/www/home.png 770 hass hass - - ${config.age.secrets.home_assistant_planimetry.path}"
       ];
+
+      # `services.home-assistant.openFirewall` was removed upstream: the frontend
+      # port is no longer configured in YAML, so nixpkgs cannot determine it at
+      # eval time. We pin `http.server_port` below, so the same global opening is
+      # expressed directly — LAN devices that talk to Home Assistant without
+      # going through the nginx proxy keep working.
+      networking.firewall.allowedTCPPorts = [ config.services.home-assistant.config.http.server_port ];
 
       networking.firewall.interfaces."wg0" = {
         allowedTCPPorts = [
