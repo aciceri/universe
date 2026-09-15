@@ -68,7 +68,10 @@ let
               nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.git ];
               prePatch = (old.prePatch or "") + ''
                 git apply --whitespace=nowarn -p1 ${final.omp-session-gateway.ompPatch}
-                git apply --whitespace=nowarn -p1 ${../patches/oh-my-pi}/*.patch
+                # Only the `.patch` files: interpolating the directory would
+                # make omp rebuild from scratch — natives included — whenever
+                # its README changes.
+                git apply --whitespace=nowarn -p1 ${final.lib.sources.sourceFilesBySuffices ../patches/oh-my-pi [ ".patch" ]}/*.patch
               '';
             });
           };
