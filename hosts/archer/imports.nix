@@ -12,7 +12,6 @@
     home-manager.sharedModules = with config.flake.modules.homeManager; [
       base
       claude-code
-      daily-brief
       development
       # emacs  # off, see modules/emacs/emacs.nix
       ghostty

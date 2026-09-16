@@ -92,7 +92,32 @@ in
 
   # Cross-platform claude-code config + omp.
   flake.modules.homeManager.claude-code =
-    { pkgs, lib, ... }:
+    {
+      config,
+      pkgs,
+      lib,
+      ...
+    }:
+    let
+      m = pkgs.writeShellScript "m" ''
+        root=${lib.escapeShellArg config.multiversePath}
+        if [ ! -d "$root" ] || [ ! -e "$root/.git" ]; then
+          printf 'm: multiverse checkout is unavailable at %s\n' "$root" >&2
+          exit 1
+        fi
+        exec ${lib.getExe pkgs.llm-agents.omp} --cwd "$root" "$@"
+      '';
+      geo = pkgs.writeShellScript "geo" ''
+        workspace=${lib.escapeShellArg "${config.multiversePath}/geosurge"}
+        if [ ! -r "$workspace/AGENTS.md" ]; then
+          printf 'geo: geosurge submodule or AGENTS.md is unavailable at %s\n' "$workspace" >&2
+          exit 1
+        fi
+        exec ${m} --append-system-prompt ${lib.escapeShellArg ''
+          This is the geoSurge work context. Use geosurge/ as the work entry point and read geosurge/AGENTS.md before work. Paths inside that file are relative to geosurge/.
+        ''} "$@"
+      '';
+    in
     {
       programs.claude-code = {
         enable = true;
@@ -132,6 +157,10 @@ in
       };
 
       home.packages = [ pkgs.llm-agents.omp ];
+      programs.nushell.shellAliases = lib.mkIf config.multiverse.enable {
+        m = "${m}";
+        geo = "${geo}";
+      };
     };
 
   # OTEL telemetry endpoints — point to sisko inside WireGuard. Useful only

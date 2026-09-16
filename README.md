@@ -7,6 +7,35 @@ meaning each file is a [flake-parts](https://flake.parts/) module.
 Also, this README is dynamically generated using a flake-parts module, with its
 source distributed throughout the repository.
 
+## Personal workspace
+
+My interactive checkout lives at `~/multiverse/universe`, a submodule of
+the private `multiverse` workspace. `~/universe` and `~/geosurge` are
+symlinks to the corresponding workspace checkouts.
+
+Workspace management is enabled for non-root users by default and can be
+disabled with the Home Manager option `multiverse.enable = false`. Root
+does not clone private repositories, migrate checkouts or receive workspace
+aliases and flake references.
+
+Home Manager bootstraps the workspace over SSH and preserves previous
+checkouts as `~/universe.before-multiverse` and `~/geosurge.before-multiverse`.
+Existing independent work repositories and worktrees move into the new
+geoSurge checkout without being recloned. Migration refuses existing backup
+or repository destination collisions.
+Linked worktrees are repaired from their relocated parent repository.
+Re-running activation also repairs an interrupted migration whose symlink
+was already created.
+
+A systemd user timer on Linux, or launchd on macOS, fetches remote updates
+without changing populated worktrees. Missing submodules are initialized
+recursively; advancing branches and recording new submodule pins is explicit.
+
+On agent-enabled machines, `m` opens the multiverse root and `geo` opens
+the same root with geoSurge work context. Both accept additional OMP arguments.
+For the first NixOS switch, select the new checkout explicitly:
+`nh os switch ~/multiverse/universe`.
+
 ## NixOS configurations
 
 As you can notice I'm a big Star Trek fan...
@@ -61,6 +90,36 @@ Running on my decommissioned Thinkpad Carbon X1 gen 7
 My mobile workstation—an Acer Nitro V15 laptop equipped with an i5-13420H CPU,
 32GB of DDR5 RAM, and an Nvidia RTX 2050 GPU.
 Configured to closely mirror my main workstation `picard` for seamless work when away from home.
+
+#### Persistent multiverse agent
+
+With `multiverse.enable`, `ccr` runs `omp-multiverse.service` without a terminal.
+It starts in the multiverse checkout with `anthropic/claude-opus-5`, continues
+its dedicated history under `~/.local/state/omp-multiverse/sessions`, and
+appears as `multiverse` in the existing OMP session gateway. Open the session
+and select **Control** to send prompts and answer dialogs from the phone.
+**Start live voice** also works here: the phone supplies the microphone and
+speaker, while pike keeps the realtime connection, existing Codex credentials
+and device attestation. No microphone, speaker or terminal is needed on pike.
+Voice uses the configured `live.voice`; the main agent remains Opus 5.
+
+User lingering starts the service at boot and keeps it running after logout.
+Pike must remain awake and online for phone access. The private RPC FIFO is
+`${XDG_RUNTIME_DIR}/omp-multiverse/stdin`; it is not a network listener.
+The `m` and `geo` commands remain separate interactive sessions.
+
+```sh
+systemctl --user status omp-multiverse.service
+systemctl --user restart omp-multiverse.service
+systemctl --user stop omp-multiverse.service
+systemctl --user start omp-multiverse.service
+journalctl --user -u omp-multiverse.service -f
+```
+
+An explicit stop also stops FIFO activation and leaves the session history
+intact. Unexpected exits restart automatically; setting `multiverse.enable`
+to `false` removes this service and socket from the configuration.
+Journal output includes RPC events and can contain conversation and tool data.
 
 ### Picard
 

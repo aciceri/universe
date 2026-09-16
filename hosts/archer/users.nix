@@ -1,6 +1,11 @@
 {
   configurations.darwin.archer.module =
-    { pkgs, ... }:
+    {
+      config,
+      lib,
+      pkgs,
+      ...
+    }:
     {
       system.primaryUser = "ccr";
       users.users.ccr = {
@@ -9,7 +14,7 @@
       };
 
       environment.variables = {
-        NH_FLAKE = "/Users/ccr/universe";
+        NH_FLAKE = lib.mkIf config.home-manager.users.ccr.multiverse.enable config.home-manager.users.ccr.universePath;
         XDG_CONFIG_HOME = "/Users/ccr/.config";
       };
 

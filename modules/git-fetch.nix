@@ -1,6 +1,5 @@
 { ... }:
 let
-  # Option declaration (cross-platform).
   gitFetchOptions =
     { lib, ... }:
     let
@@ -15,6 +14,7 @@ let
           interval = lib.mkOption {
             type = lib.types.int;
           };
+          recursive = lib.mkEnableOption "cloning and fetching submodules";
         };
       };
     in
@@ -25,8 +25,7 @@ let
       };
     };
 
-  # systemd-user implementation (Linux only).
-  gitFetchSystemd =
+  gitFetchServices =
     {
       config,
       pkgs,
@@ -35,65 +34,107 @@ let
     }:
     let
       cfg = config.services.git-fetch;
+      scripts = lib.mapAttrs (
+        name: repo:
+        pkgs.writeShellApplication {
+          name = "git-fetch-${name}";
+          runtimeInputs = with pkgs; [
+            git
+            git-lfs
+            openssh
+            coreutils
+          ];
+          text = ''
+            repository=${lib.escapeShellArg repo.path}
+            export GIT_TERMINAL_PROMPT=0
+            export GIT_SSH_COMMAND="ssh -o BatchMode=yes"
 
-      mkGitCloneService = name: repo: {
-        Unit.Description = "Git fetch for ${name}";
-        Service = {
-          Type = "oneshot";
-          ExecStart =
-            (pkgs.writeShellApplication {
-              name = "git-fetch-${name}";
-              runtimeInputs = with pkgs; [
-                git
-                openssh
-                coreutils
-              ];
-              text = ''
-                if [ ! -d "${repo.path}" ]; then
-                  mkdir -p "$(dirname "${repo.path}")"
-                  git clone "${repo.uri}" "${repo.path}"
-                else
-                  cd "${repo.path}"
-                  git fetch --all
+            ${lib.optionalString repo.recursive ''
+              init_missing_submodules() {
+                local parent="$1" entry path
+                if [ ! -f "$parent/.gitmodules" ]; then
+                  return
                 fi
-              '';
-            })
-            |> lib.getExe;
-        };
-      };
+                while IFS= read -r -d "" entry; do
+                  path="''${entry#*$'\n'}"
+                  if [ ! -e "$parent/$path/.git" ]; then
+                    git -C "$parent" submodule update --init -- "$path"
+                  fi
+                  init_missing_submodules "$parent/$path"
+                done < <(git -C "$parent" config --file .gitmodules --null --get-regexp 'submodule\..*\.path')
+              }
+            ''}
 
-      mkGitCloneTimer = name: repo: {
-        Unit.Description = "Timer for git clone/fetch ${name}";
-        Timer = {
-          OnUnitActiveSec = "${toString repo.interval}s";
-          OnStartupSec = "10s";
-          Persistent = true;
-        };
-        Install.WantedBy = [ "timers.target" ];
-      };
+            if [ ! -e "$repository" ] && [ ! -L "$repository" ]; then
+              mkdir -p "$(dirname "$repository")"
+              git clone ${lib.optionalString repo.recursive "--recurse-submodules"} -- ${lib.escapeShellArg repo.uri} "$repository"
+            else
+              if [ ! -e "$repository/.git" ]; then
+                echo "Not a Git checkout: $repository" >&2
+                exit 1
+              fi
+              git -C "$repository" fetch --all --recurse-submodules=${if repo.recursive then "yes" else "no"}
+            fi
+            ${lib.optionalString repo.recursive ''
+              # Recover partial clones without moving initialized worktrees or branches.
+              init_missing_submodules "$repository"
+            ''}
+          '';
+        }
+      ) cfg.repositories;
     in
-    lib.mkIf (cfg.repositories != { }) {
-      systemd.user.services =
-        cfg.repositories
-        |> lib.mapAttrs (name: repo: mkGitCloneService name repo)
-        |> lib.mapAttrs' (name: service: lib.nameValuePair "git-fetch-${name}" service);
-      systemd.user.timers =
-        cfg.repositories
-        |> lib.mapAttrs (name: repo: mkGitCloneTimer name repo)
-        |> lib.mapAttrs' (name: timer: lib.nameValuePair "git-fetch-${name}" timer);
-    };
+    lib.mkIf (cfg.repositories != { }) (
+      lib.mkMerge [
+        (lib.mkIf pkgs.stdenv.hostPlatform.isLinux {
+          systemd.user.services = lib.mapAttrs' (
+            name: script:
+            lib.nameValuePair "git-fetch-${name}" {
+              Unit.Description = "Git clone/fetch for ${name}";
+              Service = {
+                Type = "oneshot";
+                ExecStart = lib.getExe script;
+              };
+            }
+          ) scripts;
+          systemd.user.timers = lib.mapAttrs' (
+            name: repo:
+            lib.nameValuePair "git-fetch-${name}" {
+              Unit.Description = "Timer for git clone/fetch ${name}";
+              Timer = {
+                OnUnitActiveSec = "${toString repo.interval}s";
+                OnStartupSec = "10s";
+                Persistent = true;
+              };
+              Install.WantedBy = [ "timers.target" ];
+            }
+          ) cfg.repositories;
+        })
+        (lib.mkIf pkgs.stdenv.hostPlatform.isDarwin {
+          launchd.agents = lib.mapAttrs' (
+            name: repo:
+            lib.nameValuePair "git-fetch-${name}" {
+              enable = true;
+              config = {
+                ProgramArguments = [ (lib.getExe scripts.${name}) ];
+                RunAtLoad = true;
+                StartInterval = repo.interval;
+                ProcessType = "Background";
+                StandardOutPath = "${config.home.homeDirectory}/Library/Logs/git-fetch-${name}.log";
+                StandardErrorPath = "${config.home.homeDirectory}/Library/Logs/git-fetch-${name}.err";
+              };
+            }
+          ) cfg.repositories;
+        })
+      ]
+    );
 in
 {
-  # Inject HM modules at system level.
-  flake.modules.nixos.base = {
-    home-manager.sharedModules = [
-      gitFetchOptions
-      gitFetchSystemd
-    ];
-  };
-
-  # No git-fetch implementation for darwin (launchd) yet, only the options.
-  flake.modules.darwin.base = {
-    home-manager.sharedModules = [ gitFetchOptions ];
-  };
+  flake.modules.nixos.base.home-manager.sharedModules = [
+    gitFetchOptions
+    gitFetchServices
+  ];
+  flake.modules.darwin.base.home-manager.sharedModules = [
+    gitFetchOptions
+    gitFetchServices
+  ];
 }
