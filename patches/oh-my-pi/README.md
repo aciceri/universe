@@ -1,9 +1,11 @@
-# Remote live voice for omp collab
+# OMP collaboration: remote voice and headless hosting
 
-Eight patches that let a collab guest — a phone, a browser on another machine —
-hold omp's `/live` realtime voice call. The host keeps the Codex WebRTC peer,
-its credentials and its device attestation; only the microphone and speaker
-move to the guest.
+Ten patches extend OMP collaboration. Patches 1 through 8 let a collab guest,
+such as a phone or a browser on another machine, hold OMP's `/live` realtime
+voice call. The host keeps the Codex WebRTC peer, its credentials and its device
+attestation; only the microphone and speaker move to the guest.
+Patch 9 adds headless RPC hosting. Patch 10 connects headless hosts to the same
+remote live voice path, without requiring terminal components or local audio.
 
 `modules/agents.nix` applies them with `git apply`, **after**
 `omp-session-gateway.ompPatch`, because they are cut against the gateway-patched
@@ -63,6 +65,23 @@ carries an optional `setLiveAudioBridge`. Cut against pristine upstream, patch
    characters per call and is omitted entirely when there is nothing to report.
    Uses `{{#if recap}}`: a handlebars section rebinds the context to the
    string, and `{{recap}}` inside it would then resolve to nothing.
+9. `collab`: host RPC sessions through the existing `CollabController` when
+   `collab.autoStart` is enabled. Narrow structural contexts replace the TUI
+   dependency without fabricating terminal components. Supported dialogs use
+   the existing encrypted control-guest UI and publish `inputRequired`; session
+   replacement rotates ownership, and title/model changes refresh metadata.
+   Startup and terminal host failures exit for supervisor recovery; EOF and
+   signal cleanup stop publication and dispose the session. Default-off RPC,
+   gateway authentication, guest permissions, and the phone client are unchanged.
+10. `collab`: register an RPC live-audio bridge before headless publication.
+    It uses the existing `LiveSessionController`, configured voice, Codex
+    authentication, device attestation, recap and delegation, with local capture
+    and playback disabled. Pending-call cancellation, disconnects, session
+    replacement and shutdown drain the controller before allowing another call.
+    Host ownership is generation-guarded: duplicate claims preserve mute state,
+    and late callbacks cannot reclaim ownership or affect a replacement call.
+    The gateway, phone client, wire protocol and interactive audio defaults are
+    unchanged.
 
 ## The browser half lives elsewhere
 
@@ -92,3 +111,44 @@ pristine upstream.
   `live-phase` frames;
 - silence gating moved 51 KB where the raw track would have moved 2.9 MB for
   the same reply.
+
+For patch 9, verification used the built Nix package and runtime-only copies of
+the pike service/socket with isolated state:
+
+- the existing phone directory discovered the Opus 5 session; a real control
+  guest sent a prompt, received streaming output, aborted a turn, and completed
+  an actual `ask` tool interaction;
+- selection, editor and confirmation answers reached the headless runtime;
+  pending dialogs replayed to a later control guest, cancellation removed the
+  dialog, and `inputRequired` cleared;
+- a forced process crash restarted automatically with the same session ID and
+  persisted assistant response, visible again after reconnecting the phone;
+- `new_session` rotated the published generation and session identity;
+  `switch_session` restored the original conversation and rotated ownership again;
+- explicit stop left both service and socket inactive, removed the FIFO and
+  registry entry, and did not reactivate after the restart interval;
+- unreachable-relay startup exited unsuccessfully; ordinary RPC remained
+  collaboration-free with `ask` unavailable; collaboration-enabled stdin EOF
+  exited successfully and removed publication;
+- 50 focused controller, read-only guest, guest UI, event-bus fallback and RPC UI
+  regression tests passed; the Nix package built and generated units passed
+  `systemd-analyze --user verify`.
+
+For patch 10, verification used both the patched source and the built Nix package:
+
+- an isolated RPC host ran without a terminal and without usable local ALSA or
+  PulseAudio devices;
+- a phone-sized browser joined through the unchanged gateway, streamed locally
+  synthesized speech, displayed its real transcription and received the spoken
+  reply through the existing client playback path;
+- mute, unmute, call release and a second call succeeded; SIGTERM during the
+  second connected call shut down the packaged host with exit status 143;
+- default-off RPC emitted `ready`, started no collaboration host and exited
+  successfully on stdin EOF;
+- 56 focused collaboration, RPC UI and live-controller tests passed, including
+  pending mute, duplicate claims, disconnects, stale callbacks and awaited
+  teardown.
+
+The source-tree type check with the checked-in native declarations reported the
+same three `live/transport.ts:185-186` diagnostics before and after patches 9
+and 10. Neither headless patch introduced additional diagnostics.
