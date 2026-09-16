@@ -1,5 +1,22 @@
 { config, lib, ... }:
+let
+  knowledgeTools =
+    { pkgs, ... }:
+    {
+      environment.systemPackages = with pkgs; [
+        zk
+        poppler-utils
+        tesseract
+        ocrmypdf
+        python3
+        sqlite
+      ];
+    };
+in
 {
+  flake.modules.nixos.base = knowledgeTools;
+  flake.modules.darwin.base = knowledgeTools;
+
   flake.modules.homeManager.workstation =
     { pkgs, ... }:
     {
