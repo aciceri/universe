@@ -5,14 +5,19 @@
   # don't match, so they keep stock behavior.
   #
   # Idiom from keyd(1) for home row mods:
-  #   overloadi(key, overloadt2(mod, key, hold), idle)
-  # - overloadi: if another letter was struck less than <idle> ms ago we're in
-  #   a typing flow, so resolve as the plain letter (no mod attempt at all —
-  #   this is what prevents mistypes during fast typing/rolls);
-  # - overloadt2: otherwise tap = letter, hold >= <hold> ms = modifier.
+  #   lettermod(mod, key, idle, hold)
+  #     == overloadi(key, overloadt2(mod, key, hold), idle)
+  # - idle: if another symbol key was struck less than <idle> ms ago we're in a
+  #   typing flow, so the key resolves as the plain letter and no modifier is
+  #   possible at all (this is what prevents mistypes during fast rolls).
+  #   Keep it below the inter-key interval of normal typing (~80-150 ms is
+  #   fast); at 200 ms every keystroke blocks the mods for a fifth of a second,
+  #   which forces a deliberate pause before every chord.
+  # - hold: outside the idle window, tap = letter, hold >= <hold> ms = modifier;
+  #   overloadt2 also resolves as a hold when another key is tapped meanwhile.
   configurations.nixos.pike.module =
     let
-      homeRowMod = mod: key: "overloadi(${key}, overloadt2(${mod}, ${key}, 200), 200)";
+      homeRowMod = mod: key: "lettermod(${mod}, ${key}, 100, 180)";
     in
     {
       services.keyd = {
