@@ -1,74 +1,97 @@
-From 09cb7f1f649d5f2325f45d07e87b32ca6537df34 Mon Sep 17 00:00:00 2001
-From: ccr <ccr@aciceri.dev>
-Date: Sun, 13 Sep 2026 12:15:45 +0200
-Subject: [PATCH 3/8] collab: carry live voice audio between host and a guest
+Subject: [PATCH] collab: remote live voice and headless RPC on native hosting
 
-A live call could only run on the machine holding the audio devices, so a
-collab guest could read and steer a session but never talk to it.
-
-Add four additive frames: live-ctl and live-audio guest-to-host, live-state
-and live-out host-to-guest. COLLAB_PROTO stays 3 because both sides already
-ignore unknown frame types, so a stock guest or host is unaffected.
-
-CollabHost routes them through a CollabLiveAudioBridge that the interactive
-/live controller registers, keeping collab free of live internals and the
-live controller free of collab internals. One peer owns live audio at a
-time; ownership is released when that peer leaves.
-
-Output frames whose peak is silence are dropped. The remote track runs for
-the whole call and is almost entirely silence, so relaying it verbatim cost
-2.9 MB where a gated stream costs 51 KB for the same reply.
-
-(cherry picked from commit 8f3786f27a38c3600d3b820ccabd4c14f0740fab)
----
- .../coding-agent/src/collab/controller.ts     |   7 +-
- packages/coding-agent/src/collab/host.ts      | 135 ++++++++++++++++++
- packages/coding-agent/src/collab/protocol.ts  |   7 +
- packages/coding-agent/src/live/controller.ts  |   9 +-
- .../controllers/live-command-controller.ts    |  30 +++-
- .../src/modes/interactive-mode.ts             |   6 +
- packages/coding-agent/src/modes/types.ts      |   7 +
- .../slash-commands/builtin-collaboration.ts   |   1 +
- packages/wire/src/index.ts                    |  22 ++-
- 9 files changed, 218 insertions(+), 6 deletions(-)
+Based on OMP v18.3.0 after the native audio and pluggable endpoint patches.
 
 diff --git a/packages/coding-agent/src/collab/controller.ts b/packages/coding-agent/src/collab/controller.ts
-index 0926a37..2776b58 100644
 --- a/packages/coding-agent/src/collab/controller.ts
 +++ b/packages/coding-agent/src/collab/controller.ts
-@@ -1,7 +1,7 @@
- import { randomUUID } from "node:crypto";
- import { basename } from "node:path";
+@@ -1,5 +1,5 @@
+ /**
+- * Owns collaboration hosting for one interactive process: manual `/collab`,
++ * Owns collaboration hosting for one process: manual `/collab`,
+  * the opt-in `collab.autoStart` policy, and room rotation when the active
+  * session changes.
+  *
+@@ -14,7 +14,7 @@ import { logger } from "@oh-my-pi/pi-utils";
+ import { sanitizeDisplayLine } from "@oh-my-pi/pi-tui/overlays/extensions/display-text";
  import type { InteractiveModeContext } from "../modes/types";
--import { CollabHost } from "./host";
-+import { CollabHost, type CollabLiveAudioBridge } from "./host";
- import {
- 	type CollabPublicationState,
- 	type CollabPublisherRecord,
-@@ -37,6 +37,8 @@ interface HostLike {
- 	onFatal?: (reason: string) => void;
- 	start(relayUrl: string, webUrl?: string): Promise<void>;
- 	stop(reason: string): Promise<void>;
-+	/** Absent on test doubles that do not model live voice. */
-+	setLiveAudioBridge?(bridge: CollabLiveAudioBridge | undefined): void;
+ import { TRUNCATE_LENGTHS, truncateToWidth } from "@oh-my-pi/pi-tui/render/render-utils";
+-import { CollabHost, CollabHostStoppedError } from "./host";
++import { CollabHost, type CollabHostContext, CollabHostStoppedError } from "./host";
+ import type { CollabAccess } from "./registry";
+ 
+ export type CollabAutoStart = "off" | CollabAccess;
+@@ -29,9 +29,13 @@ export interface CollabStartOptions {
+ 	relay?: string;
  }
  
- interface PublisherLike {
-@@ -253,6 +255,9 @@ export class CollabController {
- 		this.#generation += 1;
- 		const generation = this.#generation;
- 		const host = this.#hostFactory(this.#context);
-+		// Registered before start: a guest can claim live audio as soon as it
-+		// joins, which may be before this call returns.
-+		host.setLiveAudioBridge?.(this.#context.liveAudioBridge?.());
- 		host.onFatal = reason => void this.#handleFatal(host, generation, reason);
++/** Session services shared by interactive and headless collaboration owners. */
++export interface CollabControllerContext
++	extends CollabHostContext, Pick<InteractiveModeContext, "collabGuest" | "liveAudioBridge"> {}
++
+ export class CollabController {
+ 	readonly instanceId: string;
+-	#ctx: InteractiveModeContext;
++	#ctx: CollabControllerContext;
+ 	#generation = 0;
+ 	#host: CollabHost | undefined;
+ 	/** Serializes stop/start sequences so a rotation never interleaves with another. */
+@@ -44,8 +48,10 @@ export class CollabController {
+ 	#startupComplete = false;
+ 	#shutdown = false;
+ 	#shutdownWake: PromiseWithResolvers<void> | undefined;
++	/** Headless owners exit on terminal hosting failures; interactive owners remain local. */
++	onFatal?: (error: Error) => void;
+ 
+-	constructor(ctx: InteractiveModeContext) {
++	constructor(ctx: CollabControllerContext) {
+ 		this.#ctx = ctx;
+ 		// 64 random bits: unique per process on one machine, short enough for `omp collab link <id>` and socket paths.
+ 		this.instanceId = randomBytes(8).toString("hex");
+@@ -222,6 +228,11 @@ export class CollabController {
+ 			access,
+ 			guestActionsReady: () => this.#startupComplete && !this.#ctx.session.isSessionTransitioning,
+ 		});
++		// Install before start: a guest can claim audio as soon as it joins.
++		host.setLiveAudioBridge(this.#ctx.liveAudioBridge?.());
++		host.onFatal = reason => {
++			if (this.#host === host && !this.#shutdown) this.onFatal?.(new Error(reason));
++		};
+ 		this.#host = host;
+ 		this.#ctx.collabHost = host;
  		try {
- 			await host.start(relayUrl, options.webUrl ?? this.#context.settings.get("collab.webUrl") ?? "");
+@@ -258,6 +269,7 @@ export class CollabController {
+ 		this.#ctx.showStatus(truncateToWidth(`Collab auto-start failed: ${message}`, TRUNCATE_LENGTHS.LINE), {
+ 			dim: true,
+ 		});
++		this.onFatal?.(err instanceof Error ? err : new Error(String(err)));
+ 	}
+ 
+ 	/**
+diff --git a/packages/coding-agent/src/collab/display-name.ts b/packages/coding-agent/src/collab/display-name.ts
+--- a/packages/coding-agent/src/collab/display-name.ts
++++ b/packages/coding-agent/src/collab/display-name.ts
+@@ -2,7 +2,7 @@ import * as os from "node:os";
+ import type { InteractiveModeContext } from "../modes/types";
+ 
+ /** Display name for this process's user in collab sessions. */
+-export function collabDisplayName(ctx: InteractiveModeContext): string {
++export function collabDisplayName(ctx: Pick<InteractiveModeContext, "settings">): string {
+ 	const configured = (ctx.settings.get("collab.displayName") ?? "").trim();
+ 	if (configured) return configured;
+ 	try {
 diff --git a/packages/coding-agent/src/collab/host.ts b/packages/coding-agent/src/collab/host.ts
-index a81abd4..a1d985f 100644
 --- a/packages/coding-agent/src/collab/host.ts
 +++ b/packages/coding-agent/src/collab/host.ts
-@@ -62,6 +62,43 @@ const STATE_DEBOUNCE_MS = 100;
+@@ -27,6 +27,7 @@ import { type AgentRef, AgentRegistry } from "../registry/agent-registry";
+ import type { AgentSessionEvent } from "../session/agent-session";
+ import { stripImagesFromMessage, USER_INTERRUPT_LABEL } from "../session/messages";
+ import type { SessionEntry as StoredSessionEntry } from "../session/session-entries";
++import type { LivePhase } from "@oh-my-pi/pi-tui/apps/live-visualizer";
+ import { TASK_SUBAGENT_LIFECYCLE_CHANNEL, TASK_SUBAGENT_PROGRESS_CHANNEL } from "../task/types";
+ import { generateRoomKey, generateWriteToken, importRoomKey } from "./crypto";
+ import { collabDisplayName } from "./display-name";
+@@ -77,6 +78,58 @@ const STATE_DEBOUNCE_MS = 100;
  const AGENTS_DEBOUNCE_MS = 100;
  const STREAMING_STATE_INTERVAL_MS = 2000;
  const WELCOME_IMAGE_STRIP_THRESHOLD = 24 * 1024 * 1024;
@@ -83,12 +106,27 @@ index a81abd4..a1d985f 100644
 + * without it, guests cannot start remote live audio.
 + */
 +export interface CollabLiveAudioBridge {
-+	/** Starts a live session with no local microphone or speaker. */
-+	start(onOutput: (samples: Float32Array) => void): Promise<void>;
++	/**
++	 * Starts a live session with no local microphone or speaker. The sinks are
++	 * everything the remote endpoint needs to render the call itself: decoded
++	 * audio, the conversational transcript, and the phase the host visualizer
++	 * shows.
++	 */
++	start(sinks: CollabLiveSinks): Promise<void>;
 +	/** Feeds guest microphone audio as mono 16 kHz PCM. */
 +	pushInput(samples: Float32Array): void;
 +	setMuted(muted: boolean): void;
++	/** Applies the host echo gate to this guest's input; see the wire `gate-on` op. */
++	setEchoGate(enabled: boolean): void;
 +	stop(): Promise<void>;
++}
++
++export interface CollabLiveSinks {
++	onOutput(samples: Float32Array): void;
++	onTranscript(role: "user" | "assistant", text: string, turn: number, final: boolean): void;
++	onPhase(phase: LivePhase): void;
++	/** Releases ownership after a bridge has finished terminal cleanup. */
++	onTerminal?(error?: Error): void;
 +}
 +
 +function decodePcm16(base64: string): Float32Array {
@@ -112,33 +150,135 @@ index a81abd4..a1d985f 100644
  const WIRE_AGENT_EVENT_TYPES: Record<WireAgentEvent["type"], true> = {
  	agent_start: true,
  	agent_end: true,
-@@ -137,6 +174,9 @@ export class CollabHost {
- 	#peers = new Map<number, { name: string; canWrite: boolean }>();
+@@ -176,8 +229,22 @@ export class CollabHostStoppedError extends Error {
+ 	}
+ }
+ 
++/** Session services shared by interactive and headless collaboration hosts. */
++export interface CollabHostContext extends Pick<
++	InteractiveModeContext,
++	"session" | "sessionManager" | "settings" | "eventBus" | "subagentEventBus" | "showStatus" | "collabHost"
++> {
++	/** Present only when the host has a local terminal surface. */
++	statusLine?: Pick<
++		InteractiveModeContext["statusLine"],
++		"setCollabStatus" | "invalidate" | "getCachedContextBreakdown"
++	>;
++	ui?: Pick<InteractiveModeContext["ui"], "requestRender">;
++	updatePendingMessagesDisplay?(): void;
++}
++
+ export class CollabHost {
+-	#ctx: InteractiveModeContext;
++	#ctx: CollabHostContext;
+ 	#socket: CollabSocket | null = null;
+ 	#link = "";
+ 	#webLink = "";
+@@ -215,6 +282,12 @@ export class CollabHost {
+ 	 */
  	#uiReqSeq = 0;
- 	#pendingUi = new Map<number, { request: CollabUiRequest; settle(result: CollabGuestUiResult): void }>();
+ 	#pendingUi = new Map<number, PendingCollabUiRequest>();
 +	#liveAudio: CollabLiveAudioBridge | undefined;
 +	#liveOwner: number | undefined;
 +	#liveSilent = true;
++	#liveMuted = false;
++	#liveGeneration = 0;
++	#liveStop: Promise<void> | undefined;
  	#lastStateJson = "";
  	#stateDebounce: Timer | null = null;
  	#streamingInterval: Timer | null = null;
-@@ -357,6 +397,12 @@ export class CollabHost {
+@@ -226,8 +299,10 @@ export class CollabHost {
+ 	/** The in-flight or finished `stop()`; concurrent callers share it. */
+ 	#stopDone: Promise<void> | undefined;
+ 	#stopped = false;
++	/** Invoked after an unrecoverable relay close tears down this host. */
++	onFatal?: (reason: string) => void;
+ 
+-	constructor(ctx: InteractiveModeContext, options: CollabHostOptions = {}) {
++	constructor(ctx: CollabHostContext, options: CollabHostOptions = {}) {
+ 		this.#ctx = ctx;
+ 		this.#instanceId = options.instanceId ?? randomBytes(8).toString("hex");
+ 		this.#generation = options.generation ?? 1;
+@@ -389,7 +464,7 @@ export class CollabHost {
+ 		};
+ 		socket.onClose = (reason, willReconnect) => {
+ 			this.#relayConnected = false;
+-			if (this.#stopped) return;
++			if (this.ending) return;
+ 			if (!opened) {
+ 				firstOpen.reject(new Error(reason));
+ 				return;
+@@ -397,7 +472,9 @@ export class CollabHost {
+ 			if (willReconnect) {
+ 				this.#ctx.showStatus(`Collab relay connection lost (${reason}), reconnecting…`, { dim: true });
+ 			} else {
+-				void this.#teardown();
++				void this.#teardown()
++					.then(() => this.onFatal?.(reason))
++					.catch(error => logger.warn("Collab terminal cleanup failed", { error: String(error) }));
+ 				this.#ctx.session.emitNotice("warning", `Collab ended: ${reason}`, "collab");
+ 			}
+ 		};
+@@ -531,6 +608,10 @@ export class CollabHost {
+ 	async #runTeardown(): Promise<void> {
+ 		if (this.#stopped) return;
+ 		this.#stopped = true;
++		const hadLiveOwner = this.#liveOwner !== undefined;
++		this.#liveOwner = undefined;
++		this.#liveGeneration += 1;
++		const liveStop = hadLiveOwner ? this.#stopLiveAudio() : this.#liveStop;
+ 		// A room that ended on its own (fatal relay close) reaches here without
+ 		// `#runStop`: leave the public slot before the first await as well.
+ 		if (this.#ctx.collabHost === this) this.#ctx.collabHost = undefined;
+@@ -562,8 +643,8 @@ export class CollabHost {
+ 		this.#peers.clear();
+ 		this.#socket?.close();
+ 		this.#socket = null;
+-		this.#ctx.statusLine.setCollabStatus(null);
+-		this.#ctx.ui.requestRender();
++		this.#ctx.statusLine?.setCollabStatus(null);
++		this.#ctx.ui?.requestRender();
+ 		// A publication still being created when the room ended is withdrawn
+ 		// before stop() resolves: a successor room reuses this instance
+ 		// endpoint, and this room's late cleanup must never unlink the winner.
+@@ -573,6 +654,7 @@ export class CollabHost {
+ 		if (late) {
+ 			await late.close().catch(err => logger.warn("Collab host registry withdrawal failed", { error: String(err) }));
+ 		}
++		await liveStop;
+ 	}
+ 
+ 	/**
+@@ -683,6 +765,14 @@ export class CollabHost {
  			case "fetch-transcript":
  				void this.#handleFetchTranscript(frame.reqId, frame.agentId, frame.fromByte, fromPeer);
  				break;
 +			case "live-ctl":
++				if (frame.op === "claim" && this.#rejectWhileStarting("live audio", fromPeer)) break;
 +				void this.#handleLiveCtl(frame.op, fromPeer);
 +				break;
 +			case "live-audio":
++				if (!this.#guestActionsReady()) break;
 +				this.#handleLiveAudio(frame.pcm, fromPeer);
 +				break;
  			default:
  				logger.debug("collab host ignoring unexpected frame", { type: frame.t, fromPeer });
  		}
-@@ -526,9 +572,98 @@ export class CollabHost {
+@@ -883,8 +973,8 @@ export class CollabHost {
+ 			images && images.length > 0 ? [{ type: "text", text }, ...images] : text;
+ 		const details: CollabPromptDetails = { from: name };
+ 		if (this.#ctx.session.isStreaming) {
+-			this.#ctx.updatePendingMessagesDisplay();
+-			this.#ctx.ui.requestRender();
++			this.#ctx.updatePendingMessagesDisplay?.();
++			this.#ctx.ui?.requestRender();
+ 			this.#scheduleStateBroadcast();
+ 		}
+ 		this.#ctx.session
+@@ -939,6 +1029,138 @@ export class CollabHost {
+ 			})
  			.catch(err => logger.warn("collab guest abort failed", { error: String(err) }));
  	}
- 
 +	/**
 +	 * Registers the surface that owns live sessions on this host, normally the
 +	 * interactive `/live` controller. Absent, `live-ctl` is refused.
@@ -147,7 +287,10 @@ index a81abd4..a1d985f 100644
 +		this.#liveAudio = bridge;
 +	}
 +
-+	async #handleLiveCtl(op: "claim" | "release" | "mute" | "unmute", fromPeer: number): Promise<void> {
++	async #handleLiveCtl(
++		op: "claim" | "release" | "mute" | "unmute" | "gate-on" | "gate-off",
++		fromPeer: number,
++	): Promise<void> {
 +		const peer = this.#peers.get(fromPeer);
 +		if (!peer?.canWrite) {
 +			this.#rejectReadOnly("live audio", fromPeer);
@@ -155,41 +298,88 @@ index a81abd4..a1d985f 100644
 +		}
 +		const bridge = this.#liveAudio;
 +		if (!bridge) {
-+			this.#socket?.send({ t: "live-state", active: false, error: "This host does not accept remote live audio." }, fromPeer);
++			this.#send(
++				{ t: "live-state", active: false, error: "This host does not accept remote live audio." },
++				fromPeer,
++			);
 +			return;
 +		}
 +		if (op === "claim") {
++			if (this.ending || this.#liveOwner === fromPeer) return;
 +			if (this.#liveOwner !== undefined && this.#liveOwner !== fromPeer) {
 +				const holder = this.#peers.get(this.#liveOwner)?.name ?? "another participant";
-+				this.#socket?.send(
-+					{ t: "live-state", active: true, owner: this.#liveOwner, error: `${holder} is already holding live audio.` },
++				this.#send(
++					{
++						t: "live-state",
++						active: true,
++						owner: this.#liveOwner,
++						error: `${holder} is already holding live audio.`,
++					},
 +					fromPeer,
 +				);
 +				return;
 +			}
 +			this.#liveOwner = fromPeer;
++			const generation = ++this.#liveGeneration;
++			const current = (): boolean => !this.ending && this.#liveGeneration === generation;
++			this.#liveSilent = true;
++			this.#liveMuted = false;
 +			try {
-+				await bridge.start(samples => this.#sendLiveAudio(samples));
++				await bridge.start({
++					onOutput: samples => {
++						if (current()) this.#sendLiveAudio(samples);
++					},
++					onTranscript: (role, text, turn, final) => {
++						if (current()) this.#send({ t: "live-transcript", role, text, turn, final }, fromPeer);
++					},
++					onPhase: phase => {
++						if (current()) this.#send({ t: "live-phase", phase }, fromPeer);
++					},
++					onTerminal: error => {
++						if (!current()) return;
++						this.#liveGeneration += 1;
++						this.#liveOwner = undefined;
++						this.#send({ t: "live-state", active: false, error: error?.message });
++					},
++				});
 +			} catch (error) {
++				if (!current()) return;
++				this.#liveGeneration += 1;
 +				this.#liveOwner = undefined;
-+				this.#socket?.send({ t: "live-state", active: false, error: String(error) }, fromPeer);
++				this.#send({ t: "live-state", active: false, error: String(error) }, fromPeer);
 +				return;
 +			}
++			if (!current()) return;
 +			this.#ctx.session.emitNotice("info", `${peer.name} started live voice`, "collab");
-+			this.#broadcast({ t: "live-state", active: true, owner: fromPeer, muted: false });
++			this.#send({ t: "live-state", active: true, owner: fromPeer, muted: this.#liveMuted });
 +			return;
 +		}
 +		if (this.#liveOwner !== fromPeer) return;
 +		if (op === "release") {
 +			this.#liveOwner = undefined;
-+			await bridge.stop().catch(error => logger.warn("collab live stop failed", { error: String(error) }));
++			this.#liveGeneration += 1;
++			const stopping = this.#stopLiveAudio();
 +			this.#ctx.session.emitNotice("info", `${peer.name} stopped live voice`, "collab");
-+			this.#broadcast({ t: "live-state", active: false });
++			this.#send({ t: "live-state", active: false });
++			await stopping;
++			return;
++		}
++		if (op === "gate-on" || op === "gate-off") {
++			bridge.setEchoGate(op === "gate-on");
 +			return;
 +		}
 +		const muted = op === "mute";
++		this.#liveMuted = muted;
 +		bridge.setMuted(muted);
-+		this.#broadcast({ t: "live-state", active: true, owner: fromPeer, muted });
++		this.#send({ t: "live-state", active: true, owner: fromPeer, muted });
++	}
++
++	#stopLiveAudio(): Promise<void> | undefined {
++		this.#liveStop = this.#liveAudio?.stop().catch(error => {
++			logger.warn("collab live stop failed", { error: String(error) });
++			this.#ctx.session.emitNotice("error", `Live voice cleanup failed: ${String(error)}`, "collab");
++		});
++		return this.#liveStop;
 +	}
 +
 +	#handleLiveAudio(pcm: string, fromPeer: number): void {
@@ -219,26 +409,90 @@ index a81abd4..a1d985f 100644
 +		} else {
 +			this.#liveSilent = false;
 +		}
-+		this.#socket.send({ t: "live-out", pcm: encodePcm16(samples), rate: LIVE_OUTPUT_RATE }, owner);
++		this.#send({ t: "live-out", pcm: encodePcm16(samples), rate: LIVE_OUTPUT_RATE }, owner);
 +	}
-+
+ 
+ 	/**
+ 	 * The relay recreated the room and will reissue peer ids from 1, so every id in
+@@ -956,6 +1178,11 @@ export class CollabHost {
+ 		// Identities first: settle() fans `ui-request-end` out over #peers, and those
+ 		// ids belong to the room that just went away.
+ 		this.#peers.clear();
++		if (this.#liveOwner !== undefined) {
++			this.#liveOwner = undefined;
++			this.#liveGeneration += 1;
++			void this.#stopLiveAudio();
++		}
+ 		// The relay closed everyone who could answer, so an outstanding ask has no
+ 		// recipient. Leaving it pending hangs callers that await it without racing a
+ 		// local dialog, and #handleHello re-poses every pending request to the next
+@@ -972,6 +1199,12 @@ export class CollabHost {
  	#handlePeerLeft(peer: number): void {
  		const name = this.#peers.get(peer)?.name;
  		this.#peers.delete(peer);
 +		if (this.#liveOwner === peer) {
 +			this.#liveOwner = undefined;
-+			const bridge = this.#liveAudio;
-+			void bridge?.stop().catch(error => logger.warn("collab live stop failed", { error: String(error) }));
-+			this.#broadcast({ t: "live-state", active: false });
++			this.#liveGeneration += 1;
++			void this.#stopLiveAudio();
++			this.#send({ t: "live-state", active: false });
 +		}
+ 		// Relay controls arrive outside the normal frame handler.
+ 		if (!this.#guestTrafficAllowed()) return;
  		if (name) this.#ctx.session.emitNotice("info", `${name} left the collab session`, "collab");
- 		this.#updateStatusSegment();
- 		this.#scheduleStateBroadcast();
+@@ -981,11 +1214,13 @@ export class CollabHost {
+ 
+ 	#buildState(): CollabSessionState {
+ 		const session = this.#ctx.session;
+-		// Context numbers come from the status line's memoized breakdown so guests
+-		// render exactly the same anchored, provider-real count the host's own
+-		// status line shows.
+-		const breakdown = this.#ctx.statusLine.getCachedContextBreakdown();
+-		const tokens = breakdown.usedTokens ?? 0;
++		// Preserve the TUI's memoized count when present. Headless hosts use the
++		// same session breakdown directly, without constructing a status line.
++		const breakdown = this.#ctx.statusLine
++			? this.#ctx.statusLine.getCachedContextBreakdown()
++			: session.getContextBreakdown();
++		const tokens = breakdown?.usedTokens ?? 0;
++		const contextWindow = breakdown?.contextWindow ?? session.model?.contextWindow ?? 0;
+ 		return {
+ 			isStreaming: session.isStreaming,
+ 			isAborting: session.isAborting,
+@@ -996,8 +1231,8 @@ export class CollabHost {
+ 			thinkingLevel: session.thinkingLevel,
+ 			contextUsage: {
+ 				tokens,
+-				contextWindow: breakdown.contextWindow,
+-				percent: breakdown.contextWindow > 0 ? (tokens / breakdown.contextWindow) * 100 : 0,
++				contextWindow,
++				percent: contextWindow > 0 ? (tokens / contextWindow) * 100 : 0,
+ 			},
+ 			participants: this.participants,
+ 		};
+@@ -1150,8 +1385,8 @@ export class CollabHost {
+ 	}
+ 
+ 	#updateStatusSegment(): void {
+-		this.#ctx.statusLine.setCollabStatus({ role: "host", participantCount: this.#peers.size + 1 });
+-		this.#ctx.statusLine.invalidate();
+-		this.#ctx.ui.requestRender();
++		this.#ctx.statusLine?.setCollabStatus({ role: "host", participantCount: this.#peers.size + 1 });
++		this.#ctx.statusLine?.invalidate();
++		this.#ctx.ui?.requestRender();
+ 	}
+ }
 diff --git a/packages/coding-agent/src/collab/protocol.ts b/packages/coding-agent/src/collab/protocol.ts
-index 92e904f..0cb8bce 100644
 --- a/packages/coding-agent/src/collab/protocol.ts
 +++ b/packages/coding-agent/src/collab/protocol.ts
-@@ -103,6 +103,13 @@ export type CollabFrame =
+@@ -24,6 +24,7 @@ import {
+ 	WRITE_TOKEN_BYTES,
+ } from "@oh-my-pi/pi-wire";
+ import type { CollabSessionState } from "@oh-my-pi/pi-tui/status-line/types";
++import type { LivePhase } from "@oh-my-pi/pi-tui/apps/live-visualizer";
+ import type { AgentSessionEvent } from "../session/agent-session";
+ import type { SessionEntry, SessionHeader } from "../session/session-entries";
+ 
+@@ -93,6 +94,17 @@ export type CollabFrame =
  	/** Targeted reply to fetch-transcript; `error` marks a terminal read failure that guests must surface without hot retrying. */
  	| { t: "transcript"; reqId: number; text: string; newSize: number; error?: string }
  	| { t: "bye"; reason: string }
@@ -249,14 +503,147 @@ index 92e904f..0cb8bce 100644
 +	| { t: "live-out"; pcm: string; rate: number }
 +	/** Live-audio ownership state; `owner` is the peer id holding it. */
 +	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
++	/** Realtime transcript update for the owning guest; `turn` is role-local. */
++	| { t: "live-transcript"; role: "user" | "assistant"; text: string; turn: number; final: boolean }
++	/** Realtime call phase, mirroring the host visualizer's own states. */
++	| { t: "live-phase"; phase: LivePhase }
  	| { t: "error"; message: string };
  
  // ═══════════════════════════════════════════════════════════════════════════
 diff --git a/packages/coding-agent/src/live/controller.ts b/packages/coding-agent/src/live/controller.ts
-index d25ac5c..cb3ffd6 100644
 --- a/packages/coding-agent/src/live/controller.ts
 +++ b/packages/coding-agent/src/live/controller.ts
-@@ -226,8 +226,13 @@ export class LiveSessionController {
+@@ -22,6 +22,10 @@ import { DEFAULT_LIVE_VOICE } from "./voices";
+ const OUTPUT_ACTIVE_LEVEL = 0.015;
+ const MIN_BARGE_IN_LEVEL = 0.04;
+ const OUTPUT_ECHO_RATIO = 0.65;
++/** Open todos listed in the recap before it starts counting the rest. */
++const RECAP_TODO_LIMIT = 5;
++/** Characters of the last assistant answer kept in the recap. */
++const RECAP_ANSWER_CHARS = 600;
+ 
+ /** Incremental or final transcript for one realtime conversational turn. */
+ export interface LiveTranscript {
+@@ -36,8 +40,8 @@ export interface LiveTranscript {
+ export interface LiveSessionCallbacks {
+ 	/** Reports connection and activity phase changes. */
+ 	onPhase(phase: LivePhase): void;
+-	/** Reports clamped microphone and speaker RMS levels. */
+-	onLevels(input: number, output: number): void;
++	/** Reports clamped microphone and speaker RMS levels when a surface consumes them. */
++	onLevels?(input: number, output: number): void;
+ 	/** Reports the latest available conversational transcript. */
+ 	onTranscript(transcript: LiveTranscript | undefined): void;
+ 	/** Reports one terminal stop, optionally carrying its cause. */
+@@ -73,6 +77,8 @@ export interface LiveSessionControllerOptions {
+ 	voice?: string;
+ 	/** Audio capture and rendering endpoint; defaults to local devices. */
+ 	audio?: LiveAudioEndpoint;
++	/** Cancels transport setup when the owning surface stops a connecting call. */
++	signal?: AbortSignal;
+ }
+ 
+ function errorFrom(cause: unknown): Error {
+@@ -106,6 +112,54 @@ function currentUser(): { username: string; firstName: string } {
+ 	return { username, firstName: firstPart ?? "there" };
+ }
+ 
++/**
++ * Compact snapshot of the session a call is opening on, seeded into the
++ * realtime instructions.
++ *
++ * A realtime session starts with no history: the transcript lives in the
++ * AgentSession, which the voice surface only ever reaches through delegations.
++ * Without this, "where were we" is unanswerable even though the backend knows,
++ * because that question never becomes a delegation. Kept short on purpose —
++ * these tokens are paid on every call, and anything more current has to be
++ * fetched by delegating anyway.
++ */
++function sessionRecap(session: AgentSession, extractAssistantText: (message: AssistantMessage) => string): string {
++	const lines: string[] = [];
++	const name = session.sessionName?.trim();
++	if (name) lines.push(`Session: ${name}`);
++
++	const open = session
++		.getTodoPhases()
++		.flatMap(phase => phase.tasks.map(task => ({ phase: phase.name, task })))
++		.filter(entry => entry.task.status === "in_progress" || entry.task.status === "pending");
++	if (open.length > 0) {
++		lines.push(
++			`Open todos: ${open
++				.slice(0, RECAP_TODO_LIMIT)
++				.map(entry => `${entry.task.content}${entry.task.status === "in_progress" ? " (in progress)" : ""}`)
++				.join("; ")}${open.length > RECAP_TODO_LIMIT ? `; +${open.length - RECAP_TODO_LIMIT} more` : ""}`,
++		);
++	}
++
++	// Last visible assistant answer: the single most useful anchor for "what
++	// were we doing", and the one thing a user is most likely to refer back to.
++	for (let index = session.messages.length - 1; index >= 0; index -= 1) {
++		const message = session.messages[index];
++		if (message?.role !== "assistant") continue;
++		const text = extractAssistantText(message).trim();
++		if (!text) continue;
++		lines.push(`Last answer: ${clip(text, RECAP_ANSWER_CHARS)}`);
++		break;
++	}
++
++	return lines.join("\n");
++}
++
++function clip(text: string, limit: number): string {
++	const collapsed = text.replaceAll(/\s+/g, " ").trim();
++	return collapsed.length <= limit ? collapsed : `${collapsed.slice(0, limit)}…`;
++}
++
+ /** Coordinates the realtime conversational surface with normal AgentSession turns. */
+ export class LiveSessionController {
+ 	readonly #session: AgentSession;
+@@ -113,6 +167,7 @@ export class LiveSessionController {
+ 	readonly #extractAssistantText: (message: AssistantMessage) => string;
+ 	readonly #voice: string;
+ 	readonly #audio: LiveAudioEndpoint;
++	readonly #signal: AbortSignal | undefined;
+ 
+ 	#transport: CodexLiveTransport | undefined;
+ 	#recorder: AudioCapture | undefined;
+@@ -124,6 +179,7 @@ export class LiveSessionController {
+ 	#terminalEmitted = false;
+ 	#failure: Error | undefined;
+ 	#muted = false;
++	#remoteEchoGate = false;
+ 	#phase: LivePhase = "connecting";
+ 	#inputLevel = 0;
+ 	#outputLevel = 0;
+@@ -142,6 +198,7 @@ export class LiveSessionController {
+ 		this.#extractAssistantText = options.extractAssistantText;
+ 		this.#voice = options.voice?.trim() || DEFAULT_LIVE_VOICE;
+ 		this.#audio = options.audio ?? {};
++		this.#signal = options.signal;
+ 	}
+ 
+ 	/** Current realtime call phase. */
+@@ -171,7 +228,10 @@ export class LiveSessionController {
+ 
+ 		try {
+ 			const user = currentUser();
+-			const instructions = prompt.render(liveInstructionsTemplate, user);
++			const instructions = prompt.render(liveInstructionsTemplate, {
++				...user,
++				recap: sessionRecap(this.#session, this.#extractAssistantText),
++			});
+ 			const onOutput = this.#audio.onOutput;
+ 			const transport = new CodexLiveTransport({
+ 				authStorage: this.#session.modelRegistry.authStorage,
+@@ -179,6 +239,7 @@ export class LiveSessionController {
+ 				instructions,
+ 				voice: this.#voice,
+ 				localPlayback: this.#audio.localPlayback ?? true,
++				signal: this.#signal,
+ 				callbacks: {
+ 					onEvent: event => this.#guardEvent(() => this.#handleLiveEvent(event)),
+ 					onOutputLevel: level => this.#guardEvent(() => this.#handleOutputLevel(level)),
+@@ -226,8 +287,13 @@ export class LiveSessionController {
  
  	/** Toggles microphone capture while leaving output and the session connected. */
  	toggleMute(): void {
@@ -272,15 +659,126 @@ index d25ac5c..cb3ffd6 100644
  		if (this.#muted) {
  			this.#inputLevel = 0;
  			this.#emitLevels();
+@@ -388,27 +454,46 @@ export class LiveSessionController {
+ 		if (this.#muted) return;
+ 		this.#inputLevel = microphoneLevel(samples);
+ 		this.#emitLevels();
+-		// Software half-duplex gate: the local microphone hears the local
+-		// speaker, so quiet input during playback is echo rather than speech.
++		if (this.#echoGated()) return;
++		this.#sendInput(samples);
++	}
++
++	/**
++	 * Software half-duplex gate: a microphone that hears the speaker rendering
++	 * this call reports echo, not speech, whenever it stays quiet during
++	 * playback. Local capture always needs it; remote capture needs it only
++	 * when that endpoint cancels no echo of its own.
++	 */
++	#echoGated(): boolean {
+ 		const outputActive = this.#outputLevel > OUTPUT_ACTIVE_LEVEL;
++		if (!outputActive) return false;
+ 		const echoThreshold = Math.max(MIN_BARGE_IN_LEVEL, this.#outputLevel * OUTPUT_ECHO_RATIO);
+-		if (outputActive && this.#inputLevel < echoThreshold) return;
+-		this.#sendInput(samples);
++		return this.#inputLevel < echoThreshold;
+ 	}
+ 
+ 	/**
+-	 * Feeds externally captured microphone audio as mono 16 kHz PCM, for a
+-	 * session whose endpoint is not the local machine.
++	 * Whether to apply the echo gate to {@link pushInput} frames.
+ 	 *
+-	 * Unlike local capture this does not apply the echo gate: a remote endpoint
+-	 * renders playback on its own device and cancels echo there, so gating on
+-	 * this host's output level would only suppress genuine barge-in. Mute is
+-	 * still honored.
++	 * Off by default: a remote endpoint normally cancels echo on its own
++	 * device, and gating on this host's output level would then only suppress
++	 * genuine barge-in. A guest that had to capture without echo cancellation
++	 * — the price of escaping the platform's communication output stream —
++	 * turns it on instead.
++	 */
++	setRemoteEchoGate(enabled: boolean): void {
++		this.#remoteEchoGate = enabled;
++	}
++
++	/**
++	 * Feeds externally captured microphone audio as mono 16 kHz PCM, for a
++	 * session whose endpoint is not the local machine. Mute is honored, and the
++	 * echo gate only when {@link setRemoteEchoGate} asked for it.
+ 	 */
+ 	pushInput(samples: Float32Array): void {
+ 		if (this.#stopped || !this.#transport || this.#muted || samples.length === 0) return;
+ 		this.#inputLevel = microphoneLevel(samples);
+ 		this.#emitLevels();
++		if (this.#remoteEchoGate && this.#echoGated()) return;
+ 		this.#sendInput(samples);
+ 	}
+ 
+@@ -530,7 +615,7 @@ export class LiveSessionController {
+ 
+ 	#emitLevels(): void {
+ 		try {
+-			this.#callbacks.onLevels(this.#inputLevel, this.#outputLevel);
++			this.#callbacks.onLevels?.(this.#inputLevel, this.#outputLevel);
+ 		} catch (cause) {
+ 			this.#reportFailure(errorFrom(cause));
+ 		}
+diff --git a/packages/coding-agent/src/live/prompts/live-instructions.md b/packages/coding-agent/src/live/prompts/live-instructions.md
+--- a/packages/coding-agent/src/live/prompts/live-instructions.md
++++ b/packages/coding-agent/src/live/prompts/live-instructions.md
+@@ -21,3 +21,14 @@ Greetings, clarification, ordinary conversation needing no repository/tools: MUS
+ <critical>
+ MUST preserve one-assistant continuity: converse here, delegate execution, communicate returned result as own.
+ </critical>
++
++{{#if recap}}
++<session-state>
++Where the client backend stood when this call opened. Shared history, not a
++separate agent's notes: MUST treat it as own recent memory, so "what were we
++doing" is answerable directly. It is a snapshot, never authoritative about the
++present — anything needing current state MUST go through a delegation.
++
++{{recap}}
++</session-state>
++{{/if}}
+diff --git a/packages/coding-agent/src/main.ts b/packages/coding-agent/src/main.ts
+--- a/packages/coding-agent/src/main.ts
++++ b/packages/coding-agent/src/main.ts
+@@ -2084,6 +2084,10 @@ export async function runRootCommand(
+ 		);
+ 		sessionOptions.authStorage = authStorage;
+ 		sessionOptions.modelRegistry = modelRegistry;
++		const hasRemoteUI =
++			(mode === "rpc" || mode === "rpc-ui") && (settingsInstance.get("collab.autoStart") ?? "off") !== "off";
++		// Enable ask without opting headless hosts into TUI-only startup work.
++		if (hasRemoteUI) sessionOptions.interactivePrompts = true;
+ 		sessionOptions.hasUI = isInteractive || mode === "rpc-ui";
+ 		sessionOptions.settings = settingsInstance;
+ 
+@@ -2310,7 +2314,12 @@ export async function runRootCommand(
+ 				// Branch-only protocol runner: keep RPC host code out of normal interactive startup.
+ 				const runRpcMode: RunRpcMode = (await import("./modes/rpc/rpc-mode")).runRpcMode;
+ 				stopStartupWatchdog();
+-				await runRpcMode(session, mode === "rpc-ui" ? setToolUIContext : undefined, subagentEventBus, rpcInput);
++				await runRpcMode(
++					session,
++					mode === "rpc-ui" || hasRemoteUI ? setToolUIContext : undefined,
++					subagentEventBus,
++					rpcInput,
++				);
+ 			} else if (isInteractive) {
+ 				const versionCheckPromise = checkForNewVersion(VERSION).catch(() => undefined);
+ 				const startupChangelog = await startupChangelogPromise;
 diff --git a/packages/coding-agent/src/modes/controllers/live-command-controller.ts b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
-index 422a8d0..b39c037 100644
 --- a/packages/coding-agent/src/modes/controllers/live-command-controller.ts
 +++ b/packages/coding-agent/src/modes/controllers/live-command-controller.ts
 @@ -1,6 +1,12 @@
  import type { AssistantMessage } from "@oh-my-pi/pi-ai";
  import { logger } from "@oh-my-pi/pi-utils";
 -import { LiveSessionController, type LiveSessionControllerOptions, type LiveTranscript } from "../../live/controller";
-+import type { CollabLiveAudioBridge } from "../../collab/host";
++import type { CollabLiveAudioBridge, CollabLiveSinks } from "../../collab/host";
 +import {
 +	type LiveAudioEndpoint,
 +	LiveSessionController,
@@ -288,9 +786,18 @@ index 422a8d0..b39c037 100644
 +	type LiveTranscript,
 +} from "../../live/controller";
  import { LIVE_MODEL } from "../../live/protocol";
- import { LiveVisualizer } from "../../live/visualizer";
+ import { LiveVisualizer } from "@oh-my-pi/pi-tui/apps/live-visualizer";
  import { vocalizer } from "../../tts/vocalizer";
-@@ -62,6 +68,25 @@ export class LiveCommandController {
+@@ -41,6 +47,8 @@ export class LiveCommandController {
+ 	#assistantTranscriptComponent: AssistantMessageComponent | undefined;
+ 	#assistantTranscriptTurn = 0;
+ 	#assistantTranscriptStartedAt = 0;
++	/** Set while a collab guest owns the call; mirrors UI state to that guest. */
++	#remoteSinks: CollabLiveSinks | undefined;
+ 
+ 	constructor(ctx: InteractiveModeContext, createSession?: LiveSessionFactory) {
+ 		this.#ctx = ctx;
+@@ -62,6 +70,35 @@ export class LiveCommandController {
  		await this.#start();
  	}
  
@@ -301,14 +808,24 @@ index 422a8d0..b39c037 100644
 +	 */
 +	collabBridge(): CollabLiveAudioBridge {
 +		return {
-+			start: async onOutput => {
++			start: async sinks => {
 +				if (this.active) throw new Error("A live session is already running on the host.");
 +				if (this.#settling) await this.#settling;
-+				await this.#start({ localCapture: false, localPlayback: false, onOutput });
-+				if (!this.#session) throw new Error("The live session stopped while starting.");
++				this.#remoteSinks = sinks;
++				try {
++					await this.#start({ localCapture: false, localPlayback: false, onOutput: sinks.onOutput });
++				} catch (cause) {
++					if (this.#remoteSinks === sinks) this.#remoteSinks = undefined;
++					throw cause;
++				}
++				if (!this.#session || this.#remoteSinks !== sinks) {
++					if (this.#remoteSinks === sinks) this.#remoteSinks = undefined;
++					throw new Error("The live session stopped while starting.");
++				}
 +			},
 +			pushInput: samples => this.#session?.pushInput(samples),
 +			setMuted: muted => this.#session?.setMuted(muted),
++			setEchoGate: enabled => this.#session?.setRemoteEchoGate(enabled),
 +			stop: () => this.stop(),
 +		};
 +	}
@@ -316,7 +833,7 @@ index 422a8d0..b39c037 100644
  	/** Stop the active live session and restore the editor. */
  	async stop(): Promise<void> {
  		const session = this.#session;
-@@ -91,7 +116,7 @@ export class LiveCommandController {
+@@ -91,7 +128,7 @@ export class LiveCommandController {
  		}
  	}
  
@@ -325,7 +842,7 @@ index 422a8d0..b39c037 100644
  		this.#assistantTranscriptTurn = 0;
  		this.#assistantTranscriptStartedAt = 0;
  		const visualizer = new LiveVisualizer({
-@@ -107,6 +132,7 @@ export class LiveCommandController {
+@@ -107,9 +144,11 @@ export class LiveCommandController {
  			session: this.#ctx.session,
  			extractAssistantText: message => this.#ctx.extractAssistantText(message),
  			voice: this.#ctx.settings.get("live.voice"),
@@ -333,72 +850,1673 @@ index 422a8d0..b39c037 100644
  			callbacks: {
  				onPhase: phase => {
  					if (this.#visualizer !== visualizer) return;
++					this.#remoteSinks?.onPhase(phase);
+ 					visualizer.setPhase(phase);
+ 					this.#ctx.ui.requestComponentRender(visualizer);
+ 				},
+@@ -120,6 +159,14 @@ export class LiveCommandController {
+ 				},
+ 				onTranscript: transcript => {
+ 					if (this.#visualizer !== visualizer) return;
++					if (transcript) {
++						this.#remoteSinks?.onTranscript(
++							transcript.role,
++							transcript.text,
++							transcript.turn,
++							transcript.final,
++						);
++					}
+ 					if (!transcript) {
+ 						visualizer.clearTranscript();
+ 						this.#ctx.ui.requestComponentRender(visualizer);
+@@ -221,6 +268,8 @@ export class LiveCommandController {
+ 	#finish(session: LiveSessionController, error?: Error): void {
+ 		if (this.#session !== session) return;
+ 		this.#session = undefined;
++		const sinks = this.#remoteSinks;
++		this.#remoteSinks = undefined;
+ 		this.#restoreEditor();
+ 		if (error) this.#ctx.showError(error.message);
+ 		const settling = session.stop().catch(cause => {
+@@ -229,6 +278,7 @@ export class LiveCommandController {
+ 		this.#settling = settling;
+ 		void settling.finally(() => {
+ 			if (this.#settling === settling) this.#settling = undefined;
++			sinks?.onTerminal?.(error);
+ 		});
+ 	}
+ 
 diff --git a/packages/coding-agent/src/modes/interactive-mode.ts b/packages/coding-agent/src/modes/interactive-mode.ts
-index eb506d7..e7aa4a0 100644
 --- a/packages/coding-agent/src/modes/interactive-mode.ts
 +++ b/packages/coding-agent/src/modes/interactive-mode.ts
-@@ -58,6 +58,7 @@ import { reset as resetCapabilities } from "../capability";
+@@ -62,7 +62,7 @@ import { reset as resetCapabilities } from "../capability";
  import { restartArgv } from "../cli/flag-tables";
- import { CollabController } from "../collab/controller";
  import type { CollabGuestLink } from "../collab/guest";
-+import type { CollabLiveAudioBridge } from "../collab/host";
- import { formatKeyHint, KeybindingsManager } from "../config/keybindings";
+ import { CollabController } from "../collab/controller";
+-import type { CollabHost } from "../collab/host";
++import type { CollabHost, CollabLiveAudioBridge } from "../collab/host";
+ import { formatKeyHint, KeybindingsManager } from "@oh-my-pi/pi-tui/app-keybindings";
  import { formatModelString, type ResolvedModelRoleValue } from "../config/model-resolver";
- import { applyProviderGlobalsFromSettings } from "../config/provider-globals";
-@@ -747,6 +748,11 @@ export class InteractiveMode implements InteractiveModeContext {
- 	readonly collabController: CollabController;
+ import {
+@@ -1021,6 +1021,11 @@ export class InteractiveMode implements InteractiveModeContext {
+ 	/** Owned room; use {@link collabController}.host for current-session reuse and links. */
+ 	collabHost?: CollabHost;
  	collabGuest?: CollabGuestLink;
- 
++
 +	/** Live-audio bridge the collab controller hands to a starting host. */
 +	liveAudioBridge(): CollabLiveAudioBridge {
 +		return this.#liveCommandController.collabBridge();
 +	}
+ 	#streamPublisher: StreamPublisher | undefined;
+ 	#recorder: SessionRecorder | undefined;
+ 	#recorderStarting = false;
+diff --git a/packages/coding-agent/src/modes/rpc/rpc-live-audio.ts b/packages/coding-agent/src/modes/rpc/rpc-live-audio.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/coding-agent/src/modes/rpc/rpc-live-audio.ts
+@@ -0,0 +1,131 @@
++import type { CollabLiveAudioBridge, CollabLiveSinks } from "../../collab/host";
++import { extractTextContent } from "../../commit/utils";
++import { LiveSessionController } from "../../live/controller";
++import type { AgentSession } from "../../session/agent-session";
 +
- 	#pendingCommandOutput: Component[] = [];
- 	#pendingCommandOutputSessionId: string | undefined;
- 	/** Commands (not components) queued while streaming, for the deferral hint. */
++interface RemoteCall {
++	controller: LiveSessionController;
++	abort: AbortController;
++	sinks: CollabLiveSinks;
++	starting?: Promise<void>;
++	stopping?: Promise<void>;
++	connected: boolean;
++	closing: boolean;
++	failure?: Error;
++}
++
++/** Owns remote voice without creating terminal UI or opening local audio devices. */
++export class RpcLiveAudioBridge implements CollabLiveAudioBridge {
++	#call: RemoteCall | undefined;
++	#disposed = false;
++	readonly #unsubscribeSessionChange: () => void;
++
++	constructor(
++		readonly session: AgentSession,
++		readonly reportError: (error: Error) => void,
++	) {
++		// Native session-change callbacks also cover new/fork/branch, whereas
++		// the before-switch reconciler only covers switchSession. Stop at the
++		// identity boundary, before room rotation awaits its goodbye flush.
++		this.#unsubscribeSessionChange = session.registerSessionChangeCallback(() => {
++			void this.stop().catch(cause => this.reportError(cause instanceof Error ? cause : new Error(String(cause))));
++		});
++	}
++
++	async start(sinks: CollabLiveSinks): Promise<void> {
++		if (this.#disposed) throw new Error("The RPC live audio bridge has been disposed.");
++		if (this.#call) throw new Error("A live session is already running or stopping on the host.");
++		const abort = new AbortController();
++		const current = (): boolean => this.#call === call && !call.closing;
++		const controller = new LiveSessionController({
++			session: this.session,
++			extractAssistantText: extractTextContent,
++			voice: this.session.settings.get("live.voice"),
++			signal: abort.signal,
++			audio: {
++				localCapture: false,
++				localPlayback: false,
++				onOutput: samples => {
++					if (current()) sinks.onOutput(samples);
++				},
++			},
++			callbacks: {
++				onPhase: phase => {
++					if (current()) sinks.onPhase(phase);
++				},
++				onTranscript: transcript => {
++					if (current() && transcript) {
++						sinks.onTranscript(transcript.role, transcript.text, transcript.turn, transcript.final);
++					}
++				},
++				onTerminal: error => {
++					if (!current()) {
++						if (this.#call === call && call.connected) call.failure ??= error;
++						return;
++					}
++					call.failure = error;
++					void this.#stop(call);
++				},
++			},
++		});
++		const call: RemoteCall = { controller, abort, sinks, connected: false, closing: false };
++		this.#call = call;
++		call.starting = controller.start();
++		try {
++			await call.starting;
++			if (!current()) throw call.failure ?? new Error("The live session stopped while starting.");
++			call.connected = true;
++		} catch (cause) {
++			if (!call.closing) call.failure = cause instanceof Error ? cause : new Error(String(cause));
++			await this.#stop(call);
++			throw cause;
++		}
++	}
++
++	pushInput(samples: Float32Array): void {
++		if (this.#call && !this.#call.closing) this.#call.controller.pushInput(samples);
++	}
++
++	setMuted(muted: boolean): void {
++		if (this.#call && !this.#call.closing) this.#call.controller.setMuted(muted);
++	}
++
++	setEchoGate(enabled: boolean): void {
++		if (this.#call && !this.#call.closing) this.#call.controller.setRemoteEchoGate(enabled);
++	}
++
++	stop(): Promise<void> {
++		return this.#call ? this.#stop(this.#call) : Promise.resolve();
++	}
++
++	dispose(): Promise<void> {
++		this.#disposed = true;
++		this.#unsubscribeSessionChange();
++		return this.stop();
++	}
++
++	#stop(call: RemoteCall): Promise<void> {
++		if (call.stopping) return call.stopping;
++		call.closing = true;
++		// Abort signaling and an unopened sideband, not a connected call's graceful close.
++		if (!call.connected) call.abort.abort();
++		// Defer cleanup so synchronous terminal callbacks cannot reenter before stopping is assigned.
++		call.stopping = Promise.resolve().then(async () => {
++			try {
++				await call.controller.stop();
++			} catch (cause) {
++				call.failure ??= cause instanceof Error ? cause : new Error(String(cause));
++			} finally {
++				// A late connect continuation must settle before another call or session can start.
++				await call.starting?.catch(() => {});
++				if (this.#call === call) this.#call = undefined;
++				if (call.failure) {
++					this.session.emitNotice("error", `Live voice failed: ${call.failure.message}`, "live");
++					this.reportError(call.failure);
++				}
++				call.sinks.onTerminal?.(call.failure);
++			}
++		});
++		return call.stopping;
++	}
++}
+diff --git a/packages/coding-agent/src/modes/rpc/rpc-mode.ts b/packages/coding-agent/src/modes/rpc/rpc-mode.ts
+--- a/packages/coding-agent/src/modes/rpc/rpc-mode.ts
++++ b/packages/coding-agent/src/modes/rpc/rpc-mode.ts
+@@ -13,8 +13,10 @@
+ import { ThinkingLevel } from "@oh-my-pi/pi-agent-core";
+ import { getOAuthProviders } from "@oh-my-pi/pi-ai/oauth";
+ import { toolWireSchema } from "@oh-my-pi/pi-ai/utils/schema";
+-import { $env, isRecord, logger, Snowflake } from "@oh-my-pi/pi-utils";
++import { $env, isRecord, logger, postmortem, Snowflake } from "@oh-my-pi/pi-utils";
++import type { CollabUiRequestDraft } from "@oh-my-pi/pi-wire";
+ import { reset as resetCapabilities } from "../../capability";
++import { CollabController } from "../../collab/controller";
+ import { clearPluginRootsAndCaches, resolveActiveProjectRegistryPath } from "../../discovery/helpers";
+ import {
+ 	type ExtensionUIContext,
+@@ -46,6 +48,7 @@ import { isRpcHostToolResult, isRpcHostToolUpdate, RpcHostToolBridge } from "./h
+ import { isRpcHostUriResult, RpcHostUriBridge } from "./host-uris";
+ import { MAX_RPC_FRAME_BYTES, MAX_RPC_REASSEMBLED_BYTES, RpcFrameEncoder } from "./rpc-frame";
+ import { claimRpcInput, readRpcInputFrames } from "./rpc-input";
++import { RpcLiveAudioBridge } from "./rpc-live-audio";
+ import { pageRpcMessages, RPC_MESSAGES_PAGE_BUSY_ERROR, RpcMessagesPageError } from "./rpc-messages";
+ import { RpcOutputWriter } from "./rpc-output";
+ import { RpcSubagentRegistry, readRpcSubagentTranscript } from "./rpc-subagents";
+@@ -774,6 +777,42 @@ export function requestRpcDialog<T>(
+ 	output({ type: "extension_ui_request", id, ...request } as RpcExtensionUIRequest);
+ 	return promise;
+ }
++
++/**
++ * Mirror an RPC dialog to authenticated control guests. A transport loss is
++ * not a user cancellation: only an answer can win against the RPC client.
++ * The existing RPC dialog owns timeouts and abort handling on both surfaces.
++ */
++async function requestRpcCollabDialog<T>(
++	controller: CollabController | undefined,
++	request: CollabUiRequestDraft,
++	dialogOptions: ExtensionUIDialogOptions | undefined,
++	local: (options: ExtensionUIDialogOptions | undefined) => Promise<T>,
++	parseGuest: (value: string | undefined) => T,
++): Promise<T> {
++	const host = controller?.host;
++	if (!controller || !host || dialogOptions?.signal?.aborted) return local(dialogOptions);
++	const localAbort = new AbortController();
++	const remoteAbort = new AbortController();
++	const remoteSignal = dialogOptions?.signal
++		? AbortSignal.any([dialogOptions.signal, remoteAbort.signal])
++		: remoteAbort.signal;
++	const remote = host.requestGuestUi(request, remoteSignal);
++	if (!remote) return local(dialogOptions);
++	try {
++		const localResult = local({
++			...dialogOptions,
++			signal: dialogOptions?.signal ? AbortSignal.any([dialogOptions.signal, localAbort.signal]) : localAbort.signal,
++		});
++		return await Promise.race([
++			localResult,
++			remote.then(result => (result.kind === "answered" ? parseGuest(result.value) : localResult)),
++		]);
++	} finally {
++		localAbort.abort();
++		remoteAbort.abort();
++	}
++}
+ /**
+  * Applies a queue-mode RPC command to the calling session only. Owns the
+  * `persist: false` contract (#11555) in one place so no dispatcher arm can
+@@ -834,9 +873,10 @@ export async function runRpcMode(
+ 	process.env.PI_NOTIFICATIONS = "off";
+ 
+ 	const frameEncoder = new RpcFrameEncoder();
++	let disposeAfterOutputFailure = (): Promise<void> => session.dispose();
+ 	const outputWriter = new RpcOutputWriter(process.stdout, failure => {
+ 		logger.error("RPC output delivery failed", { error: String(failure) });
+-		void session.dispose().finally(() => process.exit(1));
++		void disposeAfterOutputFailure().finally(() => process.exit(1));
+ 	});
+ 	outputWriter.write(
+ 		frameEncoder.encodeFrames({
+@@ -879,6 +919,135 @@ export async function runRpcMode(
+ 	// Shutdown request flag (wrapped in object to allow mutation with const)
+ 	const shutdownState = { requested: false };
+ 
++	const notifyCollab = (message: string, notifyType: "info" | "warning" | "error" = "info"): void => {
++		output({
++			type: "extension_ui_request",
++			id: Snowflake.next() as string,
++			method: "notify",
++			message,
++			notifyType,
++		} satisfies RpcExtensionUIRequest);
++		process.stderr.write(`[collab] ${message}\n`);
++	};
++	const liveAudio =
++		(session.settings.get("collab.autoStart") ?? "off") === "off"
++			? undefined
++			: new RpcLiveAudioBridge(session, error => notifyCollab(`Live voice failed: ${error.message}`, "error"));
++	const collabController = !liveAudio
++		? undefined
++		: new CollabController({
++				session,
++				sessionManager: session.sessionManager,
++				settings: session.settings,
++				subagentEventBus,
++				liveAudioBridge: () => liveAudio,
++				showStatus: message => notifyCollab(message),
++			});
++	let collabShutdown: Promise<void> | undefined;
++	const stopCollab = (): Promise<void> => {
++		if (!collabController) return Promise.resolve();
++		if (!collabShutdown) {
++			session.setSessionBeforeSwitchReconciler(null);
++			collabShutdown = (async () => {
++				try {
++					await liveAudio?.dispose();
++				} finally {
++					await collabController.shutdown("RPC session shut down");
++				}
++			})();
++		}
++		return collabShutdown;
++	};
++	let unregisterCollabCleanup: (() => void) | undefined;
++	let rpcDisposal: Promise<void> | undefined;
++	const disposeRpc = (reason?: postmortem.Reason): Promise<void> => {
++		if (!collabController) return session.dispose();
++		if (!rpcDisposal) {
++			session.beginDispose();
++			pendingExtensionRequests.rejectAll("RPC session shut down before extension UI response completed");
++			hostToolBridge.close("RPC session shut down before host tool execution completed");
++			hostUriBridge.clear("RPC session shut down before host URI request completed");
++			rpcDisposal = (async () => {
++				try {
++					await stopCollab();
++				} finally {
++					subagentRegistry?.dispose();
++					await session.dispose({ reason });
++					unregisterCollabCleanup?.();
++				}
++			})();
++		}
++		return rpcDisposal;
++	};
++	disposeAfterOutputFailure = disposeRpc;
++	// Discriminates a store failure from any other dispose rejection below.
++	let persistenceFailure: Error | undefined;
++	registerRpcPersistenceSurface(
++		session,
++		frame => output(frame),
++		error => {
++			persistenceFailure = error;
++		},
++	);
++
++	/**
++	 * Dispose the session, then end the process. A store failure still latched
++	 * at dispose makes `dispose()` reject, and the `notice` frame it emits is
++	 * queued on the asynchronous `outputWriter`: drain that writer before exiting
++	 * or the client never learns the failure (review 3983906393). The durability
++	 * loss is mirrored on stderr and the exit code is nonzero. A dispose
++	 * rejection with no latched store failure still surfaces to the caller.
++	 */
++	const disposeAndExit = async (): Promise<never> => {
++		try {
++			await disposeRpc();
++		} catch (error) {
++			if (!persistenceFailure || error !== persistenceFailure) throw error;
++			// The notice frame this failure queued must reach the client before the
++			// process ends (review 3983906393).
++			await outputWriter.close();
++			try {
++				if (!process.stderr.write(`${formatPersistenceDurabilityFailure(persistenceFailure.message)}\n`)) {
++					const { promise, resolve } = Promise.withResolvers<void>();
++					// A closed stream never emits `drain`; resolve on error/close too
++					// so an undeliverable mirror cannot strand the exit.
++					const settle = (): void => {
++						process.stderr.off("drain", settle);
++						process.stderr.off("error", settle);
++						process.stderr.off("close", settle);
++						resolve();
++					};
++					process.stderr.on("drain", settle);
++					process.stderr.on("error", settle);
++					process.stderr.on("close", settle);
++					await promise;
++				}
++			} catch {
++				// A mirror that cannot be written must not cost the exit code.
++			}
++			process.exit(1);
++		}
++		// A failure that already reported and then recovered still leaves its notice
++		// queued here, so the success path drains the same queue before it exits.
++		await outputWriter.close();
++		process.exit(0);
++	};
++	// Deferred shutdown (pi.shutdown() from an extension) must not kill the
++	// process while a background-dispatched bash still owes the client its
++	// response frame. The coordinator drains tracked tasks before exiting and
++	// re-checks the request as each task settles.
++	const shutdownCoordinator = new RpcShutdownCoordinator({
++		isShutdownRequested: () => shutdownState.requested,
++		performShutdown: async () => {
++			// Route through the idempotent session.dispose() so the browser
++			// reaper (releaseTabsForOwner) and other bounded teardown run before
++			// the process exits. dispose() also emits `session_shutdown`, so we
++			// must NOT emit it separately here or the event fires twice. Skipping
++			// dispose left OMP-owned Chromium alive after RPC shutdown (#5643).
++			await disposeAndExit();
++		},
++	});
++
+ 	/**
+ 	 * Extension UI context that uses the RPC protocol.
+ 	 */
+@@ -893,24 +1062,51 @@ export async function runRpcMode(
+ 			options: ExtensionUISelectItem[],
+ 			dialogOptions?: ExtensionUIDialogOptions,
+ 		): Promise<string | undefined> {
+-			return requestRpcSelect(this.pendingRequests, this.output, title, options, dialogOptions);
++			if (!collabController) {
++				return requestRpcSelect(this.pendingRequests, this.output, title, options, dialogOptions);
++			}
++			return requestRpcCollabDialog(
++				collabController,
++				{
++					kind: "select",
++					title,
++					options,
++					initialIndex: dialogOptions?.initialIndex,
++					selectionMarker: dialogOptions?.selectionMarker,
++					checkedIndices: dialogOptions?.checkedIndices ? [...dialogOptions.checkedIndices] : undefined,
++					markableCount: dialogOptions?.markableCount,
++					helpText: dialogOptions?.helpText,
++				},
++				dialogOptions,
++				opts => requestRpcSelect(this.pendingRequests, this.output, title, options, opts),
++				value => value,
++			);
+ 		}
+ 
+ 		confirm(title: string, message: string, dialogOptions?: ExtensionUIDialogOptions): Promise<boolean> {
+-			return requestRpcDialog(
+-				this.pendingRequests,
+-				this.output,
+-				dialogOptions,
+-				false,
+-				{ method: "confirm", title, message, timeout: dialogOptions?.timeout },
+-				response => {
+-					if ("cancelled" in response && response.cancelled) {
+-						if (response.timedOut) dialogOptions?.onTimeout?.();
++			const local = (opts: ExtensionUIDialogOptions | undefined) =>
++				requestRpcDialog(
++					this.pendingRequests,
++					this.output,
++					opts,
++					false,
++					{ method: "confirm", title, message, timeout: opts?.timeout },
++					response => {
++						if ("cancelled" in response && response.cancelled) {
++							if (response.timedOut) opts?.onTimeout?.();
++							return false;
++						}
++						if ("confirmed" in response) return response.confirmed;
+ 						return false;
+-					}
+-					if ("confirmed" in response) return response.confirmed;
+-					return false;
+-				},
++					},
++				);
++			if (!collabController) return local(dialogOptions);
++			return requestRpcCollabDialog(
++				collabController,
++				{ kind: "select", title: `${title}\n\n${message}`, options: ["Yes", "No"], initialIndex: 1 },
++				dialogOptions,
++				local,
++				value => value === "Yes",
+ 			);
+ 		}
+ 
+@@ -919,13 +1115,22 @@ export async function runRpcMode(
+ 			placeholder?: string,
+ 			dialogOptions?: ExtensionUIDialogOptions,
+ 		): Promise<string | undefined> {
+-			return requestRpcDialog(
+-				this.pendingRequests,
+-				this.output,
++			const local = (opts: ExtensionUIDialogOptions | undefined) =>
++				requestRpcDialog(
++					this.pendingRequests,
++					this.output,
++					opts,
++					undefined,
++					{ method: "input", title, placeholder, timeout: opts?.timeout },
++					response => parseValueDialogResponse(response, opts),
++				);
++			if (!collabController) return local(dialogOptions);
++			return requestRpcCollabDialog(
++				collabController,
++				{ kind: "editor", title: placeholder ? `${title}\n\n${placeholder}` : title },
+ 				dialogOptions,
+-				undefined,
+-				{ method: "input", title, placeholder, timeout: dialogOptions?.timeout },
+-				response => parseValueDialogResponse(response, dialogOptions),
++				local,
++				value => value,
+ 			);
+ 		}
+ 
+@@ -1026,7 +1231,16 @@ export async function runRpcMode(
+ 			dialogOptions?: ExtensionUIDialogOptions,
+ 			editorOptions?: { promptStyle?: boolean },
+ 		): Promise<string | undefined> {
+-			return requestRpcEditor(this.pendingRequests, this.output, title, prefill, dialogOptions, editorOptions);
++			if (!collabController) {
++				return requestRpcEditor(this.pendingRequests, this.output, title, prefill, dialogOptions, editorOptions);
++			}
++			return requestRpcCollabDialog(
++				collabController,
++				{ kind: "editor", title, prefill },
++				dialogOptions,
++				opts => requestRpcEditor(this.pendingRequests, this.output, title, prefill, opts, editorOptions),
++				value => value,
++			);
+ 		}
+ 
+ 		addAutocompleteProvider(): void {
+@@ -1069,6 +1283,26 @@ export async function runRpcMode(
+ 	// correct waiting promise regardless of which code path created the request.
+ 	const rpcUiContext = new RpcExtensionUIContext(pendingExtensionRequests, output);
+ 	setToolUIContext?.(rpcUiContext, true);
++	if (collabController) {
++		unregisterCollabCleanup = postmortem.register("rpc-collab-teardown", reason => disposeRpc(reason));
++		session.setSessionBeforeSwitchReconciler(async () => {
++			await liveAudio?.stop();
++		});
++		// Native hosting installs the room synchronously and keeps guest actions
++		// gated until extensions finish startup; dialogs remain answerable.
++		collabController.autoStart();
++		await collabController.idle();
++		if (!collabController.host?.relayConnected) {
++			await disposeRpc();
++			throw new Error("Automatic collaboration did not start in RPC mode");
++		}
++		collabController.onFatal = error => {
++			if (collabShutdown) return;
++			notifyCollab(`Collaboration host failed: ${error.message}; exiting for supervisor recovery.`, "error");
++			void postmortem.quit(1);
++		};
++		notifyCollab(`Collaboration host started for session ${session.sessionId}`);
++	}
+ 
+ 	// Set up extensions with RPC-based UI context
+ 	await initializeExtensions(session, {
+@@ -1081,70 +1315,24 @@ export async function runRpcMode(
+ 		},
+ 		onShutdown: () => {
+ 			shutdownState.requested = true;
++			// Guest prompts need no stdin traffic to complete a shutdown request.
++			if (collabController) void shutdownCoordinator.checkShutdownRequested();
+ 		},
+ 		trackAgentInvokingMessage: task => {
+ 			extensionUserMessageTracker.trackAgentMessageTask(task);
+ 		},
+ 		uiContext: rpcUiContext,
++	}).catch(async error => {
++		if (collabController) await disposeRpc();
++		throw error;
+ 	});
++	collabController?.startupComplete();
+ 
+ 	// Output all agent events as JSON
+ 	session.subscribe(event => {
+ 		output(event);
+ 	});
+ 
+-	// Discriminates a store failure from any other dispose rejection below.
+-	let persistenceFailure: Error | undefined;
+-	registerRpcPersistenceSurface(
+-		session,
+-		frame => output(frame),
+-		error => {
+-			persistenceFailure = error;
+-		},
+-	);
+-
+-	/**
+-	 * Dispose the session, then end the process. A store failure still latched
+-	 * at dispose makes `dispose()` reject, and the `notice` frame it emits is
+-	 * queued on the asynchronous `outputWriter`: drain that writer before exiting
+-	 * or the client never learns the failure (review 3983906393). The durability
+-	 * loss is mirrored on stderr and the exit code is nonzero. A dispose
+-	 * rejection with no latched store failure still surfaces to the caller.
+-	 */
+-	const disposeAndExit = async (): Promise<never> => {
+-		try {
+-			await session.dispose();
+-		} catch (error) {
+-			if (!persistenceFailure || error !== persistenceFailure) throw error;
+-			// The notice frame this failure queued must reach the client before the
+-			// process ends (review 3983906393).
+-			await outputWriter.close();
+-			try {
+-				if (!process.stderr.write(`${formatPersistenceDurabilityFailure(persistenceFailure.message)}\n`)) {
+-					const { promise, resolve } = Promise.withResolvers<void>();
+-					// A closed stream never emits `drain`; resolve on error/close too
+-					// so an undeliverable mirror cannot strand the exit.
+-					const settle = (): void => {
+-						process.stderr.off("drain", settle);
+-						process.stderr.off("error", settle);
+-						process.stderr.off("close", settle);
+-						resolve();
+-					};
+-					process.stderr.on("drain", settle);
+-					process.stderr.on("error", settle);
+-					process.stderr.on("close", settle);
+-					await promise;
+-				}
+-			} catch {
+-				// A mirror that cannot be written must not cost the exit code.
+-			}
+-			process.exit(1);
+-		}
+-		// A failure that already reported and then recovered still leaves its notice
+-		// queued here, so the success path drains the same queue before it exits.
+-		await outputWriter.close();
+-		process.exit(0);
+-	};
+ 
+ 	const getAvailableCommands = async () => buildAvailableSlashCommands(session);
+ 	const reloadPluginState = async () => {
+@@ -1698,21 +1886,6 @@ export async function runRpcMode(
+ 		}
+ 	};
+ 
+-	// Deferred shutdown (pi.shutdown() from an extension) must not kill the
+-	// process while a background-dispatched bash still owes the client its
+-	// response frame. The coordinator drains tracked tasks before exiting and
+-	// re-checks the request as each task settles.
+-	const shutdownCoordinator = new RpcShutdownCoordinator({
+-		isShutdownRequested: () => shutdownState.requested,
+-		performShutdown: async () => {
+-			// Route through the idempotent session.dispose() so the browser
+-			// reaper (releaseTabsForOwner) and other bounded teardown run before
+-			// the process exits. dispose() also emits `session_shutdown`, so we
+-			// must NOT emit it separately here or the event fires twice. Skipping
+-			// dispose left OMP-owned Chromium alive after RPC shutdown (#5643).
+-			await disposeAndExit();
+-		},
+-	});
+ 
+ 	const dispatchFrameDeps: RpcInputFrameDeps = {
+ 		handleCommand,
+@@ -1740,16 +1913,20 @@ export async function runRpcMode(
+ 		input ?? Bun.stdin.stream(),
+ 		parsed => inputDispatcher.dispatch(parsed),
+ 		message => output(error(undefined, "parse", message)),
+-	);
++	).catch(async error => {
++		if (collabController) await disposeRpc();
++		throw error;
++	});
+ 
+ 	// stdin closed — RPC client is gone. Fail pending side-channel requests
+ 	// first so active/queued commands can settle, then drain accepted work.
+ 	pendingExtensionRequests.rejectAll("RPC client disconnected before extension UI response completed");
+ 	hostToolBridge.close("RPC client disconnected before host tool execution completed");
+ 	hostUriBridge.clear("RPC client disconnected before host URI request completed");
++	await stopCollab();
+ 	await inputDispatcher.drain();
+ 	await shutdownCoordinator.drain();
+-	subagentRegistry?.dispose();
++	if (!collabController) subagentRegistry?.dispose();
+ 	// Dispose the main session before exiting so the browser reaper and other
+ 	// bounded teardown run on the stdin-EOF path too (#5643). Idempotent: a
+ 	// prior pi.shutdown() through the coordinator makes this await settle
 diff --git a/packages/coding-agent/src/modes/types.ts b/packages/coding-agent/src/modes/types.ts
-index bb49168..fe91f09 100644
 --- a/packages/coding-agent/src/modes/types.ts
 +++ b/packages/coding-agent/src/modes/types.ts
-@@ -5,6 +5,7 @@ import type { Component, Container, EditorTheme, Loader, Spacer, Text, TUI } fro
- import type { CollabUiRequest } from "@oh-my-pi/pi-wire";
+@@ -4,7 +4,7 @@ import type { AssistantMessage, ImageContent, Model, Usage, UsageReport } from "
+ import type { Component, Container, EditorTheme, Loader, Spacer, Text, TUI } from "@oh-my-pi/pi-tui";
  import type { CollabController } from "../collab/controller";
  import type { CollabGuestLink } from "../collab/guest";
-+import type { CollabLiveAudioBridge } from "../collab/host";
- import type { KeybindingsManager } from "../config/keybindings";
+-import type { CollabHost } from "../collab/host";
++import type { CollabHost, CollabLiveAudioBridge } from "../collab/host";
+ import type { KeybindingsManager } from "@oh-my-pi/pi-tui/app-keybindings";
  import type { Settings } from "../config/settings";
  import type {
-@@ -161,6 +162,12 @@ export interface InteractiveModeContext {
- 	lspServers?: LspStartupServerInfo[];
- 	collabController: CollabController;
+@@ -165,6 +165,8 @@ export interface InteractiveModeContext {
+ 	/** Owned room; use {@link collabController}.host for current-session reuse and links. */
+ 	collabHost?: CollabHost;
  	collabGuest?: CollabGuestLink;
-+	/**
-+	 * Live-audio bridge handed to a starting collab host so guests can
-+	 * hold a live voice call against this session. Absent outside interactive
-+	 * mode, where no `/live` surface exists.
-+	 */
++	/** Live voice surface shared by local and remote audio endpoints. */
 +	liveAudioBridge?(): CollabLiveAudioBridge;
  	eventController: EventController;
  	eventBus?: EventBus;
  	/** Root-scoped bus carrying this session tree's `task:subagent:*` frames. */
-diff --git a/packages/coding-agent/src/slash-commands/builtin-collaboration.ts b/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
-index 294c30f..825e574 100644
---- a/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
-+++ b/packages/coding-agent/src/slash-commands/builtin-collaboration.ts
-@@ -380,6 +380,7 @@ export const BUILTIN_COLLABORATION_SLASH_COMMANDS: ReadonlyArray<SlashCommandSpe
- 			// Scheme-less relay args default to wss (ws:// must be spelled out for localhost).
- 			const relayUrl = relayInput.includes("://") ? relayInput : `wss://${relayInput}`;
- 			const webUrl = ctx.settings.get("collab.webUrl") || "";
+diff --git a/packages/coding-agent/test/collab/live-audio.test.ts b/packages/coding-agent/test/collab/live-audio.test.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/coding-agent/test/collab/live-audio.test.ts
+@@ -0,0 +1,234 @@
++import { afterEach, beforeEach, describe, expect, it, type Mock, spyOn } from "bun:test";
++import * as fs from "node:fs/promises";
++import * as os from "node:os";
++import * as path from "node:path";
++import { importRoomKey } from "@oh-my-pi/pi-coding-agent/collab/crypto";
++import {
++	CollabHost,
++	type CollabHostContext,
++	type CollabLiveAudioBridge,
++	type CollabLiveSinks,
++} from "@oh-my-pi/pi-coding-agent/collab/host";
++import { COLLAB_PROTO, type CollabFrame, parseCollabLink } from "@oh-my-pi/pi-coding-agent/collab/protocol";
++import * as registry from "@oh-my-pi/pi-coding-agent/collab/registry";
++import { CollabSocket } from "@oh-my-pi/pi-coding-agent/collab/relay-client";
++import { installInMemoryRelay, uninstallInMemoryRelay } from "./helpers/in-memory-relay";
 +
- 			try {
- 				await ctx.collabController.start({
- 					relayUrl,
++/** Delayed connection and close let real encrypted guest traffic cross lifecycle boundaries. */
++class DelayedAudio implements CollabLiveAudioBridge {
++	calls: Array<{ sinks: CollabLiveSinks; connection: PromiseWithResolvers<void> }> = [];
++	active = false;
++	closed = Promise.withResolvers<void>();
++	closeGate = Promise.resolve();
++	muted = false;
++	gate = false;
++
++	start(sinks: CollabLiveSinks): Promise<void> {
++		if (this.active) return Promise.reject(new Error("A call is already active"));
++		this.active = true;
++		const connection = Promise.withResolvers<void>();
++		this.calls.push({ sinks, connection });
++		return connection.promise;
++	}
++	pushInput(samples: Float32Array): void {
++		if (!this.muted) this.calls.at(-1)?.sinks.onOutput(samples);
++	}
++	setMuted(muted: boolean): void {
++		this.muted = muted;
++	}
++	setEchoGate(enabled: boolean): void {
++		this.gate = enabled;
++	}
++	async stop(): Promise<void> {
++		this.active = false;
++		this.closed.resolve();
++		await this.closeGate;
++	}
++}
++
++interface Guest {
++	socket: CollabSocket;
++	frames: CollabFrame[];
++	flush(): Promise<void>;
++}
++
++const guests: Guest[] = [];
++let host: CollabHost;
++let audio: DelayedAudio;
++const notices: string[] = [];
++let tmp: string;
++let publishSpy: Mock<typeof registry.publishCollabHost>;
++
++async function join(link: string, name: string): Promise<Guest> {
++	const parsed = parseCollabLink(link);
++	if ("error" in parsed) throw new Error(parsed.error);
++	const socket = new CollabSocket({ wsUrl: parsed.wsUrl, role: "guest", key: await importRoomKey(parsed.key) });
++	const frames: CollabFrame[] = [];
++	const welcome = Promise.withResolvers<void>();
++	const barriers = new Map<number, () => void>();
++	let seq = 0;
++	socket.onFrame = frame => {
++		if (frame.t === "transcript") barriers.get(frame.reqId)?.();
++		else if (frame.t === "welcome") welcome.resolve();
++		else if (frame.t.startsWith("live-")) frames.push(frame);
++	};
++	socket.onOpen = () =>
++		socket.send({
++			t: "hello",
++			proto: COLLAB_PROTO,
++			name,
++			writeToken: parsed.writeToken ? Buffer.from(parsed.writeToken).toString("base64url") : undefined,
++		});
++	socket.connect();
++	const guest: Guest = {
++		socket,
++		frames,
++		async flush() {
++			const id = ++seq;
++			const barrier = Promise.withResolvers<void>();
++			barriers.set(id, barrier.resolve);
++			// A missing transcript replies synchronously after preceding inbound
++			// frames, replacing the old gateway fork's health-ping barrier.
++			socket.send({ t: "fetch-transcript", reqId: id, agentId: "live-audio-barrier", fromByte: 0 });
++			await barrier.promise;
++			barriers.delete(id);
++		},
++	};
++	guests.push(guest);
++	await welcome.promise;
++	return guest;
++}
++
++beforeEach(async () => {
++	installInMemoryRelay();
++	tmp = await fs.mkdtemp(path.join(os.tmpdir(), "omp-live-audio-"));
++	const real = registry.publishCollabHost;
++	publishSpy = spyOn(registry, "publishCollabHost").mockImplementation((source, options) =>
++		real(source, { ...options, dir: tmp }),
++	);
++	notices.length = 0;
++	const ctx = {
++		settings: { get: () => "" },
++		sessionManager: {
++			getSessionId: () => "live-session",
++			getCwd: () => "/tmp",
++			snapshotForReplication: () => ({
++				header: { type: "session", id: "live-session", timestamp: "2026-01-01T00:00:00.000Z", cwd: "/tmp" },
++				entries: [],
++			}),
++		},
++		session: {
++			isStreaming: false,
++			queuedMessageCount: 0,
++			sessionName: "live",
++			subscribe: () => () => {},
++			emitNotice: (_level: string, message: string) => notices.push(message),
++			getContextBreakdown: () => ({ usedTokens: 0, contextWindow: 0 }),
++		},
++		showStatus: (message: string) => notices.push(message),
++	} as unknown as CollabHostContext;
++	audio = new DelayedAudio();
++	host = new CollabHost(ctx);
++	host.setLiveAudioBridge(audio);
++	await host.start("ws://localhost:8787");
++});
++
++afterEach(async () => {
++	for (const call of audio.calls) call.connection.resolve();
++	for (const guest of guests.splice(0)) guest.socket.close();
++	try {
++		await host.stop("test complete");
++	} finally {
++		uninstallInMemoryRelay();
++		publishSpy?.mockRestore();
++		await fs.rm(tmp, { recursive: true, force: true });
++	}
++});
++
++describe("collab live audio ownership", () => {
++	it("keeps a duplicate claimant's ownership and a mute set while connecting", async () => {
++		const guest = await join(host.link, "speaker");
++		guest.socket.send({ t: "live-ctl", op: "claim" });
++		await guest.flush();
++		guest.socket.send({ t: "live-ctl", op: "claim" });
++		guest.socket.send({ t: "live-ctl", op: "mute" });
++		await guest.flush();
++		expect(guest.frames).toEqual([{ t: "live-state", active: true, owner: 1, muted: true }]);
++		guest.frames.length = 0;
++		audio.calls[0]!.connection.resolve();
++		await guest.flush();
++		expect(guest.frames).toEqual([{ t: "live-state", active: true, owner: 1, muted: true }]);
++	});
++
++	it("isolates a replacement from a released call's late failure and callbacks", async () => {
++		const first = await join(host.link, "first");
++		const second = await join(host.link, "second");
++		first.socket.send({ t: "live-ctl", op: "claim" });
++		await first.flush();
++		const stale = audio.calls[0]!;
++		first.socket.send({ t: "live-ctl", op: "release" });
++		await first.flush();
++		second.socket.send({ t: "live-ctl", op: "claim" });
++		await second.flush();
++		audio.calls[1]!.connection.resolve();
++		await second.flush();
++		first.frames.length = 0;
++		second.frames.length = 0;
++		stale.sinks.onOutput(new Float32Array([0.5]));
++		stale.sinks.onTranscript("assistant", "old call", 1, true);
++		stale.sinks.onPhase("error");
++		stale.sinks.onTerminal?.(new Error("old terminal"));
++		stale.connection.reject(new Error("old connection"));
++		await first.flush();
++		await second.flush();
++		expect(first.frames).toEqual([]);
++		expect(second.frames).toEqual([]);
++		second.socket.send({ t: "live-ctl", op: "mute" });
++		await second.flush();
++		expect(second.frames).toEqual([{ t: "live-state", active: true, owner: 2, muted: true }]);
++	});
++
++	it("releases a disconnected owner before its connection completes", async () => {
++		const first = await join(host.link, "first");
++		const second = await join(host.link, "second");
++		first.socket.send({ t: "live-ctl", op: "claim" });
++		await first.flush();
++		first.socket.close();
++		await audio.closed.promise;
++		second.socket.send({ t: "live-ctl", op: "claim" });
++		await second.flush();
++		audio.calls[1]!.connection.resolve();
++		await second.flush();
++		second.frames.length = 0;
++		audio.calls[0]!.connection.resolve();
++		await second.flush();
++		expect(second.frames).toEqual([]);
++		second.socket.send({ t: "live-ctl", op: "mute" });
++		await second.flush();
++		expect(second.frames).toEqual([{ t: "live-state", active: true, owner: 2, muted: true }]);
++	});
++
++	it("awaits voice cleanup on repeated teardown and ignores late startup", async () => {
++		const guest = await join(host.link, "speaker");
++		guest.socket.send({ t: "live-ctl", op: "claim" });
++		await guest.flush();
++		const closing = Promise.withResolvers<void>();
++		audio.closeGate = closing.promise;
++		const stopping = host.stop("session replacement");
++		const again = host.stop("RPC disposal");
++		let disposed = false;
++		void again.then(() => {
++			disposed = true;
++		});
++		try {
++			await audio.closed.promise;
++			expect(audio.active).toBe(false);
++			expect(disposed).toBe(false);
++			audio.calls[0]!.connection.resolve();
++		} finally {
++			closing.resolve();
++			await Promise.all([stopping, again]);
++		}
++		expect(audio.active).toBe(false);
++	});
++});
+diff --git a/packages/collab-web/src/app.tsx b/packages/collab-web/src/app.tsx
+--- a/packages/collab-web/src/app.tsx
++++ b/packages/collab-web/src/app.tsx
+@@ -6,9 +6,11 @@ import { Banners } from "./components/shell/Banners";
+ import { Composer } from "./components/shell/Composer";
+ import { ConnectScreen } from "./components/shell/ConnectScreen";
+ import { HeaderBar } from "./components/shell/HeaderBar";
++import { LivePanel } from "./components/shell/LivePanel";
+ import { Toasts } from "./components/shell/Toasts";
+ import { Transcript } from "./components/transcript/Transcript";
+ import { GuestClient } from "./lib/client";
++import { LiveAudioDevice } from "./lib/live-audio";
+ import { useGuestSnapshot } from "./lib/use-guest";
+ import type { ToolRenderHost } from "./tool-render";
+ import "./components/shell/shell.css";
+@@ -152,6 +154,45 @@ function Session({ client, onLeave, onRejoin }: SessionProps): ReactNode {
+ 		document.title = `${title} · omp collab`;
+ 	}, [title]);
+ 
++	// Live voice: the host runs the realtime call, this device is its
++	// microphone and speaker. Playback is wired before any claim so the first
++	// frame after `live-state` is not dropped.
++	const audioRef = useRef<LiveAudioDevice | null>(null);
++	const [liveError, setLiveError] = useState<string | null>(null);
++	useEffect(() => {
++		const device = new LiveAudioDevice(pcm => client.sendLiveAudio(pcm));
++		audioRef.current = device;
++		client.onLiveAudio = (pcm, rate) => device.play(pcm, rate);
++		return () => {
++			client.onLiveAudio = undefined;
++			audioRef.current = null;
++			void device.stop();
++		};
++	}, [client]);
++
++	const owned = snap.live.owned;
++	useEffect(() => {
++		const device = audioRef.current;
++		if (!device) return;
++		if (owned && !device.active) {
++			device.start().catch((err: unknown) => {
++				setLiveError(err instanceof Error ? err.message : String(err));
++				client.stopLiveAudio();
++			});
++		} else if (!owned && device.active) {
++			void device.stop();
++		}
++	}, [owned, client]);
++	useEffect(() => {
++		audioRef.current?.setMuted(snap.live.muted);
++	}, [snap.live.muted]);
++
++	const toggleLive = useCallback(() => {
++		setLiveError(null);
++		if (snap.live.owned) client.stopLiveAudio();
++		else if (!snap.live.active) client.startLiveAudio();
++	}, [client, snap.live.owned, snap.live.active]);
++
+ 	const drawerAgent = selectedId != null ? snap.agents.find(a => a.id === selectedId) : undefined;
+ 
+ 	return (
+@@ -162,6 +203,8 @@ function Session({ client, onLeave, onRejoin }: SessionProps): ReactNode {
+ 				railOpen={railOpen}
+ 				onToggleRail={() => setRailOpen(open => !open)}
+ 				onLeave={onLeave}
++				onToggleLive={snap.readOnly ? undefined : toggleLive}
++				liveError={liveError}
+ 			/>
+ 			<main className="sh-main">
+ 				<section className="sh-content" data-rail={railOpen ? "true" : "false"}>
+@@ -192,6 +235,12 @@ function Session({ client, onLeave, onRejoin }: SessionProps): ReactNode {
+ 					</>
+ 				)}
+ 			</main>
++			<LivePanel
++				live={snap.live}
++				error={liveError}
++				onToggleMute={() => client.setLiveMuted(!snap.live.muted)}
++				onStop={() => client.stopLiveAudio()}
++			/>
+ 			<Composer client={client} snapshot={snap} />
+ 			{drawerAgent && (
+ 				<>
+diff --git a/packages/collab-web/src/components/shell/HeaderBar.tsx b/packages/collab-web/src/components/shell/HeaderBar.tsx
+--- a/packages/collab-web/src/components/shell/HeaderBar.tsx
++++ b/packages/collab-web/src/components/shell/HeaderBar.tsx
+@@ -1,7 +1,8 @@
+-import { LogOut, PanelRight } from "lucide-react";
++import { LogOut, Mic, MicOff, PanelRight } from "lucide-react";
+ import type { ReactNode } from "react";
+ import type { GuestSnapshot } from "../../lib/client";
+ import { fmtPercent, shortenPath } from "../../lib/format";
++import { ScaleToggle } from "./ScaleToggle";
+ import { ThemeToggle } from "./ThemeToggle";
+ 
+ export interface HeaderBarProps {
+@@ -10,10 +11,22 @@ export interface HeaderBarProps {
+ 	railOpen: boolean;
+ 	onToggleRail(): void;
+ 	onLeave(): void;
++	/** Absent for a read-only guest, which cannot hold live audio. */
++	onToggleLive?(): void;
++	/** Local microphone failure (permission denied, no device). */
++	liveError?: string | null;
+ }
+ 
+-export function HeaderBar({ snapshot, subCount, railOpen, onToggleRail, onLeave }: HeaderBarProps): ReactNode {
+-	const { header, state, phase, readOnly } = snapshot;
++export function HeaderBar({
++	snapshot,
++	subCount,
++	railOpen,
++	onToggleRail,
++	onLeave,
++	onToggleLive,
++	liveError,
++}: HeaderBarProps): ReactNode {
++	const { header, state, phase, readOnly, live } = snapshot;
+ 	const title = header?.title ?? state?.sessionName ?? "session";
+ 	const usage = state?.contextUsage;
+ 	let pct: number | null = null;
+@@ -70,7 +83,27 @@ export function HeaderBar({ snapshot, subCount, railOpen, onToggleRail, onLeave
+ 					</span>
+ 				)}
+ 				<span className={`sh-dot sh-dot-${phase}`} title={phase} />
++				<ScaleToggle />
+ 				<ThemeToggle />
++				{onToggleLive && (
++					<button
++						type="button"
++						className={live.owned ? "sh-btn sh-btn-icon sh-btn-on" : "sh-btn sh-btn-icon"}
++						onClick={onToggleLive}
++						disabled={live.active && !live.owned}
++						title={
++							liveError ??
++							live.error ??
++							(live.owned
++								? "stop live voice"
++								: live.active
++									? "another participant is holding live voice"
++									: "start live voice on this device")
++						}
++					>
++						{live.owned ? <Mic size={14} /> : <MicOff size={14} />}
++					</button>
++				)}
+ 				<button
+ 					type="button"
+ 					className={railOpen ? "sh-btn sh-btn-icon sh-btn-on" : "sh-btn sh-btn-icon"}
+diff --git a/packages/collab-web/src/components/shell/LivePanel.tsx b/packages/collab-web/src/components/shell/LivePanel.tsx
+new file mode 100644
+--- /dev/null
++++ b/packages/collab-web/src/components/shell/LivePanel.tsx
+@@ -0,0 +1,60 @@
++import { Mic, MicOff, Radio } from "lucide-react";
++import type { ReactNode } from "react";
++import type { GuestSnapshot } from "../../lib/client";
++
++export interface LivePanelProps {
++	live: GuestSnapshot["live"];
++	onToggleMute(): void;
++	onStop(): void;
++	/** Local microphone failure (permission denied, no device). */
++	error?: string | null;
++}
++
++/**
++ * Realtime voice overlay.
++ *
++ * Deliberately not part of the session transcript: these lines are speech
++ * recognition of the live call, they rewrite themselves while a turn streams,
++ * and they are never persisted in the session. Rendering them inline would
++ * mix volatile recognition with the durable transcript.
++ */
++export function LivePanel({ live, onToggleMute, onStop, error }: LivePanelProps): ReactNode {
++	if (!live.owned) return null;
++	const phase = live.error ?? error ?? live.phase ?? "connecting";
++	return (
++		<aside className="sh-live" aria-label="live voice">
++			<header className="sh-live-head">
++				<Radio size={12} className={live.phase === "speaking" ? "sh-live-on" : undefined} />
++				<span className="sh-live-title">live voice</span>
++				<span className={`sh-live-phase sh-live-phase-${live.phase ?? "connecting"}`}>{phase}</span>
++				<button
++					type="button"
++					className="sh-btn sh-btn-icon"
++					onClick={onToggleMute}
++					title={live.muted ? "unmute microphone" : "mute microphone"}
++				>
++					{live.muted ? <MicOff size={12} /> : <Mic size={12} />}
++				</button>
++				<button type="button" className="sh-btn sh-btn-icon" onClick={onStop} title="end live voice">
++					end
++				</button>
++			</header>
++			<div className="sh-live-lines">
++				<p className="sh-live-line sh-live-you">
++					<span className="sh-live-who">you</span>
++					<span className={live.transcript.user?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}>
++						{live.transcript.user?.text || (live.muted ? "microphone muted" : "listening…")}
++					</span>
++				</p>
++				<p className="sh-live-line sh-live-agent">
++					<span className="sh-live-who">omp</span>
++					<span
++						className={live.transcript.assistant?.final === false ? "sh-live-text sh-live-partial" : "sh-live-text"}
++					>
++						{live.transcript.assistant?.text || "—"}
++					</span>
++				</p>
++			</div>
++		</aside>
++	);
++}
+diff --git a/packages/collab-web/src/components/shell/ScaleToggle.tsx b/packages/collab-web/src/components/shell/ScaleToggle.tsx
+new file mode 100644
+--- /dev/null
++++ b/packages/collab-web/src/components/shell/ScaleToggle.tsx
+@@ -0,0 +1,20 @@
++import { Type } from "lucide-react";
++import { UI_SCALES, useUiScale } from "../../lib/ui-scale";
++
++export function ScaleToggle() {
++	const { scale, setScale } = useUiScale();
++	const percent = Math.round(scale * 100);
++
++	return (
++		<button
++			type="button"
++			className="sh-theme-toggle sh-scale-toggle"
++			onClick={() => setScale(UI_SCALES[(UI_SCALES.indexOf(scale) + 1) % UI_SCALES.length]!)}
++			aria-label={`Interface scale ${percent}% (click to change)`}
++			title={`Interface scale ${percent}% — click to change`}
++		>
++			<Type size={14} />
++			<span className="sh-scale-value">{percent}</span>
++		</button>
++	);
++}
+diff --git a/packages/collab-web/src/components/shell/shell.css b/packages/collab-web/src/components/shell/shell.css
+--- a/packages/collab-web/src/components/shell/shell.css
++++ b/packages/collab-web/src/components/shell/shell.css
+@@ -10,7 +10,10 @@
+ 	 * viewport and clip the right edge. `minmax(0, 1fr)` caps the track so rows
+ 	 * shrink and ellipsize instead of overflowing. */
+ 	grid-template-columns: minmax(0, 1fr);
+-	height: var(--viewport-height, 100%);
++	/* `height` is in the pre-zoom coordinate space, so dividing by the scale
++	 * keeps the rendered frame exactly one viewport tall at any scale. */
++	height: calc(var(--viewport-height, 100%) / var(--ui-scale, 1));
++	zoom: var(--ui-scale, 1);
+ }
+ 
+ .sh-main {
+@@ -140,6 +143,18 @@
+ 	border-color: var(--border-strong);
+ }
+ 
++.sh-scale-toggle {
++	gap: 3px;
++	width: auto;
++	padding: 0 5px;
++}
++
++.sh-scale-value {
++	font-family: var(--font-mono);
++	font-size: 10px;
++	font-variant-numeric: tabular-nums;
++}
++
+ @media (prefers-reduced-motion: reduce) {
+ 	.sh-theme-toggle {
+ 		transition: none;
+@@ -294,6 +309,99 @@
+ 	background: var(--err);
+ }
+ 
++/* ---- live voice ----
++   Sits above the composer as its own surface: volatile speech recognition,
++   visually not part of the durable session transcript. */
++.sh-live {
++	max-width: 880px;
++	width: calc(100% - 24px);
++	margin: 0 auto 8px;
++	border: 1px solid var(--accent-muted);
++	border-left: 2px solid var(--accent);
++	border-radius: var(--radius-sm);
++	background: var(--bg-inset);
++	font-family: var(--font-mono);
++	font-size: 12px;
++}
++
++.sh-live-head {
++	display: flex;
++	align-items: center;
++	gap: 6px;
++	padding: 4px 8px;
++	border-bottom: 1px solid var(--border);
++	color: var(--fg-faint);
++}
++
++.sh-live-title {
++	text-transform: uppercase;
++	letter-spacing: 0.08em;
++	font-size: 10px;
++}
++
++.sh-live-phase {
++	margin-right: auto;
++	color: var(--fg-muted);
++}
++
++.sh-live-phase-listening {
++	color: var(--ok);
++}
++
++.sh-live-phase-speaking {
++	color: var(--accent);
++}
++
++.sh-live-phase-working {
++	color: var(--warn);
++}
++
++.sh-live-phase-error {
++	color: var(--err);
++}
++
++.sh-live-on {
++	color: var(--accent);
++}
++
++.sh-live-lines {
++	display: flex;
++	flex-direction: column;
++	gap: 2px;
++	padding: 6px 8px;
++}
++
++.sh-live-line {
++	display: flex;
++	gap: 8px;
++	margin: 0;
++	line-height: 1.45;
++}
++
++.sh-live-who {
++	flex: 0 0 28px;
++	color: var(--fg-faint);
++	text-align: right;
++}
++
++.sh-live-text {
++	min-width: 0;
++	overflow-wrap: anywhere;
++}
++
++.sh-live-you .sh-live-text {
++	color: var(--fg);
++}
++
++.sh-live-agent .sh-live-text {
++	color: var(--fg-muted);
++}
++
++.sh-live-partial {
++	opacity: 0.65;
++	font-style: italic;
++}
++
+ /* ---- composer ---- */
+ .sh-composer {
+ 	padding: 10px 12px;
+diff --git a/packages/collab-web/src/lib/client.ts b/packages/collab-web/src/lib/client.ts
+--- a/packages/collab-web/src/lib/client.ts
++++ b/packages/collab-web/src/lib/client.ts
+@@ -42,6 +42,13 @@ export interface Notice {
+ 	at: number;
+ }
+ 
++/** One realtime transcript line, replaced in place while its turn streams. */
++export interface LiveLine {
++	text: string;
++	turn: number;
++	final: boolean;
++}
++
+ export interface GuestSnapshot {
+ 	phase: ConnectionPhase;
+ 	endedReason: string | null;
+@@ -63,6 +70,18 @@ export interface GuestSnapshot {
+ 	readOnly: boolean;
+ 	/** Pending host-side UI request (`ask` select/editor) this guest can answer. */
+ 	uiRequest: CollabUiRequest | null;
++	/**
++	 * Live voice state. `transcript` holds the last update per role, coalesced
++	 * by turn, so it renders as a conversation rather than an append log.
++	 */
++	live: {
++		active: boolean;
++		owned: boolean;
++		muted: boolean;
++		error: string | null;
++		phase: string | null;
++		transcript: { user: LiveLine | null; assistant: LiveLine | null };
++	};
+ 	/** Capped at 50, newest last. */
+ 	notices: readonly Notice[];
+ }
+@@ -117,7 +136,18 @@ export class GuestClient {
+ 	#readOnly = false;
+ 	#uiRequest: CollabUiRequest | null = null;
+ 	#uiRequestQueue: CollabUiRequest[] = [];
++	#live: GuestSnapshot["live"] = {
++		active: false,
++		owned: false,
++		muted: false,
++		error: null,
++		phase: null,
++		transcript: { user: null, assistant: null },
++	};
++	#liveClaimed = false;
+ 	#notices: readonly Notice[] = [];
++	/** Receives decoded host audio (base64 PCM16) for playback on this device. */
++	onLiveAudio: ((pcm: string, rate: number) => void) | undefined;
+ 	#snapshot: GuestSnapshot;
+ 	/**
+ 	 * Published entries array, cached across commits: rebuilt only when
+@@ -194,6 +224,30 @@ export class GuestClient {
+ 		this.#socket.send({ t: "agent-cmd", cmd, agentId, text });
+ 	}
+ 
++	/**
++	 * Claims live voice for this guest: the host starts a live session with no
++	 * microphone or speaker of its own and streams audio here instead.
++	 */
++	startLiveAudio(): void {
++		this.#liveClaimed = true;
++		this.#socket.send({ t: "live-ctl", op: "claim" });
++	}
++
++	stopLiveAudio(): void {
++		this.#liveClaimed = false;
++		this.#socket.send({ t: "live-ctl", op: "release" });
++	}
++
++	setLiveMuted(muted: boolean): void {
++		this.#socket.send({ t: "live-ctl", op: muted ? "mute" : "unmute" });
++	}
++
++	/** Sends one or more 20 ms frames of mono 16 kHz PCM16, base64 encoded. */
++	sendLiveAudio(pcm: string): void {
++		if (!this.#live.owned) return;
++		this.#socket.send({ t: "live-audio", pcm });
++	}
++
+ 	/**
+ 	 * Incremental subagent-transcript read. Resolves a {@link TranscriptResult}
+ 	 * (`rows` or terminal `error`), or `null` on transient failure (10s timeout,
+@@ -404,6 +458,36 @@ export class GuestClient {
+ 				}
+ 				this.#pushNotice("error", frame.message);
+ 				break;
++			case "live-state": {
++				// A guest never learns its own relay peer id, so ownership is
++				// tracked from local intent: we claimed, the host confirmed.
++				if (frame.error) this.#liveClaimed = false;
++				const owned = frame.active && this.#liveClaimed;
++				this.#live = {
++					active: frame.active,
++					owned,
++					muted: frame.muted === true,
++					error: frame.error ?? null,
++					phase: frame.active ? this.#live.phase : null,
++					// A finished call keeps no transcript: the next one starts clean.
++					transcript: owned ? this.#live.transcript : { user: null, assistant: null },
++				};
++				break;
++			}
++			case "live-phase":
++				this.#live = { ...this.#live, phase: frame.phase };
++				break;
++			case "live-transcript": {
++				const line: LiveLine = { text: frame.text, turn: frame.turn, final: frame.final };
++				this.#live = {
++					...this.#live,
++					transcript: { ...this.#live.transcript, [frame.role]: line },
++				};
++				break;
++			}
++			case "live-out":
++				this.onLiveAudio?.(frame.pcm, frame.rate);
++				return; // audio is not snapshot state; skip the render commit
+ 			default:
+ 				// unknown frame type from a newer host — ignore
+ 				break;
+@@ -532,6 +616,7 @@ export class GuestClient {
+ 			readOnly: this.#readOnly,
+ 			uiRequest: this.#uiRequest,
+ 			notices: this.#notices,
++			live: this.#live,
+ 		};
+ 	}
+ 
+diff --git a/packages/collab-web/src/lib/live-audio.ts b/packages/collab-web/src/lib/live-audio.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/collab-web/src/lib/live-audio.ts
+@@ -0,0 +1,137 @@
++/**
++ * Browser side of a remote live voice call.
++ *
++ * Captures the microphone, resamples to the 16 kHz mono PCM16 the host's
++ * realtime peer expects, and renders the host's 48 kHz output stream. Echo
++ * cancellation is left to the browser: the host deliberately skips its own
++ * echo gate for remote input, since the speaker is here, not there.
++ */
++
++const INPUT_RATE = 16_000;
++/** 20 ms at 16 kHz, matching the native peer's input framing. */
++const INPUT_FRAME = 320;
++/** Keep the playback queue this far ahead of the clock to absorb jitter. */
++const PLAYBACK_LEAD_S = 0.08;
++
++function encodePcm16(samples: Float32Array): string {
++	const bytes = new Uint8Array(samples.length * 2);
++	const view = new DataView(bytes.buffer);
++	for (let index = 0; index < samples.length; index += 1) {
++		const clamped = Math.max(-1, Math.min(1, samples[index] ?? 0));
++		view.setInt16(index * 2, Math.round(clamped * 32_767), true);
++	}
++	let binary = "";
++	for (const byte of bytes) binary += String.fromCharCode(byte);
++	return btoa(binary);
++}
++
++function decodePcm16(base64: string): Float32Array {
++	const binary = atob(base64);
++	const count = binary.length >> 1;
++	const samples = new Float32Array(count);
++	for (let index = 0; index < count; index += 1) {
++		const low = binary.charCodeAt(index * 2);
++		const high = binary.charCodeAt(index * 2 + 1);
++		const value = (high << 8) | low;
++		samples[index] = (value >= 0x8000 ? value - 0x10000 : value) / 32_768;
++	}
++	return samples;
++}
++
++/** One live call's microphone capture and speaker playback. */
++export class LiveAudioDevice {
++	readonly #onFrame: (pcm: string) => void;
++	#stream: MediaStream | undefined;
++	#context: AudioContext | undefined;
++	#node: ScriptProcessorNode | undefined;
++	#source: MediaStreamAudioSourceNode | undefined;
++	#pending: number[] = [];
++	#playbackContext: AudioContext | undefined;
++	#playbackCursor = 0;
++	#muted = false;
++
++	constructor(onFrame: (pcm: string) => void) {
++		this.#onFrame = onFrame;
++	}
++
++	get active(): boolean {
++		return this.#stream !== undefined;
++	}
++
++	/** @throws when the user denies microphone access. */
++	async start(): Promise<void> {
++		if (this.#stream) return;
++		const stream = await navigator.mediaDevices.getUserMedia({
++			audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
++		});
++		this.#stream = stream;
++		const context = new AudioContext();
++		this.#context = context;
++		const source = context.createMediaStreamSource(stream);
++		this.#source = source;
++		// ScriptProcessor rather than an AudioWorklet: the worklet needs a
++		// separate module URL, and this path carries 20 ms frames of one mono
++		// channel, well inside its budget.
++		const node = context.createScriptProcessor(4096, 1, 1);
++		this.#node = node;
++		const ratio = context.sampleRate / INPUT_RATE;
++		node.onaudioprocess = event => {
++			if (this.#muted) return;
++			const input = event.inputBuffer.getChannelData(0);
++			for (let index = 0; index < Math.floor(input.length / ratio); index += 1) {
++				const position = index * ratio;
++				const low = Math.floor(position);
++				const high = Math.min(low + 1, input.length - 1);
++				const fraction = position - low;
++				this.#pending.push((input[low] ?? 0) * (1 - fraction) + (input[high] ?? 0) * fraction);
++			}
++			while (this.#pending.length >= INPUT_FRAME) {
++				this.#onFrame(encodePcm16(Float32Array.from(this.#pending.splice(0, INPUT_FRAME))));
++			}
++		};
++		source.connect(node);
++		// Chrome only pulls a ScriptProcessor that reaches the destination; a
++		// zero-gain sink keeps it running without echoing the microphone.
++		const sink = context.createGain();
++		sink.gain.value = 0;
++		node.connect(sink);
++		sink.connect(context.destination);
++	}
++
++	setMuted(muted: boolean): void {
++		this.#muted = muted;
++		for (const track of this.#stream?.getAudioTracks() ?? []) track.enabled = !muted;
++	}
++
++	/** Queues one decoded host frame for playback in arrival order. */
++	play(pcm: string, rate: number): void {
++		const samples = decodePcm16(pcm);
++		if (samples.length === 0) return;
++		const context = (this.#playbackContext ??= new AudioContext());
++		void context.resume();
++		const buffer = context.createBuffer(1, samples.length, rate);
++		buffer.getChannelData(0).set(samples);
++		const source = context.createBufferSource();
++		source.buffer = buffer;
++		source.connect(context.destination);
++		const earliest = context.currentTime + PLAYBACK_LEAD_S;
++		const startAt = Math.max(this.#playbackCursor, earliest);
++		source.start(startAt);
++		this.#playbackCursor = startAt + buffer.duration;
++	}
++
++	async stop(): Promise<void> {
++		this.#node?.disconnect();
++		this.#source?.disconnect();
++		for (const track of this.#stream?.getAudioTracks() ?? []) track.stop();
++		this.#stream = undefined;
++		this.#node = undefined;
++		this.#source = undefined;
++		this.#pending = [];
++		this.#playbackCursor = 0;
++		await this.#context?.close().catch(() => {});
++		await this.#playbackContext?.close().catch(() => {});
++		this.#context = undefined;
++		this.#playbackContext = undefined;
++	}
++}
+diff --git a/packages/collab-web/src/lib/ui-scale.ts b/packages/collab-web/src/lib/ui-scale.ts
+new file mode 100644
+--- /dev/null
++++ b/packages/collab-web/src/lib/ui-scale.ts
+@@ -0,0 +1,62 @@
++import { useSyncExternalStore } from "react";
++
++/**
++ * UI scale preference.
++ *
++ * Every shell size is a hardcoded px value, so a text-size preference cannot
++ * come from a root font size. `zoom` on the app frame scales the whole
++ * interface instead, and unlike `transform: scale` it participates in layout,
++ * so rows still shrink and ellipsize at the scaled width.
++ */
++const STORAGE_KEY = "omp-collab-ui-scale";
++export const UI_SCALES = [0.85, 1, 1.15, 1.3, 1.5] as const;
++export type UiScale = (typeof UI_SCALES)[number];
++const DEFAULT_SCALE: UiScale = 1;
++
++function readStoredScale(): UiScale {
++	try {
++		const stored = Number(globalThis.localStorage.getItem(STORAGE_KEY));
++		return UI_SCALES.find(scale => scale === stored) ?? DEFAULT_SCALE;
++	} catch {
++		// Private-mode or blocked storage: fall back to unscaled.
++		return DEFAULT_SCALE;
++	}
++}
++
++let scale: UiScale = readStoredScale();
++const listeners = new Set<() => void>();
++
++function applyScale(): void {
++	// A document without CSSOM (test stubs, non-browser hosts) cannot take a
++	// custom property; the preference still holds in memory and persists.
++	const root = typeof document === "undefined" ? undefined : document.documentElement;
++	root?.style?.setProperty?.("--ui-scale", String(scale));
++}
++
++if (typeof window !== "undefined") applyScale();
++
++export function setUiScale(next: UiScale): void {
++	scale = next;
++	try {
++		globalThis.localStorage.setItem(STORAGE_KEY, String(next));
++	} catch {
++		// Persistence is best-effort; still apply the in-memory preference.
++	}
++	applyScale();
++	for (const listener of listeners) listener();
++}
++
++function subscribe(callback: () => void): () => void {
++	listeners.add(callback);
++	return () => listeners.delete(callback);
++}
++
++/** Reader + writer for the UI scale (powers the toggle). */
++export function useUiScale(): { scale: UiScale; setScale: (next: UiScale) => void } {
++	const current = useSyncExternalStore(
++		subscribe,
++		() => scale,
++		() => DEFAULT_SCALE,
++	);
++	return { scale: current, setScale: setUiScale };
++}
+diff --git a/packages/collab-web/test/composer.test.tsx b/packages/collab-web/test/composer.test.tsx
+--- a/packages/collab-web/test/composer.test.tsx
++++ b/packages/collab-web/test/composer.test.tsx
+@@ -25,6 +25,14 @@ function snapshot(uiRequest: GuestSnapshot["uiRequest"]): GuestSnapshot {
+ 		working: true,
+ 		readOnly: false,
+ 		uiRequest,
++		live: {
++			active: false,
++			owned: false,
++			muted: false,
++			error: null,
++			phase: null,
++			transcript: { user: null, assistant: null },
++		},
+ 		notices: [],
+ 	};
+ }
 diff --git a/packages/wire/src/index.ts b/packages/wire/src/index.ts
-index 57d5497..bc603b9 100644
 --- a/packages/wire/src/index.ts
 +++ b/packages/wire/src/index.ts
-@@ -337,7 +337,19 @@ export type GuestFrame =
+@@ -337,7 +337,25 @@ export type GuestFrame =
  	| { t: "ui-response"; reqId: number; value?: CollabUiResponseValue }
  	| { t: "abort" }
  	| { t: "agent-cmd"; cmd: "chat" | "kill" | "revive"; agentId: string; text?: string }
@@ -411,15 +2529,21 @@ index 57d5497..bc603b9 100644
 +	 */
 +	| { t: "live-audio"; pcm: string }
 +	/**
-+	 * Live-audio ownership and mute. `claim` starts a live session whose
-+	 * endpoint is this guest (no host microphone or speaker) and fails when
-+	 * another peer already owns it; `release` stops it.
++	 * Live-audio ownership, mute, and echo gating. `claim` starts a live
++	 * session whose endpoint is this guest (no host microphone or speaker) and
++	 * fails when another peer already owns it; `release` stops it.
++	 *
++	 * `gate-on` asks the host to apply its software echo gate to this guest's
++	 * input. A guest needs it when it captures without echo cancellation —
++	 * which it may have to do, because an echo-cancelling capture pins the
++	 * platform's output to its low-ceilinged communication stream. `gate-off`
++	 * is the default and the right choice when the guest cancels echo itself.
 +	 */
-+	| { t: "live-ctl"; op: "claim" | "release" | "mute" | "unmute" };
++	| { t: "live-ctl"; op: "claim" | "release" | "mute" | "unmute" | "gate-on" | "gate-off" };
  
  /** EventBus channels mirrored to guests (task subagent traffic only). */
  export type BusChannel = "task:subagent:progress" | "task:subagent:lifecycle";
-@@ -377,6 +389,14 @@ export type HostFrame =
+@@ -377,6 +395,22 @@ export type HostFrame =
  	/** Targeted reply to fetch-transcript; `text` is decoded JSONL from `fromByte`, `newSize` the next offset base. */
  	| { t: "transcript"; reqId: number; text: string; newSize: number; error?: string }
  	| { t: "bye"; reason: string }
@@ -431,6 +2555,14 @@ index 57d5497..bc603b9 100644
 +	| { t: "live-out"; pcm: string; rate: number }
 +	/** Live-audio ownership state; `owner` is the peer id holding it. */
 +	| { t: "live-state"; active: boolean; owner?: number; muted?: boolean; error?: string }
++	/**
++	 * One realtime conversational transcript update for the owning guest.
++	 * `turn` is role-local and monotonic, so a guest coalesces streaming
++	 * updates of the same turn instead of appending them.
++	 */
++	| { t: "live-transcript"; role: "user" | "assistant"; text: string; turn: number; final: boolean }
++	/** Realtime call phase, mirroring the host visualizer's own states. */
++	| { t: "live-phase"; phase: "connecting" | "listening" | "working" | "speaking" | "muted" | "error" }
  	| { t: "error"; message: string };
  
  export type WireFrame = GuestFrame | HostFrame;

@@ -49,7 +49,7 @@ diff --git a/apps/gateway/src/http.ts b/apps/gateway/src/http.ts
 index 1f4a974..5872b8e 100644
 --- a/apps/gateway/src/http.ts
 +++ b/apps/gateway/src/http.ts
-@@ -35,7 +35,11 @@ const SECURITY_HEADERS: Record<string, string> = {
+@@ -52,7 +52,11 @@ const SECURITY_HEADERS: Record<string, string> = {
    "Referrer-Policy": "no-referrer",
    "X-Content-Type-Options": "nosniff",
    "X-Frame-Options": "DENY",
@@ -82,8 +82,8 @@ index 8611e06..c76ede1 100644
 +
 +A guest holds OMP's `/live` realtime call from its own microphone and speaker. The host keeps the
 +Codex WebRTC peer, its credentials and its device attestation; only the audio endpoint moves here.
-+The host half is a six-patch series applied downstream (`universe/patches/oh-my-pi`), cut against
-+`v18.1.15` plus this package's own `patches/oh-my-pi` mbox.
++The host half is applied downstream (`universe/patches/oh-my-pi`) on mainline OMP.
++Gateway discovery uses OMP's native registry; no gateway-specific OMP mbox is needed.
 +
 +`lib/live-frames.ts` declares the four host frames (`live-state`, `live-transcript`, `live-phase`,
 +`live-out`) and two guest frames (`live-ctl`, `live-audio`) the client consumes: the pinned
@@ -107,8 +107,8 @@ index 8611e06..c76ede1 100644
 +px value that a root font size cannot reach; the frame divides its height by the scale so it stays
 +exactly one viewport tall.
  
- The local patch passes the capability directly into the root `App` component. The installed PWA
- mounts that component in its current document so Android standalone navigation does not depend on
+ These are the preserved browser-client provenance pins, not the OMP host prerequisite. Gateway
+ v0.4.0 consumes the native registry/controller in stock OMP `>= 18.1.20` without a fork, custom
 diff --git a/packages/collab-client/test/composer.test.ts b/packages/collab-client/test/composer.test.ts
 index a0b7eac..d182243 100644
 --- a/packages/collab-client/test/composer.test.ts

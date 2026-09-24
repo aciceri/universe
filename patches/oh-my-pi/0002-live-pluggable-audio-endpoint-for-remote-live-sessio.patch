@@ -23,7 +23,7 @@ barge-in. Mute is still honoured.
  2 files changed, 96 insertions(+), 15 deletions(-)
 
 diff --git a/packages/coding-agent/src/live/controller.ts b/packages/coding-agent/src/live/controller.ts
-index 61699bc..d25ac5c 100644
+index 20b8db2..e4c0794 100644
 --- a/packages/coding-agent/src/live/controller.ts
 +++ b/packages/coding-agent/src/live/controller.ts
 @@ -44,6 +44,23 @@ export interface LiveSessionCallbacks {

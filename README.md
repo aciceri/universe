@@ -422,7 +422,7 @@ Utility to synchronize CI checks from Forgejo to GitHub
 
 Self-hosted relay for omp collab E2E-encrypted session sharing
 
-### [omp-session-gateway](packages/omp-session-gateway/_package.nix) (version 0.3.0-unstable-2026-09-09)
+### [omp-session-gateway](packages/omp-session-gateway/_package.nix) (version 0.5.0-unstable-2026-09-23)
 
 Private mobile directory and capability broker for live omp collab sessions
 

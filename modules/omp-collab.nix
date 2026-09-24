@@ -2,9 +2,9 @@
 #
 # The relay only shuttles E2E-encrypted frames between an omp host and a
 # browser guest; it never learns a room key. The gateway is the phone-facing
-# half: patched omp auto-hosts a room per interactive session and publishes it
-# over an authenticated unix socket, the gateway lists those sessions and hands
-# out view/control capabilities on tap.
+# half: omp auto-hosts a room per session and publishes native discovery
+# metadata. The gateway queries each host over its authenticated local endpoint,
+# lists those sessions and hands out view/control capabilities on tap.
 #
 # Path from the phone: https://omp.sisko.wg.aciceri.dev (TLS + WireGuard ACL on
 # sisko) -> pike:80 -> pike's own nginx -> 127.0.0.1:4317. The last hop matters:
@@ -22,7 +22,6 @@
 #   omp config set collab.relayUrl wss://collab.sisko.wg.aciceri.dev
 #   omp config set collab.webUrl https://my.omp.sh
 #   omp config set collab.autoStart control   # publish to the gateway
-#   omp config set collab.registryEndpoint auto
 {
   configurations.nixos.pike.module =
     {
@@ -51,16 +50,14 @@
         registry = {
           heartbeatSeconds = 10;
           ttlSeconds = 35;
-          maxPublishers = 100;
           maxSessions = 100;
         };
       };
 
       # The daemon refuses a symlinked or group-readable config, so the store
       # copy is installed as a private regular file instead of being linked in
-      # by home-manager. The publisher token next to it is created by the
-      # daemon on first start and is deliberately left alone: rotating it would
-      # orphan the omp processes already holding it.
+      # by home-manager. OMP owns the discovery metadata and authentication tokens;
+      # the gateway only reads them.
       installConfig = pkgs.writeShellScript "omp-session-gateway-config" ''
         dir="''${XDG_CONFIG_HOME:-$HOME/.config}/omp-session-gateway"
         ${pkgs.coreutils}/bin/install -d -m 0700 "$dir"
@@ -97,9 +94,8 @@
         {
           home.packages = [ pkgs.omp-session-gateway ];
 
-          # A user service, not a system one: the registry socket lives in
-          # $XDG_RUNTIME_DIR, and the omp processes that publish to it derive
-          # that same path from their own session.
+          # Run as the same user as OMP to read its private host discovery
+          # directory and query the authenticated local endpoints.
           systemd.user.services.omp-session-gateway = {
             Unit = {
               Description = "omp session gateway (live collab session directory)";
@@ -108,8 +104,7 @@
             Service = {
               ExecStartPre = toString installConfig;
               ExecStart = lib.getExe' pkgs.omp-session-gateway "omp-gatewayd";
-              # 0700 because the daemon asserts its runtime directory is
-              # unreadable by anyone else before binding the socket.
+              # The gateway's own runtime state must remain owner-only.
               RuntimeDirectory = "omp-session-gateway";
               RuntimeDirectoryMode = "0700";
               Restart = "on-failure";

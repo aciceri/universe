@@ -48,26 +48,14 @@ let
     {
       nixpkgs.overlays = [
         inputs.llm-agents.overlays.shared-nixpkgs
-        # omp-session-gateway needs an omp that auto-hosts a collab room and
-        # publishes it (plus its view/control capabilities and attention state)
-        # to the daemon's registry socket; stock omp does neither. The upstream
-        # artifact is a four-commit mbox that GNU patch — nix's `patches` —
-        # mis-applies, so it goes through `git apply` before the package's own
-        # postPatch. Both must move together: the mbox is cut against an exact
-        # omp tag, so a version bump that rejects it means waiting for the
-        # gateway to reroll (patches/oh-my-pi/README.md).
-        #
-        # Our own series follows it, letting a collab guest hold the `/live`
-        # realtime voice call from its own microphone and speaker. It is cut
-        # against the gateway-patched tree, not pristine upstream — the mbox
-        # moves `CollabHost` ownership into a shared controller, which is where
-        # the live bridge registers — so the order here is load-bearing.
+        # OMP provides native gateway discovery and collaboration hosting.
+        # Our patches add remote live voice and headless RPC hosting on top
+        # of that integration (patches/oh-my-pi/README.md).
         (final: prev: {
           llm-agents = prev.llm-agents // {
             omp = prev.llm-agents.omp.overrideAttrs (old: {
               nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [ final.git ];
               prePatch = (old.prePatch or "") + ''
-                git apply --whitespace=nowarn -p1 ${final.omp-session-gateway.ompPatch}
                 # Only the `.patch` files: interpolating the directory would
                 # make omp rebuild from scratch — natives included — whenever
                 # its README changes.

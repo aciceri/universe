@@ -1,31 +1,24 @@
 # OMP collaboration: remote voice and headless hosting
 
-Ten patches extend OMP collaboration. Patches 1 through 8 let a collab guest,
-such as a phone or a browser on another machine, hold OMP's `/live` realtime
-voice call. The host keeps the Codex WebRTC peer, its credentials and its device
-attestation; only the microphone and speaker move to the guest.
-Patch 9 adds headless RPC hosting. Patch 10 connects headless hosts to the same
-remote live voice path, without requiring terminal components or local audio.
+Three patches extend OMP collaboration with remote live voice and headless
+RPC hosting. A collab guest, such as a phone or another browser, supplies the
+microphone and speaker. The host keeps the Codex WebRTC peer, credentials,
+device attestation and session delegation, without requiring local audio.
 
-`modules/agents.nix` applies them with `git apply`, **after**
-`omp-session-gateway.ompPatch`, because they are cut against the gateway-patched
-tree, not pristine upstream:
+`modules/agents.nix` applies the series directly to pristine **OMP v18.3.0**:
 
-| | |
-|---|---|
-| upstream tag | `v18.1.15` (`a33cc26824e3c91edd9fa42d681f10dceb4ac2f0`) |
-| gateway mbox | `patches/oh-my-pi/0001-collab-controller-autostart-registry.patch` from `omp-session-gateway` 0.3.0-unstable-2026-09-09 |
-| base tree | upstream + that mbox, kept as the git worktree `~/projects/oh-my-pi-gateway-base` |
+1. `0001`: native decoded-output callbacks and optional local playback.
+2. `0002`: pluggable live audio endpoints.
+3. `0003`: collaboration transport, browser UI, echo gate, session recap and
+   headless RPC integration, consolidated from the former patches 3 through 10.
 
-Rebasing onto the gateway tree was not cosmetic. The mbox moves `CollabHost`
-ownership out of the `/collab` slash command into a shared `CollabController`,
-so the bridge registration lives in `CollabController.#start` (before
-`host.start`, since a guest can claim audio as soon as it joins) and `HostLike`
-carries an optional `setLiveAudioBridge`. Cut against pristine upstream, patch
-0003 conflicts in `interactive-mode.ts`, `types.ts` and
-`builtin-collaboration.ts`, and 0005 cascades from it.
+OMP now provides its own controller and authenticated local discovery registry.
+Gateway 0.5.0 reads that registry; no gateway fork or prerequisite mbox remains.
+The voice bridge is registered in `CollabController.#launch` before `host.start`.
+Native session-ID-driven rotation, readiness gating, metadata snapshots and
+host-owned `inputRequired` remain authoritative.
 
-## What each patch does
+## Preserved functionality
 
 1. `pi-voice`: tap the decoded live output and make local playback optional.
    `LiveCallbacks::output` receives each frame as mono f32 at 48 kHz;
@@ -69,9 +62,9 @@ carries an optional `setLiveAudioBridge`. Cut against pristine upstream, patch
    `collab.autoStart` is enabled. Narrow structural contexts replace the TUI
    dependency without fabricating terminal components. Supported dialogs use
    the existing encrypted control-guest UI and publish `inputRequired`; session
-   replacement rotates ownership, and title/model changes refresh metadata.
-   Startup and terminal host failures exit for supervisor recovery; EOF and
-   signal cleanup stop publication and dispose the session. Default-off RPC,
+   replacement rotates ownership, while native registry queries read the current
+   title and model. Startup and terminal host failures exit for supervisor recovery;
+   EOF and signal cleanup stop publication and dispose the session. Default-off RPC,
    gateway authentication, guest permissions, and the phone client are unchanged.
 10. `collab`: register an RPC live-audio bridge before headless publication.
     It uses the existing `LiveSessionController`, configured voice, Codex
@@ -86,8 +79,8 @@ carries an optional `setLiveAudioBridge`. Cut against pristine upstream, patch
 ## The browser half lives elsewhere
 
 `omp-session-gateway` vendors its own copy of `packages/collab-web`, and that
-copy — not omp's — is what the phone loads. Patches 4 and 6 therefore reach
-omp's client only; the gateway's needs
+copy, not OMP's, is what the phone loads. The browser changes in patch 3 reach
+OMP's client only; the gateway also needs
 `patches/omp-session-gateway/0001-collab-client-re-vendor-*.patch`, which
 re-vendors that copy from this series and carries the browser-side work the
 phone actually needs: speaker mode, microphone picker, playback boost, visible
@@ -95,12 +88,55 @@ failure text. Both move together.
 
 ## Bumping omp
 
-The gateway mbox is cut against an exact upstream tag, so a version bump that
-the mbox rejects means waiting for the gateway to reroll. Once it does, rebase
-this series on the new gateway-patched tree and re-export — do not rebase it on
-pristine upstream.
+Rebase the series on the new pristine upstream tag. Preserve native discovery,
+controller lifecycle and session identity guards instead of restoring fork-era
+publisher APIs. Rebase the separately vendored gateway client when its base
+changes, and verify the additive live wire frames on both sides.
 
-## Verification
+## Verification on OMP 18.3.0
+
+- The series rebases onto pristine `v18.3.0` with no manual conflict
+  resolution; only `modes/rpc/rpc-mode.ts` moved, around the new
+  `get_entries`, `get_available_thinking_levels` and auth-storage changes.
+- All three regenerated patches apply to a fresh upstream tree and reproduce
+  the rebased sources exactly.
+- 241 focused collaboration, live-controller, registry, guest-dialog and RPC
+  tests run with the freshly built 18.3.0 native addon: 240 pass, including
+  the four live-audio ownership tests. The single failure, the two-process
+  `collab host registry` CLI smoke, fails identically on pristine `v18.3.0`.
+- 98 collab-web tests pass, the eight composer regressions included.
+- The Nix package builds, and the compiled headless runtime starts
+  collaboration hosting on `--mode rpc`, emits `ready`, publishes the session
+  and exits successfully on stdin EOF.
+- Both complete NixOS system builds, `sisko` and `pike`, succeed.
+- Upstream collab-web churn between 18.2.10 and 18.3.0 touches only
+  `tool-render`, `index.html` and `package.json`, none of the files this
+  series changes, so the separately vendored gateway client needs no rebase.
+
+## Historical verification on OMP 18.2.10
+
+- All three patches apply to a fresh upstream tree and reproduce the rebased
+  sources exactly.
+- 113 focused collaboration ownership, controller, permissions, guest-dialog,
+  registry, event-bus and RPC UI tests pass.
+- Eight browser composer regression tests and the collab-web type check pass.
+- The compiled headless runtime starts against a loopback relay, publishes
+  through native discovery, rotates from generation 1 to 2 on `new_session`,
+  and removes its discovery entry on SIGTERM.
+- The compiled gateway discovers the headless session; its browser client
+  connects read-only and switches to control mode with the live-voice control
+  visible. This loopback-only smoke uses a browser-local CSP bypass because
+  the production CSP intentionally allows only the configured secure relays.
+  No microphone capture or external live-voice service is exercised.
+- The coding-agent type check reports the same three native-constructor
+  declaration diagnostics after patches 1 and 2 and after the full series.
+  The checked-in NAPI declarations do not yet expose the extra output callback
+  and local-playback argument; the Nix package regenerates native declarations.
+
+## Historical verification on OMP 18.1.15
+
+The following results describe the original ten-patch series, not a fresh
+end-to-end voice verification of 18.3.0.
 
 - no audio backend at all: `localPlayback=false` still produces an SDP offer,
   `true` fails with `Failed to open the default speaker`;

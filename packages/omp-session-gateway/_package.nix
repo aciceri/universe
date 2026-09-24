@@ -1,6 +1,6 @@
 # alphastorm/omp-session-gateway: a loopback Bun daemon that lists every live
-# omp collab session (the patched omp publishes them over an authenticated unix
-# socket) and hands view/control capabilities to a mobile PWA on tap.
+# omp collab session from OMP's native authenticated local registry and hands
+# view/control capabilities to a mobile PWA on tap.
 #
 # Upstream installs itself imperatively: `omp-gateway install` stages a
 # content-addressed copy of the runtime under ~/.local/state and writes its own
@@ -23,13 +23,13 @@
   extraRelayOrigins ? [ "wss://collab.sisko.wg.aciceri.dev" ],
 }:
 let
-  version = "0.3.0-unstable-2026-09-09";
+  version = "0.5.0-unstable-2026-09-23";
 
   src = fetchFromGitHub {
     owner = "alphastorm";
     repo = "omp-session-gateway";
-    rev = "a025f69a808ecf050ef10f2ac2971a97a4d8d360";
-    hash = "sha256-SAs0kBbJ0lSyuI3TSQUxRA8sXfr89zae5dgzB4dVWkM=";
+    rev = "a4ce1445e0376e53e2ee5b7d1d6df85618ce76e0";
+    hash = "sha256-LZdpjENnvqw+ZKtdeYvj4gndNLCjjPzHEo6oePW2v9Q=";
   };
 
   # `bun install` needs the network, so dependencies are a fixed-output
@@ -114,7 +114,7 @@ stdenvNoCC.mkDerivation {
     root=$out/libexec/omp-session-gateway
     mkdir -p "$root"
     cp -R \
-      apps packages node_modules patches licenses schemas \
+      apps packages node_modules licenses schemas \
       package.json bun.lock bunfig.toml tsconfig.json \
       UPSTREAM.lock.json STABLE_RELEASE.lock.json \
       LICENSE NOTICE.md THIRD_PARTY_NOTICES.md \
@@ -133,11 +133,6 @@ stdenvNoCC.mkDerivation {
 
   passthru = {
     inherit src;
-    # Applied to omp itself (see modules/agents.nix): stock omp neither
-    # auto-starts collab nor publishes to the gateway registry. Not a plain
-    # `patches` entry — it is a four-commit mbox that GNU patch mis-applies, so
-    # the consumer runs `git apply`.
-    ompPatch = "${src}/patches/oh-my-pi/0001-collab-controller-autostart-registry.patch";
   };
 
   meta = {
