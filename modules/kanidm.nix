@@ -24,8 +24,8 @@
 
       services.kanidm = {
         server.enable = true;
-        # Kanidm only supports single-step upgrades: 1.9 -> 1.10 -> 1.11.
-        package = pkgs.kanidmWithSecretProvisioning_1_10;
+        # Upgrade sequentially: sisko runs 1.10 and its upgrade-check passes.
+        package = pkgs.kanidmWithSecretProvisioning_1_11;
 
         server.settings = {
           bindaddress = "[::]:4348";
