@@ -1,16 +1,16 @@
 {
-  # Blender plus its MCP bridge. blender-mcp is two halves that speak JSON
+  # Blender plus its MCP bridge. mcp-for-blender is two halves that speak JSON
   # over TCP (127.0.0.1:9876): the MCP server (`pkgs.blender-mcp`, spawned by
   # the MCP client) connects *into* a socket server that lives inside Blender
   # as an add-on. Both halves carry a protocol version and refuse to cooperate
   # when they drift, so the add-on is symlinked straight out of the package
-  # instead of being copied into $HOME by `blender-mcp install-addon` — one
+  # instead of being copied into $HOME by `mcp-for-blender install-addon`: one
   # closure, one version, no stale file.
   #
   # The MCP client side stays outside Nix: omp keeps its server list in the
   # mutable ~/.omp/agent/mcp.json (it writes OAuth material back into it), so
   # the `blender` entry there is hand-managed:
-  #   { "command": "blender-mcp", "env": { "DISABLE_TELEMETRY": "true" } }
+  #   { "command": "mcp-for-blender", "env": { "DISABLE_TELEMETRY": "true" } }
   flake.modules.homeManager.workstation =
     { pkgs, lib, ... }:
     {

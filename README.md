@@ -344,7 +344,7 @@ flake output are included in the [\_nur.nix file](packages/_nur.nix).
 
 A web player for terminal session recordings
 
-### [blender-mcp](packages/blender-mcp/_package.nix) (version 1.9.1)
+### [blender-mcp](packages/blender-mcp/_package.nix) (version 2.0.3)
 
 Third-party MCP server that lets any MCP client inspect and edit a running
 Blender scene. It talks JSON over TCP (default port 9876) to the companion
@@ -358,7 +358,7 @@ Soothing pastel theme for Gitea and Forgejo
 
 DMS plugin showing Claude Code billing block usage
 
-### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-09-08)
+### [ds4](packages/ds4/_package.nix) (version 0-unstable-2026-09-20)
 
 DwarfStar: DeepSeek V4 Flash and PRO local inference engine (Metal build)
 
@@ -398,7 +398,7 @@ Terraform major mode for Emacs using tree-sitter and eglot
 
 Child-frame display for Vertico completions
 
-### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.16-unstable-2026-08-19)
+### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.18-unstable-2026-09-18)
 
 Home Assistant integration exposing and uploading Garmin Connect data
 
@@ -430,7 +430,7 @@ Private mobile directory and capability broker for live omp collab sessions
 
 Small bash script to reinstall magisk after each LineageOS update
 
-### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.08.19-unstable-2026-08-30)
+### [yt-dlp-master](packages/yt-dlp-master/_package.nix) (version 2026.08.19-unstable-2026-09-16)
 
 yt-dlp is a youtube-dl fork based on the now inactive youtube-dlc.
 

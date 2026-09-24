@@ -46,6 +46,15 @@
             beautifulsoup4
             getmac
             garminconnect
+            (ha-garmin.overridePythonAttrs (_: {
+              version = "0.1.48";
+              src = pkgs.fetchFromGitHub {
+                owner = "cyberjunky";
+                repo = "ha-garmin";
+                tag = "v0.1.48";
+                hash = "sha256-gdcPXD/xJBaxqZg70aL3O4/ZbQB69jdsRuAtF0wvnuM=";
+              };
+            }))
             tzlocal
             pyipp
           ];
