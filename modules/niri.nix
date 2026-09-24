@@ -11,6 +11,10 @@
       niri-flake.cache.enable = false;
       graphicalSessions.niri.exec = lib.getExe' pkgs.niri "niri-session";
       security.pam.services.swaylock = { };
+      # AT-SPI accessibility bus (org.a11y.Bus). Lets agents and assistive
+      # tools read and drive application widget trees under niri, which has
+      # no widget-level introspection of its own.
+      services.gnome.at-spi2-core.enable = true;
     };
 
   flake.modules.homeManager.pc =
