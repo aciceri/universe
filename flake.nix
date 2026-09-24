@@ -129,7 +129,7 @@
     # Pinned to the 0.10.0 rc line until nixpkgs ships ncps >= 0.10.0
     # (0.9.x 500s on opaque NAR URLs, kalbasit/ncps#1331) — see modules/ncps.nix.
     ncps = {
-      url = "github:kalbasit/ncps/v0.10.0-rc16";
+      url = "github:kalbasit/ncps/v0.10.0-rc17";
       inputs = {
         nixpkgs.follows = "nixpkgs";
         flake-parts.follows = "flake-parts";
@@ -203,7 +203,7 @@
       url = "github:numtide/flake-utils";
       inputs.systems.follows = "nix-systems_";
     };
-    nixpkgs-stable_.url = "github:NixOS/nixpkgs/nixos-25.05";
+    nixpkgs-stable_.url = "github:NixOS/nixpkgs/nixos-26.05";
   };
 
   nixConfig.allow-import-from-derivation = true;

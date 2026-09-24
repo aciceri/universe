@@ -8,19 +8,19 @@
     {
       programs.rofi = {
         enable = true;
-        extraConfig = {
+        settings = {
           modi = "drun,window,ssh";
           combi-modes = [
             "drun"
             "window"
             "ssh"
           ];
+          terminal = lib.getExe config.programs.alacritty.package;
         };
         theme = {
           window.padding = mkLiteral "1ch";
           inputbar.spacing = mkLiteral "1ch";
         };
-        terminal = lib.getExe config.programs.alacritty.package;
         plugins = [ pkgs.rofi-calc ];
       };
     };
