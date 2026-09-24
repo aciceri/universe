@@ -12,16 +12,27 @@ in
   perSystem =
     {
       pkgs,
-      config,
       lib,
       ...
     }:
     let
-      reveal-js = pkgs.fetchFromGitHub {
-        owner = "hakimel";
-        repo = "reveal.js";
-        rev = "4.6.0";
-        hash = "sha256-a+J+GasFmRvu5cJ1GLXscoJ+owzFXsLhCbeDbYChkyQ=";
+      reveal-js = pkgs.buildNpmPackage {
+        pname = "reveal-js";
+        version = "6.0.2";
+        src = pkgs.fetchFromGitHub {
+          owner = "hakimel";
+          repo = "reveal.js";
+          rev = "6.0.2";
+          hash = "sha256-yh9Fwp8PT6fFrbSsih7cD9EzH2wbfd3idjyemOQTqF8=";
+        };
+        npmDepsHash = "sha256-zvWwWAVXqj5v/qhxDuQYLiPJkpYT1hO0fBf5HSzcZHo=";
+        env.PUPPETEER_SKIP_DOWNLOAD = "true";
+        installPhase = ''
+          runHook preInstall
+          mkdir -p $out
+          cp -r dist $out/
+          runHook postInstall
+        '';
       };
 
       emacs = (pkgs.emacsPackagesFor pkgs.emacs).emacsWithPackages (epkgs: [ epkgs.org-re-reveal ]);
@@ -44,12 +55,8 @@ in
 
             class Handler(SimpleHTTPRequestHandler):
                 def do_GET(self):
-                    if self.path.startswith('/reveal.js/plugin/'):
-                        self.directory = '${config.packages.reveal-js}/plugin/'
-                        self.path = self.path.replace('/reveal.js/plugin/', "")
-                        return SimpleHTTPRequestHandler.do_GET(self)
-                    elif self.path.startswith('/reveal.js/dist/'):
-                        self.directory = '${config.packages.reveal-js}/dist/'
+                    if self.path.startswith('/reveal.js/dist/'):
+                        self.directory = '${reveal-js}/dist/'
                         self.path = self.path.replace('/reveal.js/dist/', "")
                         return SimpleHTTPRequestHandler.do_GET(self)
                     else:
@@ -74,7 +81,7 @@ in
             cp ${./talk.org} talk.org
             emacs-export.el talk.org
             mkdir -p $out/reveal.js
-            cp -r ${reveal-js}/{plugin,dist} $out/reveal.js/
+            cp -r ${reveal-js}/dist $out/reveal.js/
             mv talk.html $out/index.html
             cp -r ${./pics} $out/pics
           '';

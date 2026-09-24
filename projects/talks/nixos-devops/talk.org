@@ -8,7 +8,7 @@
 
 #+REVEAL_PLUGINS: (math markdown highlight notes)
 
-#+REVEAL_VERSION: 4
+#+REVEAL_VERSION: 6
 
 #+REVEAL_TITLE_SLIDE: <h1>%t<h1>
 
