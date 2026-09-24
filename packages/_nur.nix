@@ -14,6 +14,7 @@
   emacs-niri-awareness = pkgs.callPackage ./emacs-niri-awareness/_package.nix { };
   emacs-terraform-ts-mode = pkgs.callPackage ./emacs-terraform-ts-mode/_package.nix { };
   emacs-vertico-buffer-frame = pkgs.callPackage ./emacs-vertico-buffer-frame/_package.nix { };
+  geosurge = pkgs.callPackage ./geosurge/_package.nix { };
   hass-garmin-connect = pkgs.callPackage ./hass-garmin-connect/_package.nix { };
   hass-pun-sensor = pkgs.callPackage ./hass-pun-sensor/_package.nix { };
   helix-master = pkgs.callPackage ./helix-master/_package.nix { };

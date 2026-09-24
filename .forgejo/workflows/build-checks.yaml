@@ -39,6 +39,7 @@
         "x86_64-linux/foodlog-backend",
         "x86_64-linux/foodlog-frontend",
         "x86_64-linux/foodlog-shell",
+        "x86_64-linux/geosurge",
         "x86_64-linux/hass-garmin-connect",
         "x86_64-linux/hass-pun-sensor",
         "x86_64-linux/helix-master",
@@ -102,6 +103,7 @@
         "x86_64-linux/foodlog-backend",
         "x86_64-linux/foodlog-frontend",
         "x86_64-linux/foodlog-shell",
+        "x86_64-linux/geosurge",
         "x86_64-linux/hass-garmin-connect",
         "x86_64-linux/hass-pun-sensor",
         "x86_64-linux/helix-master",
@@ -601,6 +603,19 @@
         {
           "name": "Build",
           "run": "nix build '.#checks.x86_64-linux.\"foodlog-shell\"' -L"
+        }
+      ]
+    },
+    "x86_64-linux/geosurge": {
+      "runs-on": "native",
+      "steps": [
+        {
+          "name": "Checkout repository",
+          "uses": "actions/checkout@v4"
+        },
+        {
+          "name": "Build",
+          "run": "nix build '.#checks.x86_64-linux.\"geosurge\"' -L"
         }
       ]
     },

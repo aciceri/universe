@@ -398,6 +398,10 @@ Terraform major mode for Emacs using tree-sitter and eglot
 
 Child-frame display for Vertico completions
 
+### [geosurge](packages/geosurge/_package.nix) (version 1.0.7)
+
+geoSurge menubar app and daemon for BYO-subscription AI brand-visibility runs
+
 ### [hass-garmin-connect](packages/hass-garmin-connect/_package.nix) (version 3.0.18-unstable-2026-09-18)
 
 Home Assistant integration exposing and uploading Garmin Connect data
