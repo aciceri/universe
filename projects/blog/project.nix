@@ -114,6 +114,16 @@ in
         forceSSL = true;
         enableACME = true;
         locations."/".root = (getSystem pkgs.stdenv.system).packages.blog;
+        # Hyphenopoly injects its main script via a blob: URL and compiles WebAssembly;
+        # KaTeX and asciinema-player rely on inline style attributes.
+        extraConfig = ''
+          add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+          add_header Content-Security-Policy "default-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; frame-src https://www.youtube.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'" always;
+          add_header X-Frame-Options "SAMEORIGIN" always;
+          add_header X-Content-Type-Options "nosniff" always;
+          add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+          add_header Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), browsing-topics=()" always;
+        '';
       };
     };
 
