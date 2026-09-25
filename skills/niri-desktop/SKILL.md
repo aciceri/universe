@@ -21,14 +21,14 @@ Prefer niri IPC whenever it covers the need. It runs from any shell, needs neith
 
 ## niri IPC
 
-`$NIRI_SOCKET` is set in every process started from the session, so `niri msg` works from an agent shell. Always pass `-j` and filter with `jq`:
+`$NIRI_SOCKET` is set in every process started from the session, so `niri msg` works from an agent shell. Always pass `-j` and filter with `jq` (on pike `jq` is jaq, which has no `--unbuffered`):
 
 ```sh
 niri msg -j windows | jq -c '.[] | {id, app_id, title, workspace_id, is_focused}'
 niri msg -j workspaces | jq -c '.[] | {id, idx, output, is_active}'
 ```
 
-Window ids are stable for the lifetime of a window and are the handle for every per-window action. Resolve them from `app_id` and `title` each time; do not cache them across sessions.
+Window ids are stable for the lifetime of a window and are the handle for every per-window action. Resolve them from `app_id` and `title` each time; do not cache them across sessions. Per-window actions such as `move-window-to-workspace --window-id N --focus false W`, `toggle-window-floating --id N`, and `close-window --id N` act without moving focus. `close-window` only asks the app to close, so the window can take about a second to disappear.
 
 Screenshots:
 
@@ -42,11 +42,11 @@ niri msg action screenshot-screen --path /tmp/niri-screen.png
 - Do not use the interactive `screenshot` action (region picker); it waits for a human.
 - Screenshots contain private data (mail, chats, credentials in terminals). Keep them under `/tmp`, delete them when done, and never upload them anywhere.
 
-`niri msg -j event-stream` gives a live JSON stream of window and workspace changes, useful for waiting on a window to appear instead of polling. Without `-j` it prints human-readable text.
+`niri msg -j event-stream` gives a live JSON stream of window and workspace changes, useful for waiting on a window to appear instead of polling. Without `-j` it prints human-readable text. To wait for one window, filter with a line-buffered tool, for example `timeout 10 niri msg -j event-stream | grep --line-buffered -m1 '"title":"Foo"'`.
 
 ## DMS IPC
 
-`dms ipc call <target> <function> [args...]` drives the shell: `notifications`, `mpris`, `audio`, `lock`, `night`, `inhibit`, `launcher`, and more. Read-only functions such as `status`, `list`, and `getDoNotDisturb` are safe to call. DMS also exposes `niri screenshot*` wrappers; prefer `niri msg` directly.
+`dms ipc call <target> <function> [args...]` drives the shell: `notifications`, `mpris`, `audio`, `lock`, `night`, `inhibit`, `launcher`, and more. Read-only functions such as `status`, `list`, and `getDoNotDisturb` are safe to call. Some functions take arguments that `dms ipc` does not list (`audio increment` needs a step); a missing one prints `Too few arguments provided`. Before changing a toggle, read and record its current state (`getDoNotDisturb`, `night status`, `inhibit status`) so you can restore it exactly, and prefer explicit `enable*`/`disable*` over `toggle*`. DMS also exposes `niri screenshot*` wrappers; prefer `niri msg` directly.
 
 ## omp computer mode
 
@@ -57,6 +57,7 @@ The `computer` object in Eval uses generic freedesktop interfaces, not niri IPC:
 - `computer.windows()` lists only visible windows of registered apps; windows hidden in the tray (Telegram) do not appear. `computer.window({ app })` and `({ title })` resolve them. AX works on a window in an inactive workspace without focusing it: `win.find({ role: "textbox" })` returned its widgets, and element `value()`, `setValue()`, and `actions()` worked. On such a window `win.ax()` printed only the root line marked `(disabled)`, so use `win.find()` instead. Window and element `bounds` came back at `x: 0, y: 0` (Wayland exposes no global coordinates), so do not use them for pointer input.
 - Native input goes only to the focused window. `backgroundWindowInput` is false, and both `win.type()` and `win.raise()` on an unfocused window throw `BackgroundUnavailable`. Prefer AX actions; for native input, focus the target with `niri msg action focus-window --id N` first, then act.
 - `computer.capabilities()` reports what the backend can do in the current session (`backend: wayland`, `ax: true`, `axPermission: granted`). Check it first when behaviour changes.
+- Do not call `computer.close()` to recover from a wedge. It closes the desktop session for the whole omp session: afterwards `capabilities()` returns nothing and every other helper throws `Computer session is closed`, in both JavaScript and Python Eval and after an Eval reset. Only restarting omp brings it back.
 
 ## Authorization
 
