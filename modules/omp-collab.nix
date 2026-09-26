@@ -80,6 +80,15 @@
               # from the client.
               proxy_set_header Tailscale-User-Login ${login};
 
+              # The gateway rejects any request showing a second proxy hop
+              # (`secondHopEvidence` in apps/gateway/src/auth.ts). Sisko's
+              # recommendedProxySettings add these; Serve would never send them.
+              proxy_set_header X-Forwarded-For "";
+              proxy_set_header X-Forwarded-Host "";
+              proxy_set_header X-Forwarded-Server "";
+              proxy_set_header X-Real-IP "";
+              proxy_set_header Forwarded "";
+
               # /api/v1/events is a long-lived SSE stream with a 5s keepalive.
               proxy_buffering off;
               proxy_read_timeout 1h;
